@@ -19,16 +19,21 @@ if(!String.prototype.startsWith) {
 import axios from 'axios'
 axios.defaults.headers.get['Accepts'] = 'applicaton/json'
 
+//import bootstrap
 import 'bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '../node_modules/mdbootstrap/css/mdb.min.css'
+//import dc styling globally
+import '../node_modules/dc/dc.css'
 
 import fontawesome from '@fortawesome/fontawesome'
 import faSpinner from '@fortawesome/fontawesome-free-solid/faSpinner'
 import faQuestionCircle from '@fortawesome/fontawesome-free-solid/faQuestionCircle'
 import faInfoCircle from '@fortawesome/fontawesome-free-solid/faInfoCircle'
+import faArrowUp from '@fortawesome/fontawesome-free-solid/faArrowUp'
+import faArrowDown from '@fortawesome/fontawesome-free-solid/faArrowDown'
 
-fontawesome.library.add(faSpinner,faQuestionCircle, faInfoCircle)
+fontawesome.library.add(faSpinner,faQuestionCircle, faInfoCircle, faArrowUp, faArrowDown)
 
 import { store } from '@/store/store'
 

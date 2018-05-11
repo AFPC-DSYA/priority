@@ -114,7 +114,19 @@
                     </h3>
                 </div>
             </div>
-            <div id="afscGroup" class="col-8">
+            <div id="afscFamily" class="col-8">
+                <div id="dc-afscFamily-barchart">
+                    <h3>AFSC Family <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                    <button type="button" 
+                            class="btn btn-danger btn-sm btn-rounded reset" 
+                            style="display: none"
+                            @click="resetChart('dc-afscGroup-barchart')">Reset</button>
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div id="afscGroup" class="col-12">
                 <div id="dc-afscGroup-barchart">
                     <h3>AFSC Group <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
                     <button type="button" 
@@ -131,7 +143,7 @@
                     <h3>Base <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
                     <button type="button" 
                             class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="display: none"
+                            style="visibility: hidden"
                             @click="resetChart('dc-base-barchart')">Reset</button>
                     </h3>
                     <searchBox
@@ -152,6 +164,34 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-12">
+                <h4>Filtered Records</h4>
+                <table class="table table-hover table-striped table-bordered" 
+                       style="table-layout: fixed;" id="dc-data-table">
+                    <thead>
+                        <tr class="table-header">
+                            <th v-for="header in columns"
+                                :class="{'cyan lighten-5': header.selected}"
+                                style="cursor: pointer;"
+                                @click="sortColumn(header)"
+                                width="header.width*width">
+                                {{header.title}}
+                                <span v-show="header.selected">
+                                    <font-awesome-icon v-show="header.sort_state === 'ascending'" icon="arrow-up"></font-awesome-icon>
+                                    <font-awesome-icon v-show="header.sort_state === 'descending'" icon="arrow-down"></font-awesome-icon>
+                                </span>
+                            </th>
+                        </tr>
+                    </thead>
+                </table>
+                <div class="col-12" id="paging">
+                    Showing <span id="begin"></span>-<span id="end"></span> of <span id="size"></span>
+                    <button id="Prev" class="btn btn-sm btn-secondary" value="Prev">Prev</button>
+                    <button id="Next" class="btn btn-sm btn-secondary" value="Next">Next</button>
+                </div>
+            </div>
+        </div>
         </div>
         </transition-group>
     </div>
@@ -165,28 +205,47 @@ import formats from '@/store/format'
 import Loader from '@/components/Loader'
 import searchBox from '@/components/searchBox'
 import { store } from '@/store/store'
+import pacingData from '@/assets/data/pacing_test.json'
+import FontAwesomeIcon from '@fortawesome/vue-fontawesome' 
 
     export default {
         data() {
             return {
-                data: [],
+                data: pacingData.data,
+                asDate: pacingData.ASOFDATE,
                 selected: "percent",
                 searchMajcom: "",
                 searchBase: "",
                 loaded: false ,
                 baseColor: chartSpecs.baseChart.color,
-                majcomColor: chartSpecs.majcomChart.color
+                majcomColor: chartSpecs.majcomChart.color,
+                items: [],
+                dataTable: {},
+                sortedVar: '',
+                sortOrder: d3.ascending,
+                width: document.documentElement.clientWidth,
+                columns: [ 
+                    {title: 'Unit', field: 'unit', sort_state: "ascending", selected: true, width: "20%"},
+                    {title: 'MPF', field: 'mpf', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'MAJCOM', field: 'majcom', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'PASCODE', field: 'pascode', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'AFSC', field: 'afsc_group', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Grade', field: 'grade', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn', field: 'asgn', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Auth', field: 'auth', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'STP', field: 'stp', sort_state: "descending", selected: false, width: "10%"},
+                ]
             }
         },
         computed: {
-            asDate: function(){
-                return store.state.asDate;
-            },
           ndx: function(){
             return crossfilter(this.data)
           },
           allGroup: function(){
             return this.ndx.groupAll()
+          },
+          itemDim() {
+              return this.ndx.dimension(function(d) {return d});
           },
           ylabel: function() {
             if (this.selected === "percent") {
@@ -204,6 +263,37 @@ import { store } from '@/store/store'
           }
         },
         methods: {
+            setTableData: function() {
+                this.items = this.itemDim.top(Infinity).map((d) => {
+                    return {
+                        pascode: d.pascode,
+                        unit: d.unit,
+                        majcom: d.majcom,
+                        mpf: d.mpf,
+                        asgn: d.asgn,
+                        auth: d.auth,
+                        stp: d.stp
+                    }
+                }) 
+            },
+            sortColumn: function(col) {
+                for (let i = 0; i < this.columns.length; i++) {
+                    this.columns[i].selected = false
+                }
+                //make selected property on clicked header true
+                col.selected = true
+                //toggle sort_state (ascending or descending)
+                col.sort_state = col.sort_state === "ascending" ? "descending" : "ascending";
+                //boolean whether ascending or not
+                var isAscendingOrder = col.sort_state === "ascending";
+                //set sort order and field to sort
+                this.dataTable
+                    .order(isAscendingOrder ? d3.ascending : d3.descending)
+                    .sortBy(function(v) {return v[col.field];} )
+
+
+                this.dataTable.redraw();
+            },
           resetAll: (event)=>{
             dc.filterAll()
             dc.redrawAll()
@@ -244,104 +334,34 @@ import { store } from '@/store/store'
         components: {
             'loader': Loader,
             searchBox,
+            FontAwesomeIcon 
         },
         created: function(){
           console.log('created')
-          //var data = require('@/assets/data/ps_off.csv')
-          //this.data = data
         },
         mounted() {
             console.log('mounted')
 
-            //axios request - can change to a get request and change to the "get" endpoint to see a get request
-            
-            //PROD AXIOS CALL:  
-            /*
-                var querystring = require('querystring');
-                const formData = {
-                    _PROGRAM:"/REN - Dashboard Home V1/makeHTML_collab",
-                    nPage:"off"
-                }
-                var myData = axios.post('', querystring.stringify(formData)).then(response => {
-            */
-                        
-            //TEST AXIOS CALL:
-            axios.post(axios_url_off_man).then(response => {
-                store.state.asDate = response.data.ASOFDATE
-                var axiosData = response.data.data
-                var objData = makeObject(axiosData)
-                this.data = objData
-                this.loaded = true 
-                console.log(axiosData)
-                console.log(objData)
-                renderCharts()
-            }).catch(console.error)
-
-            var makeObject = (data) => {
-                var keys = data.shift()
-                var i = 0
-                var k = 0
-                var obj = null
-                var obj2 = null
-                var output = [];
-
-                for (i=0; i < data.length; i++) {
-                    obj = {};
-                    for (k = 0; k < keys.length; k++) {
-                        obj[keys[k]] = data[i][k];
-                    }
-                    obj2 = {};
-                    obj2 = formatData(obj)
-                    obj2 = testData(obj2, obj)
-                    output.push(obj2);
-                }
-                return output;
-            }
-
-            var formatData = (given) =>{
-                var obj = {}
-
-                obj.Grade = formats.gradeFormat[given.grade]
-                obj.MAJCOM = formats.majFormat[given.majcom]
-                obj.AFSC_Group = given.afsc_group
-                obj.MPF = formats.mpfFormat[given.mpf]
-                obj.Assigned = +given.asgn
-                obj.Authorized = +given.auth
-                obj.STP = given.stp
-                obj.unit_cat = given.unit_cat
-                return obj;
-            }
-
-            var testData = (formatted, original) =>{
-                for (var key in formatted) {
-                    if (formatted[key] === undefined){
-                        console.log('Empty Value of ' + key)
-                        console.log(original)
-                        formatted[key] = "UNKNOWN"
-                    }
-                }
-                return formatted;
-            }
-
-            var renderCharts = () => {
+                this.loaded = true
+                console.log(pacingData.data)
                 dc.dataCount(".dc-data-count")
                   .dimension(this.ndx)
                   .group(this.allGroup)
 
                 //reduce functions
                 function manningAdd(p,v) {
-                    p.asgn = p.asgn + +v.Assigned
-                    p.auth = p.auth + +v.Authorized
-                    p.stp = p.stp + +v.STP
+                    p.asgn = p.asgn + +v.asgn
+                    p.auth = p.auth + +v.auth
+                    p.stp = p.stp + +v.stp
                     //if divide by 0, set to 0, and if NaN, set to zero
                     p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
                     p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
                     return p
                 }
                 function manningRemove(p,v) {
-                    p.asgn = p.asgn - +v.Assigned
-                    p.auth = p.auth - +v.Authorized
-                    p.stp = p.stp - +v.STP
+                    p.asgn = p.asgn - +v.asgn
+                    p.auth = p.auth - +v.auth
+                    p.stp = p.stp - +v.stp
                     //if divide by 0, set to 0, and if NaN, set to zero
                     p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
                     p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
@@ -387,7 +407,7 @@ import { store } from '@/store/store'
                 //Majcom
                 var majcomConfig = {}
                 majcomConfig.id = 'majcom'
-                majcomConfig.dim = this.ndx.dimension(function(d){return d.MAJCOM})
+                majcomConfig.dim = this.ndx.dimension(function(d){return formats.majFormat[d.majcom]})
                 var majcomPercent = majcomConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
                 majcomConfig.group = removeEmptyBins(majcomPercent)
                 majcomConfig.minHeight = chartSpecs.majcomChart.minHeight 
@@ -411,7 +431,7 @@ import { store } from '@/store/store'
                     })
 
                 //Number Display for Auth, Asgn, STP - show total for filtered content
-                var auth = this.ndx.groupAll().reduceSum(function(d) { return +d.Authorized })
+                var auth = this.ndx.groupAll().reduceSum(function(d) { return +d.auth })
                 var authND = dc.numberDisplay("#auth")
                 authND.group(auth)
                     .formatNumber(d3.format("d"))
@@ -419,7 +439,7 @@ import { store } from '@/store/store'
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
-                var asgn = this.ndx.groupAll().reduceSum(function(d) { return +d.Assigned})
+                var asgn = this.ndx.groupAll().reduceSum(function(d) { return +d.asgn})
                 var asgnND = dc.numberDisplay("#asgn")
                 asgnND.group(asgn)
                     .formatNumber(d3.format("d"))
@@ -427,7 +447,7 @@ import { store } from '@/store/store'
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
-                var stp = this.ndx.groupAll().reduceSum(function(d) { return +d.STP})
+                var stp = this.ndx.groupAll().reduceSum(function(d) { return +d.stp})
                 var stpND = dc.numberDisplay("#stp")
                 stpND.group(stp)
                     .formatNumber(d3.format("d"))
@@ -448,7 +468,7 @@ import { store } from '@/store/store'
                 var gradeConfig = {};
                 gradeConfig.id = 'grade';
                 gradeConfig.dim = this.ndx.dimension(function (d) {
-                    return d.Grade;
+                    return formats.gradeFormat[d.grade];
                 })
                 gradeConfig.group = gradeConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
                 gradeConfig.minHeight = 200 
@@ -464,13 +484,39 @@ import { store } from '@/store/store'
                       return formats.gradeOrder[d.key]
                     })                                    
                 
+                //afscFamily
+                var afscFamilyConfig = {}
+                afscFamilyConfig.id = 'afscFamily'
+                afscFamilyConfig.dim = this.ndx.dimension(function(d){return formats.afsc1[d.afsc_family]})
+                afscFamilyConfig.group = removeEmptyBins(afscFamilyConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial))
+                afscFamilyConfig.minHeight = 200 
+                afscFamilyConfig.aspectRatio = 3 
+                afscFamilyConfig.margins = {top: 10, left: 40, right: 30, bottom: 90}
+                afscFamilyConfig.colors = ["#108b52"] 
+                var afscFamilyChart = dchelpers.getOrdinalBarChart(afscFamilyConfig)
+                afscFamilyChart
+                    .elasticX(true)
+                    .valueAccessor((d)=> {
+                        return d.value[this.selected];
+                    })
+                    .on('pretransition', (chart)=> {
+                        chart.selectAll('g.x text')
+                        .style('text-anchor', 'end')
+                        .attr('transform', 'translate(-8,0)rotate(-45)')
+                        .on('click', (d)=>{
+                            this.submit(d, 'dc-afscFamily-barchart')
+                        })
+                    });
+
                 //afscGroup
                 var afscGroupConfig = {}
                 afscGroupConfig.id = 'afscGroup'
-                afscGroupConfig.dim = this.ndx.dimension(function(d){return d.AFSC_Group})
+                afscGroupConfig.dim = this.ndx.dimension(function(d){
+                    return d.afsc_group.substr(0,3)
+                })
                 afscGroupConfig.group = removeEmptyBins(afscGroupConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial))
                 afscGroupConfig.minHeight = 200 
-                afscGroupConfig.aspectRatio = 3 
+                afscGroupConfig.aspectRatio = 4 
                 afscGroupConfig.margins = {top: 10, left: 40, right: 30, bottom: 80}
                 afscGroupConfig.colors = ["#108b52"] 
                 var afscGroupChart = dchelpers.getOrdinalBarChart(afscGroupConfig)
@@ -492,7 +538,7 @@ import { store } from '@/store/store'
                 //base(mpf)
                 var baseConfig = {}
                 baseConfig.id = 'base'
-                baseConfig.dim = this.ndx.dimension(function(d){return d.MPF})
+                baseConfig.dim = this.ndx.dimension(function(d){return formats.mpfFormat[d.mpf]})
                 var basePercent = baseConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
                 baseConfig.group = removeEmptyBins(basePercent)
                 baseConfig.minHeight = chartSpecs.baseChart.minHeight 
@@ -502,6 +548,7 @@ import { store } from '@/store/store'
                 var baseChart = dchelpers.getOrdinalBarChart(baseConfig)
                 baseChart
                     .elasticX(true)
+                    .controlsUseVisibility(true)
                     .valueAccessor((d) => {
                         return d.value[this.selected]
                     })
@@ -513,6 +560,133 @@ import { store } from '@/store/store'
                             this.submit(d, 'dc-base-barchart')
                         })
                     })
+
+                //create data table
+                //var tableUnits = d3.sum(this.columns, function(d) {return d.width;})
+                //console.log(tableUnits)
+                //var table = d3.select("#table")
+                //    .append("table")
+                //    .attr("id","dc-data-table")
+                //    .attr("class", "table table-hover")
+                //    .style("background", "#eee")
+                //    .style("table-layout","fixed")
+                //    .style("text-align", "left")
+                //    .append("thead")
+                //    .append("tr")
+                //    .attr("class", "header")
+                //    .style("padding", "0px")
+                //    .style("background-color", "#ddd")
+                //    .style("display", "table-header-group")
+                //    .style("color", "#333");
+
+                var dataTable = dc.dataTable("#dc-data-table")
+
+                var tableOffset = 0
+                var tablePageSize = 10
+
+                function nextPage() {
+                    tableOffset += tablePageSize;
+                    dataTable.redraw();
+                }
+                function prevPage() {
+                    tableOffset -= tablePageSize;
+                    dataTable.redraw();
+                }
+                d3.select('#Prev')
+                    .on("click", prevPage);
+                d3.select('#Next')
+                    .on("click", nextPage);
+
+                var updateTable = () => {
+                    var totalFiltered = this.ndx.groupAll().value();
+                    var end = tableOffset + tablePageSize > totalFiltered ? totalFiltered : tableOffset + tablePageSize;
+                    tableOffset = tableOffset >= totalFiltered ? Math.floor((totalFiltered - 1)/tablePageSize)*tablePageSize : tableOffset;
+                    tableOffset = tableOffset < 0 ? 0 : tableOffset;
+
+                    dataTable.beginSlice(tableOffset);
+                    dataTable.endSlice(tableOffset + tablePageSize);
+
+                    //update paging and footer
+                    d3.select("span#begin")
+                        .text(end === 0 ? tableOffset : tableOffset + 1);
+                    d3.select("span#end")
+                        .text(end);
+                    d3.select('#Prev')
+                        .attr('disabled', tableOffset - tablePageSize < 0 ? 'true' : null);
+                    d3.select("#Next")
+                        .attr('disabled', tableOffset + tablePageSize >= totalFiltered ? 'true' : null);
+                    d3.select('span#size').text(totalFiltered);
+                }
+
+                var tableDim = this.ndx.dimension(d => d.unit)
+                dataTable.width(this.width)
+                    .height(800)
+                    .dimension(tableDim)
+                    .group(d => 'Showing first 100')
+                    .size(Infinity)
+                    //give columns an array of functions for returning variables
+                    .columns(this.columns.map(d=> (v) => v[d.field] ))
+                    .showGroups(false)
+                    .sortBy(d => d.unit)
+                    .order(d3.ascending)
+                    .on("preRender", updateTable)
+                    .on("preRedraw", updateTable)
+                    ;
+
+                this.dataTable = dataTable
+
+                //table.selectAll("th")
+                //.data(this.columns)
+                //.enter()
+                //.append("th")
+                //.attr("class", (d, i) => '_'+i+' th_'+d.title)
+                //.text(d => d.title)
+                //.style("line-height", "1em")
+                //.style("border", "0px")
+                //.style("padding", "5px")
+                //.style("font-weight", "normal")
+                //.style("cursor", "pointer")
+                //.on("click", v => {
+                //    dataTable.sortBy(d => d[v.field])
+                //    if (this.sortedVar == v.field) {
+                //        //toggle sort order
+                //        this.sortOrder = this.sortOrder == d3.ascending ? d3.descending: d3.ascending
+                //        dataTable.order(this.sortOrder)
+                //    } else{
+                //        this.sortedVar = v.field
+                //        this.sortOrder = d3.ascending
+                //        dataTable.order(this.sortOrder)
+                //    }
+                //    //why not redraw??
+                //    dataTable.redraw()
+                //})
+
+                //var setTableStyle = () => {
+                //    d3.selectAll("#dc-data-table tbody")
+                //    .style("height", "500px")
+                //    .style("overflow-y", "auto")
+                //    .style("overflow-x", "hidden")
+                //    ;
+                //    this.columns.forEach((d,i) => {
+                //        d3.selectAll("._" + i)
+                //            .attr("width", (this.columns[i].width/tableUnits)*100+"%")
+                //    })
+                //    d3.selectAll("#dc-data-table td")
+                //    .style("color", "#333")
+                //    .style("font-size", "13px")
+                //    .style("border", "0px")
+                //    .style("float", "left")
+                //    .style("line-height", "1em")
+                //    .style("border", "0px")
+                //    .style("padding", "5px")
+                //    ;
+                //}
+
+
+
+
+
+                    
 
                 //Download Raw Data button
                 d3.select('#download')
@@ -541,10 +715,16 @@ import { store } from '@/store/store'
                     temp = setTimeout(dc.redrawAll(), 500)
                 }
 
+                var vm = this
+                dc.chartRegistry.list().forEach((chart) => {
+                    chart.on("filtered", function() {
+                       vm.setTableData(); 
+                    })
+                })
+
                 //create charts
                 dc.renderAll()
                 dc.redrawAll()
-            }
         },
         beforeUpdate() {
             console.log("beforeupdate")
@@ -560,8 +740,6 @@ import { store } from '@/store/store'
     }
 </script>
 
-<style src="@/../node_modules/dc/dc.css">
-</style>
 <style>
 div[id*="-barchart"] .x.axis text{
     text-anchor: end !important;
