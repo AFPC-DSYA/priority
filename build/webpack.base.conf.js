@@ -15,7 +15,8 @@ function resolve (dir) {
 module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
-    app: './src/main.js'
+    app: './src/main.js',
+    data: './src/assets/data/pacing_test.json'
   },
   output: {
     path: config.build.assetsRoot,
@@ -64,9 +65,10 @@ module.exports = {
         loader: 'url-loader',
         options: {
           limit: 10000,
-          name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
+          name: utils.assetsPath('fonts/[name].[hash:7].[ext]'),
+          publicPath: '../',
         }
-      }
+      },
     ]
   },
     plugins: [
@@ -83,6 +85,11 @@ module.exports = {
           dc: 'dc',
           _: 'lodash',
           Promise: 'es6-promise-promise'
+        }),
+        new webpack.optimize.CommonsChunkPlugin({
+            filename: "data.js",
+            name: "data",
+            minChunks: 3
         })
     ],
   node: {

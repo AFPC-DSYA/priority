@@ -64,14 +64,26 @@
             </div>
         </div>
         <div class="row">
-            <div id="cat" class="col-4">
-                <div id="dc-cat-rowchart">
-                    <h3>Grade <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                    <button type="button" 
-                            class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="display: none"
-                            @click="resetChart('dc-cat-rowchart')">Reset</button>
-                    </h3>
+            <div class= "col-4">
+                <div id="cat" class="col-12">
+                    <div id="dc-cat-rowchart">
+                        <h3 style="display: inline-block">Category 
+                        <button type="button" 
+                                class="btn btn-danger btn-sm btn-rounded reset" 
+                                style="visibility: hidden"
+                                @click="resetChart('dc-cat-rowchart')">Reset</button>
+                        </h3>
+                    </div>
+                </div>
+                <div id="status" class="col-12">
+                    <div id="dc-status-rowchart">
+                        <h3 style="display: inline-block">Status
+                        <button type="button" 
+                                class="btn btn-danger btn-sm btn-rounded reset" 
+                                style="visibility: hidden"
+                                @click="resetChart('dc-status-rowchart')">Reset</button>
+                        </h3>
+                    </div>
                 </div>
             </div>
             <div id="majcom" class="col-8">
@@ -79,18 +91,18 @@
                     <h3>MAJCOM <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
                     <button type="button" 
                             class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="display: none"
+                            style="visibility: hidden"
                             @click="resetChart('dc-majcom-barchart')">Reset</button>
                     </h3>
-                    <searchBox
-                        v-model:value="searchMajcom"
-                        size="3"
-                        label="Search MAJCOM"
-                        @sub="submit(searchMajcom,'dc-majcom-barchart')"
-                        button="true"
-                        :color="majcomColor"
-                        :btnColor="majcomColor"
-                    ></searchBox>
+                    <!--<searchBox-->
+                        <!--v-model:value="searchMajcom"-->
+                        <!--size="3"-->
+                        <!--label="Search MAJCOM"-->
+                        <!--@sub="submit(searchMajcom,'dc-majcom-barchart')"-->
+                        <!--button="true"-->
+                        <!--:color="majcomColor"-->
+                        <!--:btnColor="majcomColor"-->
+                    <!--</searchBox>-->
                     <!-- <form class="form-inline">
                         <div class="form-group">
                             <input id="searchMajcom" v-model="searchMajcom" placeholder="Search MAJCOM" @keydown.enter="submit(searchMajcom,'dc-majcom-barchart')">
@@ -106,12 +118,14 @@
         <div class="row">
             <div id="grade" class="col-4">
                 <div id="dc-grade-rowchart">
-                    <h3>Grade <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                    <h3 style="display: inline-block">Grade 
                     <button type="button" 
                             class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="display: none"
+                            style="visibility: hidden"
                             @click="resetChart('dc-grade-rowchart')">Reset</button>
                     </h3>
+                    <br>
+                    <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
                 </div>
             </div>
             <div id="afscFamily" class="col-8">
@@ -119,8 +133,8 @@
                     <h3>AFSC Family <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
                     <button type="button" 
                             class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="display: none"
-                            @click="resetChart('dc-afscGroup-barchart')">Reset</button>
+                            style="visibility: hidden"
+                            @click="resetChart('dc-afscFamily-barchart')">Reset</button>
                     </h3>
                 </div>
             </div>
@@ -131,7 +145,7 @@
                     <h3>AFSC Group <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
                     <button type="button" 
                             class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="display: none"
+                            style="visibility: hidden"
                             @click="resetChart('dc-afscGroup-barchart')">Reset</button>
                     </h3>
                 </div>
@@ -146,33 +160,33 @@
                             style="visibility: hidden"
                             @click="resetChart('dc-base-barchart')">Reset</button>
                     </h3>
-                    <searchBox
-                        v-model:value="searchBase"
-                        size="3"
-                        label="Search Installation"
-                        @sub="submit(searchBase,'dc-base-barchart')"
-                        button="true"
-                        :color="baseColor"
-                        :btnColor="baseColor"
-                    ></searchBox>
-                    <!-- <form class="form-inline">
-                        <div class="form-group">
-                            <input id="searchBase" v-model="searchBase" placeholder="Search Installation" @keydown.enter="submit(searchBase,'dc-base-barchart')">
-                            <button class="btn btn-primary btn-sm" @click.stop.prevent="submit(searchBase,'dc-base-barchart')">Submit</button>
-                        </div>
-                    </form> -->
+                    <!--<searchBox-->
+                        <!--v-model:value="searchBase"-->
+                        <!--size="3"-->
+                        <!--label="Search Installation"-->
+                        <!--@sub="submit(searchBase,'dc-base-barchart')"-->
+                        <!--button="true"-->
+                        <!--:color="baseColor"-->
+                        <!--:btnColor="baseColor"-->
+                    <!--</searchBox>-->
+                     <!--<form class="form-inline">-->
+                        <!--<div class="form-group">-->
+                            <!--<input id="searchBase" v-model="searchBase" placeholder="Search Installation" @keydown.enter="submit(searchBase,'dc-base-barchart')">-->
+                            <!--<button class="btn btn-primary btn-sm" @click.stop.prevent="submit(searchBase,'dc-base-barchart')">Submit</button>-->
+                        <!--</div>-->
+                    <!--</form> -->
                 </div>
             </div>
         </div>
         <div class="row">
             <div class="col-12">
                 <h4>Filtered Records</h4>
-                <table class="table table-hover table-striped table-bordered" 
+                <table class="table table-hover table-bordered" 
                        style="table-layout: fixed;" id="dc-data-table">
                     <thead>
                         <tr class="table-header">
                             <th v-for="header in columns"
-                                :class="{'cyan lighten-5': header.selected}"
+                                :class="{sortedColumn: header.selected}"
                                 style="cursor: pointer;"
                                 @click="sortColumn(header)"
                                 width="header.width*width">
@@ -234,6 +248,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     {title: 'Asgn', field: 'asgn', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Auth', field: 'auth', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'STP', field: 'stp', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Percent', field: 'percent', sort_state: "descending", selected: false, width: "10%"},
                 ]
             }
         },
@@ -288,9 +303,18 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 var isAscendingOrder = col.sort_state === "ascending";
                 //set sort order and field to sort
                 this.dataTable
-                    .order(isAscendingOrder ? d3.ascending : d3.descending)
-                    .sortBy(function(v) {return v[col.field];} )
+                    .order(isAscendingOrder ? d3.ascending : d3.descending);
 
+                //cleaner sort on grade
+                if (col.field == 'grade') {
+                    this.dataTable.sortBy(function(v) {
+                        return formats.gradeOrder[v[col.field]];
+                    } )
+                } else {
+                    this.dataTable.sortBy(function(v) {
+                        return v[col.field];
+                    } )
+                }
 
                 this.dataTable.redraw();
             },
@@ -338,12 +362,18 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
         },
         created: function(){
           console.log('created')
+            //apply formats so we have decoded variables globally
+            for (let i = 0; i < this.data.length; i++) {
+                this.data[i].majcom = formats.majFormat[this.data[i].majcom]
+                this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
+                this.data[i].grade = formats.gradeFormat[this.data[i].grade]
+                //this.data[i].percent = this.data[i].asgn/this.data[i].auth
+            }
         },
         mounted() {
             console.log('mounted')
 
                 this.loaded = true
-                console.log(pacingData.data)
                 dc.dataCount(".dc-data-count")
                   .dimension(this.ndx)
                   .group(this.allGroup)
@@ -394,12 +424,31 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     return d.unit_cat;
                 })
                 catConfig.group = catConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
-                catConfig.minHeight = 200 
-                catConfig.aspectRatio = 2
+                catConfig.minHeight = 100 
+                catConfig.aspectRatio = 3
                 catConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
                 catConfig.colors = d3.scale.category10()
                 var catChart = dchelpers.getRowChart(catConfig)
                 catChart
+                    .controlsUseVisibility(true)
+                    .valueAccessor((d)=> {
+                        return d.value[this.selected];
+                    })
+
+                //status
+                var statusConfig = {};
+                statusConfig.id = 'status';
+                statusConfig.dim = this.ndx.dimension(function (d) {
+                    return d.percent < 1 ? 'undermanned' : 'properly manned';
+                })
+                statusConfig.group = statusConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
+                statusConfig.minHeight = 100 
+                statusConfig.aspectRatio = 3
+                statusConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
+                statusConfig.colors = d3.scale.ordinal().range(['#1a9641','#d7191c']) 
+                var statusChart = dchelpers.getRowChart(statusConfig)
+                statusChart
+                    .controlsUseVisibility(true)
                     .valueAccessor((d)=> {
                         return d.value[this.selected];
                     })
@@ -407,7 +456,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 //Majcom
                 var majcomConfig = {}
                 majcomConfig.id = 'majcom'
-                majcomConfig.dim = this.ndx.dimension(function(d){return formats.majFormat[d.majcom]})
+                majcomConfig.dim = this.ndx.dimension(function(d){return d.majcom})
                 var majcomPercent = majcomConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
                 majcomConfig.group = removeEmptyBins(majcomPercent)
                 majcomConfig.minHeight = chartSpecs.majcomChart.minHeight 
@@ -417,6 +466,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 var majcomChart = dchelpers.getOrdinalBarChart(majcomConfig)
                 majcomChart
                     .elasticX(true)
+                    .controlsUseVisibility(true)
                     .valueAccessor((d) => {
                         return d.value[this.selected]
                     })
@@ -468,7 +518,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 var gradeConfig = {};
                 gradeConfig.id = 'grade';
                 gradeConfig.dim = this.ndx.dimension(function (d) {
-                    return formats.gradeFormat[d.grade];
+                    return d.grade;
                 })
                 gradeConfig.group = gradeConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
                 gradeConfig.minHeight = 200 
@@ -477,6 +527,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 gradeConfig.colors = d3.scale.category10()
                 var gradeChart = dchelpers.getRowChart(gradeConfig)
                 gradeChart
+                    .controlsUseVisibility(true)
                     .valueAccessor((d)=> {
                         return d.value[this.selected];
                     })
@@ -496,6 +547,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 var afscFamilyChart = dchelpers.getOrdinalBarChart(afscFamilyConfig)
                 afscFamilyChart
                     .elasticX(true)
+                    .controlsUseVisibility(true)
                     .valueAccessor((d)=> {
                         return d.value[this.selected];
                     })
@@ -523,6 +575,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
 
                 afscGroupChart
                     .elasticX(true)
+                    .controlsUseVisibility(true)
                     .valueAccessor((d)=> {
                         return d.value[this.selected];
                     })
@@ -538,7 +591,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 //base(mpf)
                 var baseConfig = {}
                 baseConfig.id = 'base'
-                baseConfig.dim = this.ndx.dimension(function(d){return formats.mpfFormat[d.mpf]})
+                baseConfig.dim = this.ndx.dimension(function(d){return d.mpf})
                 var basePercent = baseConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
                 baseConfig.group = removeEmptyBins(basePercent)
                 baseConfig.minHeight = chartSpecs.baseChart.minHeight 
@@ -625,12 +678,21 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     .group(d => 'Showing first 100')
                     .size(Infinity)
                     //give columns an array of functions for returning variables
-                    .columns(this.columns.map(d=> (v) => v[d.field] ))
+                    .columns(this.columns.map(d=> {
+                        if (d.field == 'percent') {
+                            return (v) => v[d.field]*100 + '%';
+                        } else {
+                            return (v) => v[d.field];   
+                        }
+                    }))
                     .showGroups(false)
                     .sortBy(d => d.unit)
                     .order(d3.ascending)
                     .on("preRender", updateTable)
                     .on("preRedraw", updateTable)
+                    //.on("renderlet", function(table) {
+                    //    console.log(d3.select("#dc-data-table tr"))
+                    //})
                     ;
 
                 this.dataTable = dataTable
@@ -748,6 +810,15 @@ div[id*="-barchart"] .x.axis text{
 
 div[id*="-rowchart"] g.row text{
     fill: black;
+}
+th {
+    opacity: 0.8;
+}
+th:hover {
+    opacity: 1.0;
+}
+.sortedColumn {
+    opacity: 1.0;
 }
 .custom-control.custom-radio{
     padding-left:20px;

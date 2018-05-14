@@ -14,15 +14,15 @@
 TODO: Prevent typed text to overflow in the 'close-icon'
 ###########################################-->
 <template>
-<div class="row" style="margin-top:13px">
+<div class="row">
 	<div :class="'col-' + size">
 		<div class="md-form">
-			<div  style="position:relative;top: 10px;">
-		        <div class='searchTip' :style="getColor">
-		            <span v-show="searchVar.length>0">
-		                {{ label }}
-		            </span>
-		        </div>
+			<div  style="position:relative;">
+                <div class='searchTip' :style="getColor">
+                    <span v-show="searchVar.length>0">
+                        {{ label }}
+                    </span>
+                </div>
 		        <input 	type="text"  class="form-control" v-model="searchVar" :placeholder="label"
 										@keydown.enter.stop.prevent="action" @focus="focus = true" @blur="focus = false"
 										:style="[getShadow,getBorderBottom]">
