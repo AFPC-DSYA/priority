@@ -219,14 +219,14 @@ import formats from '@/store/format'
 import Loader from '@/components/Loader'
 import searchBox from '@/components/searchBox'
 import { store } from '@/store/store'
-import pacingData from '@/assets/data/pacing_test.json'
+//import pacingData from '@/assets/data/pacing_test.json'
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome' 
 
     export default {
         data() {
             return {
-                data: pacingData.data,
-                asDate: pacingData.ASOFDATE,
+                data: [],//pacingData.data,
+                asDate: '',//pacingData.ASOFDATE,
                 selected: "percent",
                 searchMajcom: "",
                 searchBase: "",
@@ -362,16 +362,25 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
         },
         created: function(){
           console.log('created')
-            //apply formats so we have decoded variables globally
-            for (let i = 0; i < this.data.length; i++) {
-                this.data[i].majcom = formats.majFormat[this.data[i].majcom]
-                this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
-                this.data[i].grade = formats.gradeFormat[this.data[i].grade]
-                //this.data[i].percent = this.data[i].asgn/this.data[i].auth
-            }
         },
         mounted() {
             console.log('mounted')
+
+            //load local data (works for both dev and prod) 
+            d3.json('./data/pacing_data.json',(error,data) => {
+                console.log(data)
+                this.data = data.data;   
+                //apply formats so we have decoded variables globally
+                for (let i = 0; i < this.data.length; i++) {
+                    this.data[i].majcom = formats.majFormat[this.data[i].majcom]
+                    this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
+                    this.data[i].grade = formats.gradeFormat[this.data[i].grade]
+                    //this.data[i].percent = this.data[i].asgn/this.data[i].auth
+                }
+                renderCharts()
+            })
+
+            var renderCharts = () => {
 
                 this.loaded = true
                 dc.dataCount(".dc-data-count")
@@ -680,7 +689,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     //give columns an array of functions for returning variables
                     .columns(this.columns.map(d=> {
                         if (d.field == 'percent') {
-                            return (v) => v[d.field]*100 + '%';
+                            return (v) => Math.round(v[d.field]*1000)/10 + '%';
                         } else {
                             return (v) => v[d.field];   
                         }
@@ -787,6 +796,8 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 //create charts
                 dc.renderAll()
                 dc.redrawAll()
+                
+            }
         },
         beforeUpdate() {
             console.log("beforeupdate")

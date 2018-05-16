@@ -4,19 +4,20 @@ const utils = require('./utils')
 const config = require('../config')
 const vueLoaderConfig = require('./vue-loader.conf')
 const webpack = require('webpack')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 var Promise = require("es6-promise").Promise;
 
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
-
+//var pacingData = require('../src/assets/data/pacing_test.json')
 
 module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
     app: './src/main.js',
-    data: './src/assets/data/pacing_test.json'
+    //data: './src/assets/data/pacing_test.json'
   },
   output: {
     path: config.build.assetsRoot,
@@ -25,6 +26,9 @@ module.exports = {
       ? config.build.assetsPublicPath
       : config.dev.assetsPublicPath
   },
+  //externals: {
+  //    'pacing_data': 'static/data/pacing_test.json'
+  //},
   resolve: {
     extensions: ['.js', '.vue', '.json'],
     alias: {
@@ -66,7 +70,7 @@ module.exports = {
         options: {
           limit: 10000,
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]'),
-          publicPath: '../',
+          publicPath: '../../'
         }
       },
     ]
@@ -86,11 +90,17 @@ module.exports = {
           _: 'lodash',
           Promise: 'es6-promise-promise'
         }),
-        new webpack.optimize.CommonsChunkPlugin({
-            filename: "data.js",
-            name: "data",
-            minChunks: 3
-        })
+        new CopyWebpackPlugin([
+            {
+                from: path.resolve(__dirname, '../data'),
+                to: path.resolve(config.build.assetsRoot, 'data')
+            }
+        ])
+        //new webpack.optimize.CommonsChunkPlugin({
+        //    filename: "data.js",
+        //    name: "data",
+        //    minChunks: 3
+        //})
     ],
   node: {
     // prevent webpack from injecting useless setImmediate polyfill because Vue
