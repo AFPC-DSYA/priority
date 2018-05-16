@@ -219,14 +219,13 @@ import formats from '@/store/format'
 import Loader from '@/components/Loader'
 import searchBox from '@/components/searchBox'
 import { store } from '@/store/store'
-//import pacingData from '@/assets/data/pacing_test.json'
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome' 
 
     export default {
         data() {
             return {
-                data: [],//pacingData.data,
-                asDate: '',//pacingData.ASOFDATE,
+                data: [],
+                asDate: '',
                 selected: "percent",
                 searchMajcom: "",
                 searchBase: "",
@@ -368,8 +367,8 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
 
             //load local data (works for both dev and prod) 
             d3.json('./data/pacing_data.json',(error,data) => {
-                console.log(data)
                 this.data = data.data;   
+                this.asDate = data.ASOFDATE;
                 //apply formats so we have decoded variables globally
                 for (let i = 0; i < this.data.length; i++) {
                     this.data[i].majcom = formats.majFormat[this.data[i].majcom]
@@ -591,7 +590,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     .on('pretransition', (chart)=> {
                         chart.selectAll('g.x text')
                         .style('text-anchor', 'end')
-                        .attr('transform', 'translate(-8,0)rotate(-45)')
+                        .attr('transform', 'translate(-6,0) rotate(-45)')
                         .on('click', (d)=>{
                             this.submit(d, 'dc-afscGroup-barchart')
                         })
@@ -816,7 +815,6 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
 <style>
 div[id*="-barchart"] .x.axis text{
     text-anchor: end !important;
-    transform: rotate(-45deg);
   }
 
 div[id*="-rowchart"] g.row text{
