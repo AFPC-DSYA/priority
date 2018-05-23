@@ -10,7 +10,8 @@ var getOrdinalBarChart = (config)=>{
       .x(d3.scale.ordinal())
       .xUnits(dc.units.ordinal)
       .elasticY(true)
-      .ordinalColors(config.colors)
+      .colors(config.colors)
+      //.ordinalColors(config.colors)
       .on('preRedraw', function(c){
         preRedraw(c, config)
       })
