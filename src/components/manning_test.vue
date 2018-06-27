@@ -138,6 +138,7 @@
                        :aspectRatio="chartSpecs.unitChart.aspectRatio"
                        :minHeight="chartSpecs.unitChart.minHeight"
                        :selected="selected"
+                       :ylabel="ylabel"
                        :reducer="manningAdd"
                        :accumulator="manningInitial"
                        :numBars="30"
@@ -240,7 +241,7 @@ import largeBarChart from '@/components/largeBarChart'
           },
           ylabel: function() {
             if (this.selected === "percent") {
-                return "Manning Percent (%)"
+                return "Manning Percent"
             }
             else if (this.selected === "asgn") {
                 return "Assigned"

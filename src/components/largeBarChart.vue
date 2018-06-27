@@ -1,6 +1,50 @@
+<!--######################################
+USAGE:
+    <largeBarChart :id="'unit'"         
+                   :dimension="unitDim"
+                   :group="unitGroup"
+                   :widthFactor="0.90"
+                   :aspectRatio="chartSpecs.unitChart.aspectRatio"
+                   :minHeight="chartSpecs.unitChart.minHeight"
+                   :selected="selected"
+                   :ylabel="ylabel"
+                   :reducer="manningAdd"
+                   :accumulator="manningInitial"
+                   :numBars="30"
+                   :margin="chartSpecs.unitChart.margins"
+                   :colorScale="unitColorScale"
+                   :colorFunction="unitColorFun"
+                   :title="'Units'"
+                   :loaded="loaded">
+    </largeBarChart>
+
+Props:
+    id: string that will act as substring for all element ids
+    dimension: a crossfilter dimension for data element (suggest making this a computed property)
+    group: a crossfilter group with reduction already applied (suggest making this a computed property)
+    widthFactor: multiplier to limit size of chart on render (makes less jumpy) 
+    aspectRatio: width-to-height ratio of chart
+    minHeight: minimum height for chart
+    selected: data element to show for chosen dimension (percent, asgn, auth, etc.)
+    ylabel: string describing the data element in 'selected'
+    reducer: reduction function for generating 'others' bar
+    accumulator: function that returns initial object that reducer can accumulate on
+    numBars: default number of bars to display on chart
+    margin: object giving top, right, bottom, and right margins (all numbers)
+    colorScale: d3 scale that returns a color (needs domain and range)
+    colorFunction: function that tells chart how to choose colors for different bars  
+    title: string for chart title
+    loaded: Boolean indicating where data has been loaded
+
+###########################################-->
 <template>
     <div class ="row">
-        <div :id="this.id + 'wrapper'" class="col-12"></div>
+        <div :id="this.id + 'wrapper'" class="col-12">
+            <div :id="this.id + 'title'" class="row">
+                <h3 class="col-12">{{ title }} <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                </h3>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -14,7 +58,7 @@ export default {
             direction: 'down',
             filters: [],
             nextData: [],
-            lastBar: this.numBars,
+            lastBar: this.numBars || 30,
             svg: {},
             //chart object for registering with dc
             chart: {
@@ -22,32 +66,81 @@ export default {
                     },
             w: document.documentElement.clientWidth*this.widthFactor - this.margin.left - this.margin.right,
             rendered: false,
+            valSort: true,
         } 
     },
     props: {
-        id: String,
-        dimension: Object,
-        group: Object,
-        groupAll: Array,
-        widthFactor: Number,
-        aspectRatio: Number,
-        minHeight: Number,
-        selected: String,
-        reducer: Function,
-        accumulator: Function,
-        numBars: Number,
-        margin: Object,
-        colorScale: Function,
-        colorFunction: Function,
-        title: String,
-        loaded: Boolean
+        id: {
+            type: String,
+            required: true,
+        },
+        dimension: {
+            type: Object,
+            required: true,
+        },
+        group: {
+            type: Object,
+            required: true,
+        },
+        widthFactor: {
+            type: Number,
+            required: true,
+        },
+        aspectRatio: {
+            type: Number,
+            required: true,
+        },
+        minHeight: {
+            type: Number,
+            required: true,
+        },
+        selected: {
+            type: String,
+            required: false,  //if not supplied, group objects must have number for value property 
+        },
+        ylabel: {
+            type: String,
+            required: false,
+        },
+        reducer: {
+            type: Function,
+            required: true,
+        },
+        accumulator: {
+            type: Function,
+            required: true,
+        },
+        numBars: {
+            type: Number,
+            required: false, //if not supplied, defaults to 30
+        },
+        margin: {
+            type: Object,
+            required: true,
+        },
+        colorScale: {
+            type: Function,
+            required: true,
+        },
+        colorFunction: {
+            type: Function,
+            required: false, //if not supplied, only uses first color in range by using first element in domain
+        },
+        title: {
+            type: String,
+            required: true,
+        },
+        loaded: {
+            type: Boolean,
+            required: true,
+        }
     },
     computed: {
         h: function() {
             return Math.max(Math.round(this.w/this.aspectRatio) - this.margin.top - this.margin.bottom, this.minHeight - this.margin.top - this.margin.bottom);
         },
         minMax: function() {
-            return d3.extent(this.data, d => d.value[this.selected])
+            return d3.extent(this.data, d => (d.value[this.selected] || d.value))
         },
         minVal: function() {
             return this.minMax[0]
@@ -77,7 +170,7 @@ export default {
                      .ticks(5);
         },
         dataAll: function() {
-            return this.removeEmptyBins(this.group).all().sort((a,b) => b.value[this.selected] - a.value[this.selected]);
+            return this.removeEmptyBins(this.group).all().sort((a,b) => (b.value[this.selected] || b.value) - (a.value[this.selected] || a.value));
         },
         maxLevel: function() {
             return Math.floor((this.dataAll.length-1)/this.lastBar);
@@ -113,7 +206,7 @@ export default {
             return {
                 all: () => {
                     return source_group.all().filter((d) => {
-                        return d.value[this.selected] != 0
+                        return (d.value[this.selected] === undefined ? d.value : d.value[this.selected]) != 0
                     })
                 }
             }
@@ -138,6 +231,7 @@ export default {
              this.dimension.filterAll()
              this.level = 0
              this.original = true
+             this.valSort = true
              dc.redrawAll()
         },
         updateData: function() {
@@ -151,7 +245,17 @@ export default {
             // note: accumulator is a function so calling it returns an empty object 
             var othersObj = {key: "Others", value: nextVal.reduce(this.reducer, this.accumulator())}
             this.data.push(othersObj)
-            this.data = this.data.filter(d => d.value[this.selected] != 0)
+            this.data = this.data.filter(d => (d.value[this.selected] || d.value) != 0)
+            // sorting by key and values 
+            if (this.valSort == true) {
+                this.data.sort((a,b) => (b.value[this.selected] || b.value) - (a.value[this.selected] || a.value)) 
+            } else {
+                this.data.sort((a,b) => b.key < a.key)
+            } 
+        },
+        toggleSort: function() {
+            this.valSort = !this.valSort
+            this.redraw()
         },
         nextLevel: function(d) {
             if (d.key == "Others") {
@@ -238,13 +342,8 @@ export default {
                 //clear any svg elements before rebuilding
                 d3.select("#" + this.id + "svg").remove();
                 //set title
-                var btnUp = d3.select("#" + this.id + "wrapper")
-                                .append("div")
-                                .attr("id",this.id + "title")
-                                .classed("row",true)
-                                .append("h3")
-                                .classed("col-12",true)
-                                .text(this.title)
+                var btnUp = d3.select("#" + this.id + "title")
+                                .selectAll("h3")
                                 .append("button")
                                 .attr("id",this.id + "level")
                                 .text("Move Up")
@@ -291,7 +390,7 @@ export default {
 
                 sliderContainer.append("label")
                    .attr("id",this.id + "slider-label")
-                   .text("Number of bars: " + Number(this.lastBar + 1))
+                   .text("Bars Displayed: " + Number(this.lastBar + 1))
                    .style("font-size","12px");
 
                 sliderContainer.append("input")
@@ -307,10 +406,20 @@ export default {
                                    //'vm' is vue context and 'this' is context for this callback 
                                     vm.lastBar = +this.value
                                     d3.select('#' + vm.id + 'slider-label')
-                                      .text('Number of Bars: ' + Math.min(+this.value+1,Number(d3.select('#' + vm.id + 'slider').attr('max'))));
+                                      .text('Bars Displayed: ' + Math.min(+this.value+1,Number(d3.select('#' + vm.id + 'slider').attr('max'))));
                                     vm.redraw() 
                                })
                                ;
+
+                var btnSort = d3.select("#" + this.id + "title")
+                                .selectAll("h3")
+                                .append("button")
+                                .attr("id",this.id + "sort")
+                                .text("Sort")
+                                .classed("btn btn-primary btn-sm",true)
+                                .on("click", function() {
+                                    vm.toggleSort()
+                                });
 
                 var svg = d3.select("#" + this.id + "wrapper")
                             .append("svg")
@@ -335,23 +444,23 @@ export default {
                         return vm.xScale(d.key)
                     })
                     .attr("y", function(d) {
-                        return vm.yScale(d.value[vm.selected]);
+                        return vm.yScale((d.value[vm.selected] || d.value));
                     })
                     .attr("width", this.xScale.rangeBand())
                     .attr("height", function(d) {
-                        return vm.h-vm.yScale(d.value[vm.selected]);
+                        return vm.h-vm.yScale((d.value[vm.selected] || d.value));
                     })
                     //color bars
                     .attr("fill", function(d) {
                         // if filtered, make desired color
                         if (vm.filters.includes(d.key)) {
                             // use color scale and color domain to set color
-                            return vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()); 
+                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(vm.colorScale.domain()[0]); 
                         } 
                         // if no filters, rever to default color
                         else if (vm.filters.length == 0){
                             // use color scale and color domain to set color
-                            return vm.colorFunction(d,vm.colorScale,vm.colorScale.domain());
+                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(vm.colorScale.domain()[0]); 
                         }
                         else {
                             return "gray";
@@ -366,7 +475,7 @@ export default {
                     })
                     .append("title")
                     .text(function(d) {
-                        return d.key + ': ' + d.value[vm.selected];
+                        return d.key + ': ' + (d.value[vm.selected] || d.value);
                     })
                     ;
 
@@ -421,7 +530,7 @@ export default {
 
                 //update number in slider to reflect length of data
                 d3.select('#' + this.id + 'slider-label')
-                  .text('Number of Bars: ' + this.data.length);
+                  .text('Bars Displayed: ' + this.data.length);
 
                 //select bars for entering, updating, and exiting bars
                 var bars = d3.select("#" + this.id + "chart").selectAll("rect")
@@ -446,22 +555,22 @@ export default {
                     })
                     .append("title")
                     .text(function(d) {
-                        return d.key + ': ' + d.value[vm.selected];
+                        return d.key + ': ' + (d.value[vm.selected] || d.value);
                     })
                     ;
 
                 bars.select("title")
                     .text(function(d) {
-                        return d.key + ': ' + d.value[vm.selected];
+                        return d.key + ': ' + (d.value[vm.selected] || d.value);
                     });
 
                 //defines bar color and specifies where entering bars end up
                 bars.attr("fill", function(d) {
                         if (vm.filters.includes(d.key)) {
-                            return vm.colorFunction(d,vm.colorScale,vm.colorScale.domain());
+                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(vm.colorScale.domain()[0]); 
                         } 
                         else if (vm.filters.length == 0){
-                            return vm.colorFunction(d,vm.colorScale,vm.colorScale.domain());
+                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(vm.colorScale.domain()[0]); 
                         }
                         else {
                             return "gray";
@@ -474,10 +583,10 @@ export default {
                     })
                     .attr("width", vm.xScale.rangeBand())
                     .attr("y", function(d) {
-                        return vm.yScale(d.value[vm.selected]);
+                        return vm.yScale((d.value[vm.selected] || d.value));
                     })
                     .attr("height", function(d) {
-                        return vm.h-vm.yScale(d.value[vm.selected]);
+                        return vm.h-vm.yScale((d.value[vm.selected] || d.value));
                     })
                     ;
 
