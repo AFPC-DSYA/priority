@@ -21,9 +21,7 @@ export default {
                     id: this.id 
                     },
             w: document.documentElement.clientWidth*this.widthFactor - this.margin.left - this.margin.right,
-            h: Math.max(Math.round(this.w/this.aspectRatio) - this.margin.top - this.margin.bottom, this.minHeight - this.margin.top - this.margin.bottom),
-            //set a color scale
-            //colors: d3.scale.ordinal().domain(['good','under']).range(this.color)
+            rendered: false,
         } 
     },
     props: {
@@ -39,14 +37,15 @@ export default {
         accumulator: Function,
         numBars: Number,
         margin: Object,
-        colors: Function,
-        colorDomain: Array,
-        colorRange: Array,
+        colorScale: Function,
         colorFunction: Function,
         title: String,
         loaded: Boolean
     },
     computed: {
+        h: function() {
+            return Math.max(Math.round(this.w/this.aspectRatio) - this.margin.top - this.margin.bottom, this.minHeight - this.margin.top - this.margin.bottom);
+        },
         minMax: function() {
             return d3.extent(this.data, d => d.value[this.selected])
         },
@@ -64,7 +63,7 @@ export default {
         yScale: function() {
             return d3.scale.linear()
                      .domain([0, this.maxVal])
-                     .range([this.h,0])
+                     .range([this.h,0]);
         },
         xAxis: function() {
             return d3.svg.axis()
@@ -88,6 +87,12 @@ export default {
         //ensure chart updated when selected changes
         selected: function() {
             this.redraw()
+        },
+        //force redraw after rendered changes to true
+        rendered: function() {
+            if (this.rendered == true) {
+                this.redraw()
+            }
         }
     },
     methods: {
@@ -113,13 +118,13 @@ export default {
                 }
             }
         },
-        //TODO: componentize colors
         filterAll: function(all) {
              //all is boolean. true for all, false for partial
              var all = all == undefined ? true : all 
              d3.select("#" + this.id)
                 .selectAll("rect")
-                .attr("fill",this.colors('good'))
+                // on reset, always fill all with first color in color domain
+                .attr("fill",this.colorScale(this.colorScale.domain()[0]))
                 .attr("opacity",1);
              d3.select("#" + this.id + "reset")
                  .style("visibility",  all ? "hidden" : "visible");
@@ -219,279 +224,286 @@ export default {
             dc.redrawAll()
         },
         render: function() {
-            console.log('render')
-            // assign vm to this to prevent conflicts
-            var vm = this
-            //key funciton for accessing key properties in data
-            var key = function(d) {
-                return d.key;
-            }
-            //create data first time before drawing bars
-            this.updateData()
-            //clear any svg elements before rebuilding
-            d3.select("#" + this.id + "svg").remove();
-            //set title
-            var btnUp = d3.select("#" + this.id + "wrapper")
-                            .append("div")
-                            .attr("id",this.id + "title")
-                            .classed("row",true)
-                            .append("h3")
-                            .classed("col-12",true)
-                            .text(this.title)
-                            .append("button")
-                            .attr("id",this.id + "level")
-                            .text("Move Up")
-                            .classed("btn btn-success btn-sm",true)
-                            .style("visibility","hidden")
-                            .on("click", function() {
-                                vm.level = Math.max(vm.level-1, 0)
-                                vm.direction = 'up'
-                                vm.original = true //always at original filter when go to new level
-                                console.log('moved up')
-                                vm.updateData()
+            //wait until nextTick to render so that data is updated 
+            this.$nextTick(() => {
+                console.log('render')
+                // assign vm to this to prevent conflicts
+                var vm = this
+                //key funciton for accessing key properties in data
+                var key = function(d) {
+                    return d.key;
+                }
+                //create data first time before drawing bars
+                this.updateData()
+                //clear any svg elements before rebuilding
+                d3.select("#" + this.id + "svg").remove();
+                //set title
+                var btnUp = d3.select("#" + this.id + "wrapper")
+                                .append("div")
+                                .attr("id",this.id + "title")
+                                .classed("row",true)
+                                .append("h3")
+                                .classed("col-12",true)
+                                .text(this.title)
+                                .append("button")
+                                .attr("id",this.id + "level")
+                                .text("Move Up")
+                                .classed("btn btn-success btn-sm",true)
+                                .style("visibility","hidden")
+                                .on("click", function() {
+                                    vm.level = Math.max(vm.level-1, 0)
+                                    vm.direction = 'up'
+                                    vm.original = true //always at original filter when go to new level
+                                    console.log('moved up')
+                                    vm.updateData()
 
-                                vm.dimension.filterAll() //remove filters from dimension
-                                if (vm.level == 0) {
-                                    //if top level, always remove all filters, but if no extra data to add, do a full reset
-                                    vm.filterAll(true)
-                                }
-                                else {
-                                    // reset filters and reapply for new level
-                                    vm.filters = [] 
-                                    vm.filters = vm.filters.concat(vm.data.map(d => d.key).concat(vm.nextData.map(g => g.key)))
-                                    vm.dimension.filterFunction(d => vm.filters.includes(d))
-                                }
-                                console.log(vm.filters)
-                                dc.redrawAll();
-                            })
+                                    vm.dimension.filterAll() //remove filters from dimension
+                                    if (vm.level == 0) {
+                                        //if top level, always remove all filters, but if no extra data to add, do a full reset
+                                        vm.filterAll(true)
+                                    }
+                                    else {
+                                        // reset filters and reapply for new level
+                                        vm.filters = [] 
+                                        vm.filters = vm.filters.concat(vm.data.map(d => d.key).concat(vm.nextData.map(g => g.key)))
+                                        vm.dimension.filterFunction(d => vm.filters.includes(d))
+                                    }
+                                    console.log(vm.filters)
+                                    dc.redrawAll();
+                                })
 
-            var btnReset = d3.select("#" + this.id + "title")
-                            .selectAll("h3")
-                            .append("button")
-                            .attr("id",this.id + "reset")
-                            .text("Reset")
-                            .classed("btn btn-danger btn-sm reset",true)
-                            .style("visibility","hidden")
-                            .on("click", function() {
-                                vm.filterAll()
-                            });
+                var btnReset = d3.select("#" + this.id + "title")
+                                .selectAll("h3")
+                                .append("button")
+                                .attr("id",this.id + "reset")
+                                .text("Reset")
+                                .classed("btn btn-danger btn-sm reset",true)
+                                .style("visibility","hidden")
+                                .on("click", function() {
+                                    vm.filterAll()
+                                });
 
-            var sliderContainer = d3.select("#" + this.id + "title")
-                                    .selectAll("h3")
-                                    .append("div")
-                                    .attr("id",this.id + "slider-container")
-                                    .style("display","inline-block");
+                var sliderContainer = d3.select("#" + this.id + "title")
+                                        .selectAll("h3")
+                                        .append("div")
+                                        .attr("id",this.id + "slider-container")
+                                        .style("display","inline-block");
 
-            sliderContainer.append("label")
-               .attr("id",this.id + "slider-label")
-               .text("Number of bars: " + Number(this.lastBar + 1))
-               .style("font-size","12px");
+                sliderContainer.append("label")
+                   .attr("id",this.id + "slider-label")
+                   .text("Number of bars: " + Number(this.lastBar + 1))
+                   .style("font-size","12px");
 
-            sliderContainer.append("input")
-                           .attr("id", this.id + "slider")
-                           .attr("type","range")
-                           .classed("form-control",true)
-                           .attr("min",2)
-                           .attr("max",Math.min(this.dataAll.length,60))
-                           .attr("step",1)
-                           .attr("value",this.lastBar)
-                           .style('cursor','pointer')
-                           .on("input", function() {
-                               //'vm' is vue context and 'this' is context for this callback 
-                                vm.lastBar = +this.value
-                                d3.select('#' + vm.id + 'slider-label')
-                                  .text('Number of Bars: ' + Math.min(+this.value+1,Number(d3.select('#' + vm.id + 'slider').attr('max'))));
-                                vm.redraw() 
-                           })
-                           ;
+                sliderContainer.append("input")
+                               .attr("id", this.id + "slider")
+                               .attr("type","range")
+                               .classed("form-control",true)
+                               .attr("min",2)
+                               .attr("max",Math.min(this.dataAll.length,60))
+                               .attr("step",1)
+                               .attr("value",this.lastBar)
+                               .style('cursor','pointer')
+                               .on("input", function() {
+                                   //'vm' is vue context and 'this' is context for this callback 
+                                    vm.lastBar = +this.value
+                                    d3.select('#' + vm.id + 'slider-label')
+                                      .text('Number of Bars: ' + Math.min(+this.value+1,Number(d3.select('#' + vm.id + 'slider').attr('max'))));
+                                    vm.redraw() 
+                               })
+                               ;
 
-            var svg = d3.select("#" + this.id + "wrapper")
-                        .append("svg")
-                        .attr("id",this.id + "svg")
-                        .attr("width",this.w + this.margin.left + this.margin.right)
-                        .attr("height",this.h + this.margin.top + this.margin.bottom)
-                        .append("g")
-                        .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
-                        
+                var svg = d3.select("#" + this.id + "wrapper")
+                            .append("svg")
+                            .attr("id",this.id + "svg")
+                            .attr("width",this.w + this.margin.left + this.margin.right)
+                            .attr("height",this.h + this.margin.top + this.margin.bottom)
+                            .append("g")
+                            .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+                            
+                var firstBars = svg.append("g")
+                    .attr("id", this.id + "chart")
+                    .attr("clip-path", "url(#" + this.id + "chart-area)")
+                    .selectAll("rect")
+                    .data(this.data,key)
+                    .enter()
+                    .append("rect")
+                    .attr("id", function(d) {
+                        //remove any not alpha-numeric characters - not really necessary
+                        return d.key.replace(/[^a-z0-9]/gi,'');
+                    })
+                    .attr("x", function(d,i) {
+                        return vm.xScale(d.key)
+                    })
+                    .attr("y", function(d) {
+                        return vm.yScale(d.value[vm.selected]);
+                    })
+                    .attr("width", this.xScale.rangeBand())
+                    .attr("height", function(d) {
+                        return vm.h-vm.yScale(d.value[vm.selected]);
+                    })
+                    //color bars
+                    .attr("fill", function(d) {
+                        // if filtered, make desired color
+                        if (vm.filters.includes(d.key)) {
+                            // use color scale and color domain to set color
+                            return vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()); 
+                        } 
+                        // if no filters, rever to default color
+                        else if (vm.filters.length == 0){
+                            // use color scale and color domain to set color
+                            return vm.colorFunction(d,vm.colorScale,vm.colorScale.domain());
+                        }
+                        else {
+                            return "gray";
+                        }
+                    }) 
+                    .on("click", function(d) {
+                        if (d3.event.ctrlKey) {
+                            vm.nextLevel(d);
+                        } else {
+                            vm.updateFilters(d);
+                        }
+                    })
+                    .append("title")
+                    .text(function(d) {
+                        return d.key + ': ' + d.value[vm.selected];
+                    })
+                    ;
 
-            var firstBars = svg.append("g")
-                .attr("id", this.id + "chart")
-                .attr("clip-path", "url(#" + this.id + "chart-area)")
-                .selectAll("rect")
-                .data(this.data,key)
-                .enter()
-                .append("rect")
-                .attr("id", function(d) {
-                    //remove any not alpha-numeric characters - not really necessary
-                    return d.key.replace(/[^a-z0-9]/gi,'');
-                })
-                .attr("x", function(d,i) {
-                    return vm.xScale(d.key)
-                })
-                .attr("y", function(d) {
-                    console.log(d.value[vm.selected])
-                    return vm.yScale(d.value[vm.selected]);
-                })
-                .attr("width", this.xScale.rangeBand())
-                .attr("height", function(d) {
-                    return vm.h-vm.yScale(d.value[vm.selected]);
-                })
-                //TODO: Componentize
-                .attr("fill", function(d) {
-                    if (vm.filters.includes(d.key)) {
-                        return d.value['percent'] >= 100 ? vm.colors('good') : vm.colors('under');
-                    } 
-                    else if (vm.filters.length == 0){
-                        return d.value['percent'] >= 100 ? vm.colors('good') : vm.colors('under');
-                    }
-                    else {
-                        return "gray";
-                    }
-                }) 
-                .on("click", function(d) {
-                    if (d3.event.ctrlKey) {
-                        vm.nextLevel(d);
-                    } else {
-                        vm.updateFilters(d);
-                    }
-                })
-                .append("title")
-                .text(function(d) {
-                    return d.key + ': ' + d.value[vm.selected];
-                })
-                ;
+                svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform","translate(0," + this.h + ")")
+                    .call(this.xAxis)
+                    .selectAll("text")
+                    .style("text-anchor","end")
+                    .attr("transform","translate(-8,3)rotate(-45)");
 
-            svg.append("g")
-                .attr("class", "x axis")
-                .attr("transform","translate(0," + this.h + ")")
-                .call(this.xAxis)
-                .selectAll("text")
-                .style("text-anchor","end")
-                .attr("transform","translate(-8,3)rotate(-45)");
+                svg.append("g")
+                    .attr("class", "y axis")
+                    .call(this.yAxis);
 
-            svg.append("g")
-                .attr("class", "y axis")
-                .call(this.yAxis);
+                svg.append("clipPath")
+                    .attr("id",this.id + "chart-area")
+                    .append("rect")
+                    .attr("x",0)
+                    .attr("y",0)
+                    .attr("width",this.w)
+                    .attr("height",this.h);
 
-            svg.append("clipPath")
-                .attr("id",this.id + "chart-area")
-                .append("rect")
-                .attr("x",0)
-                .attr("y",0)
-                .attr("width",this.w)
-                .attr("height",this.h);
-
-            this.svg = svg
-            
+                this.svg = svg
+                console.log('endof render')
+                this.rendered = true
+            })
         },
         redraw: function() {
-            console.log('redraw')
-            //allow use of 'this' within scoped functions
-            var vm = this
-            //key function for getting key for each object
-            var key = function(d) {
-                return d.key;
+            //prevent calls to redraw before render
+            if (this.rendered == true) {
+                console.log('redraw')
+                //allow use of 'this' within scoped functions
+                var vm = this
+                //key function for getting key for each object
+                var key = function(d) {
+                    return d.key;
+                }
+                //calculate new width (height computed prop) 
+                this.w = document.getElementById(this.id + "wrapper").offsetWidth - this.margin.left - this.margin.right 
+
+                d3.select("#" + this.id + "level") .style("visibility", this.level <= 0 ? "hidden" : "visible");
+
+                d3.select("#" + this.id + "svg").attr("width",this.w + this.margin.left + this.margin.right)
+                            .attr("height",this.h + this.margin.top + this.margin.bottom);
+
+                d3.select("#" + this.id + "chart-area").selectAll("rect")
+                                               .attr("width",this.w)
+                                               .attr("height",this.h);
+
+                this.updateData()
+
+                //update number in slider to reflect length of data
+                d3.select('#' + this.id + 'slider-label')
+                  .text('Number of Bars: ' + this.data.length);
+
+                //select bars for entering, updating, and exiting bars
+                var bars = d3.select("#" + this.id + "chart").selectAll("rect")
+                            .data(this.data,key);
+
+                //TODO: use cool enter transition when clicking others 
+                // defines where to put new bars that will enter 
+                bars.enter()
+                    .append("rect")
+                    .attr("id", function(d) {
+                        //remove not alpha-numeric chars
+                        return d.key.replace(/[^a-z0-9]/gi,'');
+                    })
+                    .attr("x", this.direction === 'down' ? this.w : 0)
+                    .attr("y", this.h)
+                    .on("click", function(d) {
+                        if (d3.event.ctrlKey) {
+                            vm.nextLevel(d);
+                        } else {
+                            vm.updateFilters(d);
+                        }
+                    })
+                    .append("title")
+                    .text(function(d) {
+                        return d.key + ': ' + d.value[vm.selected];
+                    })
+                    ;
+
+                bars.select("title")
+                    .text(function(d) {
+                        return d.key + ': ' + d.value[vm.selected];
+                    });
+
+                //defines bar color and specifies where entering bars end up
+                bars.attr("fill", function(d) {
+                        if (vm.filters.includes(d.key)) {
+                            return vm.colorFunction(d,vm.colorScale,vm.colorScale.domain());
+                        } 
+                        else if (vm.filters.length == 0){
+                            return vm.colorFunction(d,vm.colorScale,vm.colorScale.domain());
+                        }
+                        else {
+                            return "gray";
+                        }
+                    }) 
+                    .transition()
+                    .duration(800)
+                    .attr("x", function(d,i) {
+                        return vm.xScale(d.key);
+                    })
+                    .attr("width", vm.xScale.rangeBand())
+                    .attr("y", function(d) {
+                        return vm.yScale(d.value[vm.selected]);
+                    })
+                    .attr("height", function(d) {
+                        return vm.h-vm.yScale(d.value[vm.selected]);
+                    })
+                    ;
+
+                //defines where bars that are leaving screen end up
+                bars.exit()
+                    .transition()
+                    .duration(800)
+                    .attr("y", this.h)
+                    .remove();
+
+                d3.select("#" + this.id + "svg")
+                              .select(".x.axis")
+                              .transition()
+                              .duration(800)
+                              .attr("transform","translate(0," + this.h + ")")
+                              .call(this.xAxis)
+                              .selectAll("text")
+                              .style("text-anchor","end")
+                              .attr("transform","translate(-8,3)rotate(-45)");
+
+                d3.select("#" + this.id + "svg")
+                              .select(".y.axis")
+                              .transition()
+                              .duration(800)
+                              .call(this.yAxis);
             }
-            //calculate new width and height
-            this.w = document.getElementById(this.id + "wrapper").offsetWidth - this.margin.left - this.margin.right 
-            this.h = Math.max(Math.round(this.w/this.aspectRatio) - this.margin.top - this.margin.bottom, this.minHeight - this.margin.top - this.margin.bottom)
-
-            d3.select("#" + this.id + "level") .style("visibility", this.level <= 0 ? "hidden" : "visible");
-
-            d3.select("#" + this.id + "svg").attr("width",this.w + this.margin.left + this.margin.right)
-                        .attr("height",this.h + this.margin.top + this.margin.bottom);
-
-            d3.select("#" + this.id + "chart-area").selectAll("rect")
-                                           .attr("width",this.w)
-                                           .attr("height",this.h);
-
-            this.updateData()
-
-            //update number in slider to reflect length of data
-            d3.select('#' + this.id + 'slider-label')
-              .text('Number of Bars: ' + this.data.length);
-
-            //select bars for entering, updating, and exiting bars
-            var bars = d3.select("#" + this.id + "chart").selectAll("rect")
-                        .data(this.data,key);
-
-            //TODO: use cool enter transition when clicking others 
-            // defines where to put new bars that will enter 
-            bars.enter()
-                .append("rect")
-                .attr("id", function(d) {
-                    //remove not alpha-numeric chars
-                    return d.key.replace(/[^a-z0-9]/gi,'');
-                })
-                .attr("x", this.direction === 'down' ? this.w : 0)
-                .attr("y", this.h)
-                .on("click", function(d) {
-                    if (d3.event.ctrlKey) {
-                        vm.nextLevel(d);
-                    } else {
-                        vm.updateFilters(d);
-                    }
-                })
-                .append("title")
-                .text(function(d) {
-                    return d.key + ': ' + d.value[vm.selected];
-                })
-                ;
-
-            bars.select("title")
-                .text(function(d) {
-                    return d.key + ': ' + d.value[vm.selected];
-                });
-
-            //TODO: componentize colors
-            //defines bar color and specifies where entering bars end up
-            bars.attr("fill", function(d) {
-                    if (vm.filters.includes(d.key)) {
-                        return d.value['percent'] >= 100 ? vm.colors('good') : vm.colors('under');
-                    } 
-                    else if (vm.filters.length == 0){
-                        return d.value['percent'] >= 100 ? vm.colors('good') : vm.colors('under');
-                    }
-                    else {
-                        return "gray";
-                    }
-                }) 
-                .transition()
-                .duration(800)
-                .attr("x", function(d,i) {
-                    return vm.xScale(d.key);
-                })
-                .attr("width", vm.xScale.rangeBand())
-                .attr("y", function(d) {
-                    return vm.yScale(d.value[vm.selected]);
-                })
-                .attr("height", function(d) {
-                    return vm.h-vm.yScale(d.value[vm.selected]);
-                })
-                ;
-
-            //defines where bars that are leaving screen end up
-            bars.exit()
-                .transition()
-                .duration(800)
-                .attr("y", this.h)
-                .remove();
-
-            d3.select("#" + this.id + "svg")
-                          .select(".x.axis")
-                          .transition()
-                          .duration(800)
-                          .attr("transform","translate(0," + this.h + ")")
-                          .call(this.xAxis)
-                          .selectAll("text")
-                          .style("text-anchor","end")
-                          .attr("transform","translate(-8,3)rotate(-45)");
-
-            d3.select("#" + this.id + "svg")
-                          .select(".y.axis")
-                          .transition()
-                          .duration(800)
-                          .call(this.yAxis);
         }
     },
     created: function() {
@@ -504,14 +516,11 @@ export default {
         this.chart.redraw = this.redraw
         this.chart.render = this.render
         this.chart.filterAll = this.filterAll
-        console.log(this.chart)
         //register chart for dc
         dc.chartRegistry.register(this.chart)
-        //call render and redraw if component is destroyed then created again
-        console.log('loaded = ' + this.loaded)
+        //call render (redraw always happens after render) if component is destroyed then created again
         if (this.loaded == true) {
             this.render()
-            this.redraw()
         }
     },
     beforeUpdate: function() {

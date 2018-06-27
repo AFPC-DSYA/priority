@@ -130,33 +130,6 @@
                 </div>
             </div>
         </div>
-        <!--<div class="row">-->
-            <!--<div id="unit" class="col-12">-->
-                <!--<div id="dc-unit-barchart">-->
-                    <!--<h3>Base <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>-->
-                    <!--<button type="button" -->
-                            <!--class="btn btn-danger btn-sm btn-rounded reset" -->
-                            <!--style="visibility: hidden"-->
-                            <!--@click="resetChart('dc-unit-barchart')">Reset</button>-->
-                    <!--</h3>-->
-                    <!--[><searchBox<]-->
-                        <!--[>v-model:value="searchBase"<]-->
-                        <!--[>size="3"<]-->
-                        <!--[>label="Search Installation"<]-->
-                        <!--[>@sub="submit(searchBase,'dc-unit-barchart')"<]-->
-                        <!--[>button="true"<]-->
-                        <!--[>:color="unitColor"<]-->
-                        <!--[>:btnColor="unitColor"<]-->
-                    <!--[></searchBox><]-->
-                     <!--[><form class="form-inline"><]-->
-                        <!--[><div class="form-group"><]-->
-                            <!--[><input id="searchBase" v-model="searchBase" placeholder="Search Installation" @keydown.enter="submit(searchBase,'dc-unit-barchart')"><]-->
-                            <!--[><button class="btn btn-primary btn-sm" @click.stop.prevent="submit(searchBase,'dc-unit-barchart')">Submit</button><]-->
-                        <!--[></div><]-->
-                    <!--[></form> <]-->
-                <!--</div>-->
-            <!--</div>-->
-        <!--</div>-->
         <largeBarChart :id="'unit'"
                        :dimension="unitDim"
                        :group="unitGroup"
@@ -169,9 +142,8 @@
                        :accumulator="manningInitial"
                        :numBars="30"
                        :margin="chartSpecs.unitChart.margins"
-                       :colors="unitColorFun"
-                       :colorDomain="['good','under']"
-                       :colorRange="chartSpecs.unitChart.color"
+                       :colorScale="unitColorScale"
+                       :colorFunction="unitColorFun"
                        :title="'Units'"
                        :loaded="loaded">
         </largeBarChart>
@@ -236,7 +208,7 @@ import largeBarChart from '@/components/largeBarChart'
                 sortOrder: d3.ascending,
                 width: document.documentElement.clientWidth,
                 unitColor: chartSpecs.unitChart.color,
-                unitColorFun: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color),
+                unitColorScale: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color),
                 chartSpecs: chartSpecs,
                 columns: [ 
                     {title: 'Unit', field: 'unit', sort_state: "ascending", selected: true, width: "20%"},
@@ -282,6 +254,13 @@ import largeBarChart from '@/components/largeBarChart'
           }
         },
         methods: {
+            unitColorFun: function(d, colorScale, colorDomain) {
+                if (d.value['percent'] >= 100) {
+                    return colorScale(colorDomain[0]) 
+                } else {
+                    return colorScale(colorDomain[1])
+                } 
+            },
             //reduce functions
             manningAdd: function(p,v) {
                 p.asgn = p.asgn + +v.asgn
@@ -732,7 +711,6 @@ import largeBarChart from '@/components/largeBarChart'
                 this.$nextTick(() => {
                     console.log('nextTick')
                     console.log(dc.chartRegistry.list())
-                    dc.renderAll()
                     dc.redrawAll()
                 })
                 
@@ -751,8 +729,8 @@ import largeBarChart from '@/components/largeBarChart'
                 //})
 
                 //create charts
-                //dc.renderAll()
-                //dc.redrawAll()
+                dc.renderAll()
+                dc.redrawAll()
             }
         },
         beforeUpdate() {
