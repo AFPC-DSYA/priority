@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <div class="row">
-            <h1 class="col">Pacing</h1>
+            <h1 class="col">Priority Units</h1>
             <div class="col-4 text-right">
                 Data as of: <span style="font-weight:bold; color: steelblue">{{asDate}}</span>
             </div>
@@ -130,36 +130,24 @@
                 </div>
             </div>
         </div>
-        <!--<div class="row">-->
-            <!--<div id="unit" class="col-12">-->
-                <!--<div id="dc-unit-barchart">-->
-                    <!--<h3>Base <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>-->
-                    <!--<button type="button" -->
-                            <!--class="btn btn-danger btn-sm btn-rounded reset" -->
-                            <!--style="visibility: hidden"-->
-                            <!--@click="resetChart('dc-unit-barchart')">Reset</button>-->
-                    <!--</h3>-->
-                    <!--[><searchBox<]-->
-                        <!--[>v-model:value="searchBase"<]-->
-                        <!--[>size="3"<]-->
-                        <!--[>label="Search Installation"<]-->
-                        <!--[>@sub="submit(searchBase,'dc-unit-barchart')"<]-->
-                        <!--[>button="true"<]-->
-                        <!--[>:color="unitColor"<]-->
-                        <!--[>:btnColor="unitColor"<]-->
-                    <!--[></searchBox><]-->
-                     <!--[><form class="form-inline"><]-->
-                        <!--[><div class="form-group"><]-->
-                            <!--[><input id="searchBase" v-model="searchBase" placeholder="Search Installation" @keydown.enter="submit(searchBase,'dc-unit-barchart')"><]-->
-                            <!--[><button class="btn btn-primary btn-sm" @click.stop.prevent="submit(searchBase,'dc-unit-barchart')">Submit</button><]-->
-                        <!--[></div><]-->
-                    <!--[></form> <]-->
-                <!--</div>-->
-            <!--</div>-->
-        <!--</div>-->
-        <div class ="row">
-            <div id="unit-chart-wrapper" class="col-12"></div>
-        </div>
+        <largeBarChart :id="'unit'"
+                       :dimension="unitDim"
+                       :group="unitGroup"
+                       :groupAll="unitGroup.all()"
+                       :widthFactor="0.90"
+                       :aspectRatio="chartSpecs.unitChart.aspectRatio"
+                       :minHeight="chartSpecs.unitChart.minHeight"
+                       :selected="selected"
+                       :ylabel="ylabel"
+                       :reducer="manningAdd"
+                       :accumulator="manningInitial"
+                       :numBars="30"
+                       :margin="chartSpecs.unitChart.margins"
+                       :colorScale="unitColorScale"
+                       :colorFunction="unitColorFun"
+                       :title="'Units'"
+                       :loaded="loaded">
+        </largeBarChart>
         <div class="row">
             <div class="col-12">
                 <h4>Filtered Records</h4>
@@ -202,6 +190,7 @@ import Loader from '@/components/Loader'
 import searchBox from '@/components/searchBox'
 import { store } from '@/store/store'
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome' 
+import largeBarChart from '@/components/largeBarChart'
 
     export default {
         data() {
@@ -214,11 +203,15 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 loaded: false ,
                 baseColor: chartSpecs.baseChart.color,
                 majcomColor: chartSpecs.majcomChart.color,
+                manningGoal: 95,
                 items: [],
                 dataTable: {},
                 sortedVar: '',
                 sortOrder: d3.ascending,
                 width: document.documentElement.clientWidth,
+                unitColor: chartSpecs.unitChart.color,
+                unitColorScale: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color),
+                chartSpecs: chartSpecs,
                 columns: [ 
                     {title: 'Unit', field: 'unit', sort_state: "ascending", selected: true, width: "20%"},
                     {title: 'MPF', field: 'mpf', sort_state: "descending", selected: false, width: "10%"},
@@ -237,6 +230,12 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
           },
           allGroup: function(){
             return this.ndx.groupAll()
+          },
+          unitDim: function() {
+            return this.ndx.dimension(function(d) {return d.unit;})
+          },
+          unitGroup: function() {
+            return this.unitDim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)  
           },
           itemDim() {
               return this.ndx.dimension(function(d) {return d});
@@ -257,6 +256,47 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
           }
         },
         methods: {
+            dcRowColorFun: function(d,i) {
+                return d.value['percent'] >= this.manningGoal ? i : 3;
+            },
+            dcBarColorFun: function(d,i) {
+                return d.value['percent'] >= this.manningGoal ? 'good' : 'under';
+            },
+            unitColorFun: function(d, colorScale, colorDomain) {
+                if (d.value['percent'] >= this.manningGoal) {
+                    return colorScale(colorDomain[0]) 
+                } else {
+                    return colorScale(colorDomain[1])
+                } 
+            },
+            //reduce functions
+            manningAdd: function(p,v) {
+                p.asgn = p.asgn + +v.asgn
+                p.auth = p.auth + +v.auth
+                p.stp = p.stp + +v.stp
+                //if divide by 0, set to 0, and if NaN, set to zero
+                p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
+                p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
+                return p
+            },
+            manningRemove: function(p,v) {
+                p.asgn = p.asgn - +v.asgn
+                p.auth = p.auth - +v.auth
+                p.stp = p.stp - +v.stp
+                //if divide by 0, set to 0, and if NaN, set to zero
+                p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
+                p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
+                return p
+            },
+            manningInitial: function() {
+                return {
+                    asgn: 0,
+                    auth: 0,
+                    stp: 0,
+                    percent: 0,
+                    stpPercent: 0,
+                }
+            },
             setTableData: function() {
                 this.items = this.itemDim.top(Infinity).map((d) => {
                     return {
@@ -337,7 +377,8 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
         components: {
             'loader': Loader,
             searchBox,
-            FontAwesomeIcon 
+            FontAwesomeIcon,
+            largeBarChart
         },
         created: function(){
           console.log('created')
@@ -453,9 +494,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 var catChart = dchelpers.getRowChart(catConfig)
                 catChart
                     .controlsUseVisibility(true)
-                    .colorAccessor((d,i) => {
-                        return d.value['percent'] >= 100 ? i : 3;
-                    })
+                    .colorAccessor(this.dcRowColorFun)
                     .valueAccessor((d)=> {
                         return d.value[this.selected];
                     })
@@ -474,9 +513,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 majcomChart
                     .elasticX(true)
                     .controlsUseVisibility(true)
-                    .colorAccessor((d,i) => {
-                        return d.value['percent'] >= 100 ? 'good' : 'under';
-                    })
+                    .colorAccessor(this.dcBarColorFun)
                     .valueAccessor((d) => {
                         return d.value[this.selected]
                     })
@@ -504,9 +541,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 baseChart
                     .elasticX(true)
                     .controlsUseVisibility(true)
-                    .colorAccessor((d,i) => {
-                        return d.value['percent'] >= 100 ? 'good' : 'under';
-                    })
+                    .colorAccessor(this.dcBarColorFun)
                     .valueAccessor((d) => {
                         return d.value[this.selected]
                     })
@@ -518,452 +553,6 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                             this.submit(d, 'dc-base-barchart')
                         })
                     })
-
-                ////unit(mpf)
-                //var unitConfig = {}
-                //unitConfig.id = 'unit'
-                //unitConfig.dim = this.ndx.dimension(function(d){return d.unit})
-                //var unitPercent = unitConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
-                //unitConfig.group = removeEmptyBins(unitPercent)
-                //unitConfig.minHeight = chartSpecs.unitChart.minHeight 
-                //unitConfig.aspectRatio = chartSpecs.unitChart.aspectRatio 
-                //unitConfig.margins = chartSpecs.unitChart.margins 
-                //unitConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color)
-                //var unitChart = dchelpers.getOrdinalBarChart(unitConfig)
-                //unitChart
-                //    .elasticX(true)
-                //    .controlsUseVisibility(true)
-                //    .colorAccessor((d,i) => {
-                //        return d.value['percent'] >= 100 ? 'good' : 'under';
-                //    })
-                //    .valueAccessor((d) => {
-                //        return d.value[this.selected]
-                //    })
-                //    .on('pretransition', (chart)=> {
-                //        chart.selectAll('g.x text')
-                //        .style('text-anchor', 'end')
-                //        .attr('transform', 'translate(-8,0)rotate(-45)')
-                //        .on('click', (d)=>{
-                //            this.submit(d, 'dc-unit-barchart')
-                //        })
-                //    })
-
-
-                //make unit bar chart
-                var margin = chartSpecs.unitChart.margins 
-                var w = document.documentElement.clientWidth*0.90 - margin.left - margin.right
-                var h = Math.max(Math.round(w/chartSpecs.unitChart.aspectRatio) - margin.top - margin.bottom, chartSpecs.unitChart.minHeight - margin.top - margin.bottom)
-
-                var key = function(d) {
-                    return d.key;
-                }
-
-                var unitDim = this.ndx.dimension(function(d) {return d.unit;})
-                var unitGroup = unitDim.group().reduce(manningAdd,manningRemove,manningInitial)
-                var unitShow = removeEmptyBins(unitGroup).all()
-                var minMax = d3.extent(unitShow, d => d.value[this.selected])
-                var minVal = minMax[0]
-                var maxVal = minMax[1]
-                var xScale = d3.scale.ordinal()
-                                .domain(unitShow.map(function(d) {return d.key}))
-                                .rangeRoundBands([0,w],0.1);
-                var yScale = d3.scale.linear()
-                                .domain([0, maxVal])
-                                .range([h,0])
-
-                var xAxis = d3.svg.axis()
-                                .scale(xScale)
-                                .orient("bottom");
-                var yAxis = d3.svg.axis()
-                                .scale(yScale)
-                                .orient("left")
-                                .ticks(5);
-
-                var vm = this
-                var newChart = {}
-                newChart.id = "unit-chart"
-                newChart.anchorName = function() {
-                    return newChart.id
-                }
-                newChart.dimension = unitDim
-                newChart.group = unitGroup
-                newChart.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color)
-                newChart.lastBar = 30
-                newChart.dataAll = function() {
-                    return removeEmptyBins(unitGroup).all().sort((a,b) => b.value[vm.selected]-a.value[vm.selected]);
-                }
-                newChart.level = 0
-                newChart.original = true
-                newChart.direction = 'down'
-                newChart.maxLevel = function() {
-                    return Math.floor((newChart.dataAll().length-1)/newChart.lastBar);
-                }
-                newChart.xAxis = xAxis
-                newChart.yAxis = yAxis
-                newChart.filters = []
-                newChart.filterAll = function(all){
-                     //all is boolean. true for all, false for partial
-                     var all = all == undefined ? true : all 
-                     d3.select("#unit-chart")
-                        .selectAll("rect")
-                        .attr("fill",newChart.colors('good'))
-                        .attr("opacity",1);
-                    d3.select("#unit-chart-reset")
-                        .style("visibility",  all ? "hidden" : "visible");
-                    d3.select("#unit-up-level")
-                        .style("visibility","hidden");
-                    d3.select("#slider")
-                        .property("disabled", !all)
-                        .style('cursor',  all ? 'pointer' : "default")
-                        .style('opacity', all ? 1 : 0.5);
-                    newChart.filters = []
-                    newChart.dimension.filterAll()
-                    newChart.level = 0
-                    newChart.original = true
-                    dc.redrawAll()
-                }
-                newChart.updateData = function() {
-                    newChart.data = newChart.dataAll().slice(newChart.lastBar*newChart.level,newChart.lastBar*(newChart.level+1))
-                    newChart.nextData = newChart.dataAll().slice(newChart.lastBar*(newChart.level+1))
-                    var othersObj = {key: "Others", value: {}}
-                    othersObj.value.asgn = d3.sum(newChart.nextData.map(d => d.value['asgn']))
-                    othersObj.value.auth = d3.sum(newChart.nextData.map(d => d.value['auth']))
-                    othersObj.value.stp = d3.sum(newChart.nextData.map(d => d.value['stp']))
-                    othersObj.value.percent = othersObj.value.asgn/othersObj.value.auth === Infinity ? 0 : Math.round((othersObj.value.asgn/othersObj.value.auth)*1000)/10 || 0
-                    newChart.data.push(othersObj)
-                    newChart.data = newChart.data.filter(d => d.value[vm.selected] != 0)
-                }
-                newChart.nextLevel = function(d) {
-                    if (d.key == "Others") {
-                        //reset filters so we can apply new ones at next level 
-                        newChart.filters = []
-                        //make up buttom visibile
-                        d3.select("#unit-up-level")
-                            .style("visibility","visible");
-                        //apply filters for next level
-                        newChart.filters = newChart.filters.concat(newChart.nextData.map(g=>g.key))
-                        newChart.filters.push("Others")
-                        newChart.level += 1
-                        newChart.direction = 'down'
-                        newChart.original = true //always at original filter when go to new lwevel
-                        newChart.applyFilters()
-                    }
-                }
-                newChart.updateFilters = function(d) {
-                    if (newChart.original === true || (newChart.level == newChart.maxLevel() && newChart.data.every(d=>newChart.filters.includes(d.key)))) {
-                        // if at original display for level, we have to reset all filters so the clicked bar can be filtered, also
-                        // if at last level and all data elements are currently filtered, reset filters
-                        newChart.filters = []    
-                    }                         
-                    //if clicked item filtered, remove filter
-                    if (newChart.filters.includes(d.key)) {
-                        if (d.key === "Others") {
-                            newChart.filters = []
-                        } else {
-                            var index1 = newChart.filters.indexOf(d.key)
-                            newChart.filters.splice(index1,1)
-                        }
-                        //don't set original here because we don't know if at original filters for level yet 
-                    }
-                    //if clicked item not filtered, add filter
-                    else {
-                        // if others is clicked, filter on all next data
-                        if (d.key === "Others") {
-                            newChart.filters = newChart.filters.concat(newChart.nextData.map(g=>g.key))
-                            newChart.filters.push("Others")
-                        } else {
-                            newChart.filters.push(d.key)
-                        }
-                        newChart.original = false //not original filters for this level
-                    }
-                    //if no filters and top level, full reset chart
-                    if (newChart.filters.length == 0 && newChart.level == 0) {
-                        newChart.filterAll(true)
-                    }
-                    // if we have some filters or not at top level, apply the filters 
-                    else {
-                        //apply filters for current level if not top level
-                        if (newChart.filters.length == 0 && newChart.level != 0) {
-                            //only reset to current level, so add filters for current level and future levels 
-                            newChart.filters = newChart.filters.concat(newChart.data.map(d => d.key).concat(newChart.nextData.map(g => g.key)))
-                            newChart.original = true //original filters for this level
-                        } 
-                        console.log('filters at end:')
-                        console.log(newChart.filters)
-                        newChart.applyFilters()
-                    }
-                }
-                newChart.applyFilters = function() {
-                        d3.select("#unit-chart-reset")
-                          .style("visibility","visible");
-                        d3.select("#slider")
-                            .property("disabled",true)
-                            .style("cursor","default")
-                            .style("opacity", 0.5);
-                        unitDim.filterFunction(d => newChart.filters.includes(d))
-                        dc.redrawAll()
-                }
-                newChart.render = function() {
-                    //clear any svg elements before rebuilding
-                    d3.select("#unit-svg").remove();
-                    //set title
-                    var btnUp = d3.select("#unit-chart-wrapper")
-                                    .append("div")
-                                    .attr("id","unit-title")
-                                    .classed("row",true)
-                                    .append("h3")
-                                    .classed("col-12",true)
-                                    .text("Unit Chart")
-                                    .append("button")
-                                    .attr("id","unit-up-level")
-                                    .text("Move Up")
-                                    .classed("btn btn-success btn-sm",true)
-                                    .style("visibility","hidden")
-                                    .on("click", function() {
-                                        newChart.level = Math.max(newChart.level-1, 0)
-                                        newChart.direction = 'up'
-                                        newChart.original = true //always at original filter when go to new level
-                                        console.log('moved up')
-                                        newChart.updateData()
-
-                                        newChart.dimension.filterAll() //remove filters from dimension
-                                        if (newChart.level == 0) {
-                                            //if top level, always remove all filters, but if no extra data to add, do a full reset
-                                            newChart.filterAll(true)
-                                        }
-                                        else {
-                                            // reset filters and reapply for new level
-                                            newChart.filters = [] 
-                                            newChart.filters = newChart.filters.concat(newChart.data.map(d => d.key).concat(newChart.nextData.map(g => g.key)))
-                                            unitDim.filterFunction(d => newChart.filters.includes(d))
-                                        }
-                                        console.log(newChart.filters)
-                                        dc.redrawAll();
-                                    })
-
-                    var btnReset = d3.select("#unit-title")
-                                    .selectAll("h3")
-                                    .append("button")
-                                    .attr("id","unit-chart-reset")
-                                    .text("Reset")
-                                    .classed("btn btn-danger btn-sm reset",true)
-                                    .style("visibility","hidden")
-                                    .on("click", function() {
-                                        newChart.filterAll()
-                                    });
-
-                    var sliderContainer = d3.select("#unit-title")
-                                            .selectAll("h3")
-                                            .append("div")
-                                            .attr("id","slider-container")
-                                            .style("display","inline-block");
-
-                    sliderContainer.append("label")
-                       .attr("id","slider-label")
-                       .text("Number of bars: " + Number(newChart.lastBar + 1))
-                       .style("font-size","12px");
-
-                    sliderContainer.append("input")
-                                   .attr("id", "slider")
-                                   .attr("type","range")
-                                   .classed("form-control",true)
-                                   .attr("min",2)
-                                   .attr("max",Math.min(newChart.dataAll().length,60))
-                                   .attr("step",1)
-                                   .attr("value",newChart.lastBar)
-                                   .style('cursor','pointer')
-                                   .on("input", function() {
-                                        newChart.lastBar = this.value
-                                        d3.select('#slider-label')
-                                          .text('Number of Bars: ' + Math.min(+this.value+1,Number(d3.select('#slider').attr('max'))));
-                                        newChart.redraw() 
-                                   })
-                                   ;
-
-                    var svg = d3.select("#unit-chart-wrapper")
-                                .append("svg")
-                                .attr("id","unit-svg")
-                                .attr("width",w + margin.left + margin.right)
-                                .attr("height",h + margin.top + margin.bottom)
-                                .append("g")
-                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-                                
-                    //create data first time before drawing bars
-                    newChart.updateData()
-
-                    var firstBars = svg.append("g")
-                        .attr("id", "unit-chart")
-                        .attr("clip-path", "url(#unit-chart-area)")
-                        .selectAll("rect")
-                        .data(newChart.data,key)
-                        .enter()
-                        .append("rect")
-                        .attr("id", function(d) {
-                            return d.key.replace(/[^a-z0-9]/gi,'');
-                        })
-                        .attr("x", function(d,i) {
-                            return xScale(d.key)
-                        })
-                        .attr("y", function(d) {
-                            console.log(d.value[vm.selected])
-                            return yScale(d.value[vm.selected]);
-                        })
-                        .attr("width", xScale.rangeBand())
-                        .attr("height", function(d) {
-                            return h-yScale(d.value[vm.selected]);
-                        })
-                        .attr("fill", function(d) {
-                            if (newChart.filters.includes(d.key)) {
-                                return d.value['percent'] >= 100 ? newChart.colors('good') : newChart.colors('under');
-                            } 
-                            else if (newChart.filters.length == 0){
-                                return d.value['percent'] >= 100 ? newChart.colors('good') : newChart.colors('under');
-                            }
-                            else {
-                                return "gray";
-                            }
-                        }) 
-                        .on("click", function(d) {
-                            if (d3.event.ctrlKey) {
-                                newChart.nextLevel(d);
-                            } else {
-                                newChart.updateFilters(d);
-                            }
-                        })
-                        .append("title")
-                        .text(function(d) {
-                            return d.key + ': ' + d.value[vm.selected];
-                        })
-                        ;
-
-                    svg.append("g")
-                        .attr("class", "x axis")
-                        .attr("transform","translate(0," + h + ")")
-                        .call(xAxis)
-                        .selectAll("text")
-                        .style("text-anchor","end")
-                        .attr("transform","translate(-8,3)rotate(-45)");
-
-                    svg.append("g")
-                        .attr("class", "y axis")
-                        .call(yAxis);
-
-                    svg.append("clipPath")
-                        .attr("id","unit-chart-area")
-                        .append("rect")
-                        .attr("x",0)
-                        .attr("y",0)
-                        .attr("width",w)
-                        .attr("height",h);
-
-                    newChart.svg = svg
-                }
-                newChart.redraw = function() {
-                    d3.select("#unit-up-level")
-                        .style("visibility", newChart.level <= 0 ? "hidden" : "visible");
-
-                    var w = document.getElementById("unit-chart-wrapper").offsetWidth - margin.left - margin.right 
-                    var h = Math.max(Math.round(w/chartSpecs.unitChart.aspectRatio) - margin.top - margin.bottom, chartSpecs.unitChart.minHeight - margin.top - margin.bottom)
-
-                    d3.select("#unit-svg").attr("width",w + margin.left + margin.right)
-                                .attr("height",h + margin.top + margin.bottom);
-
-                    d3.select("#unit-chart-area").selectAll("rect")
-                                                   .attr("width",w)
-                                                   .attr("height",h);
-
-                    newChart.updateData()
-
-                    //update number in slider to reflect length of data
-                    d3.select('#slider-label')
-                      .text('Number of Bars: ' + newChart.data.length);
-
-                    var minMax = d3.extent(newChart.data, d=>d.value[vm.selected])
-                    var minVal = minMax[0]
-                    var maxVal = minMax[1]
-                    xScale.domain(newChart.data.map(d => d.key))
-                            .rangeRoundBands([0,w],0.1);
-                    yScale.domain([0,maxVal])
-                            .range([h,0]);
-
-                    var bars = d3.select("#" + newChart.id).selectAll("rect")
-                                .data(newChart.data,key);
-
-                    //TODO: use cool enter transition when clicking others 
-                    bars.enter()
-                        .append("rect")
-                        .attr("id", function(d) {
-                            return d.key.replace(/[^a-z0-9]/gi,'');
-                        })
-                        .attr("x", newChart.direction === 'down' ? w : 0)
-                        .attr("y", h)
-                        .on("click", function(d) {
-                            if (d3.event.ctrlKey) {
-                                newChart.nextLevel(d);
-                            } else {
-                                newChart.updateFilters(d);
-                            }
-                        })
-                        .append("title")
-                        .text(function(d) {
-                            return d.key + ': ' + d.value[vm.selected];
-                        })
-                        ;
-
-                    bars.select("title")
-                        .text(function(d) {
-                            return d.key + ': ' + d.value[vm.selected];
-                        });
-
-                    bars.attr("fill", function(d) {
-                            if (newChart.filters.includes(d.key)) {
-                                return d.value['percent'] >= 100 ? newChart.colors('good') : newChart.colors('under');
-                            } 
-                            else if (newChart.filters.length == 0){
-                                return d.value['percent'] >= 100 ? newChart.colors('good') : newChart.colors('under');
-                            }
-                            else {
-                                return "gray";
-                            }
-                        }) 
-                        .transition()
-                        .duration(800)
-                        .attr("x", function(d,i) {
-                            return xScale(d.key);
-                        })
-                        .attr("width", xScale.rangeBand())
-                        .attr("y", function(d) {
-                            return yScale(d.value[vm.selected]);
-                        })
-                        .attr("height", function(d) {
-                            return h-yScale(d.value[vm.selected]);
-                        })
-                        ;
-
-                    bars.exit()
-                        .transition()
-                        .duration(800)
-                        .attr("y", h)
-                        .remove();
-
-
-                    newChart.svg.select(".x.axis")
-                                  .transition()
-                                  .duration(800)
-                                  .attr("transform","translate(0," + h + ")")
-                                  .call(newChart.xAxis)
-                                  .selectAll("text")
-                                  .style("text-anchor","end")
-                                  .attr("transform","translate(-8,3)rotate(-45)");
-
-                    newChart.svg.select(".y.axis")
-                                  .transition()
-                                  .duration(800)
-                                  .call(newChart.yAxis);
-                }
-
-                dc.chartRegistry.register(newChart)
-                console.log(dc.chartRegistry.list())
 
                 //create data table
                 //var tableUnits = d3.sum(this.columns, function(d) {return d.width;})
@@ -1162,6 +751,9 @@ div[id*="-barchart"] .x.axis text{
 
 div[id*="-rowchart"] g.row text{
     fill: black;
+}
+table td {
+    word-wrap: break-word;
 }
 th {
     opacity: 0.8;

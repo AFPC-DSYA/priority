@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <div class="row">
-            <h1 class="col">Pacing</h1>
+            <h1 class="col">Priority Units by AFSC</h1>
             <div class="col-4 text-right">
                 Data as of: <span style="font-weight:bold; color: steelblue">{{asDate}}</span>
             </div>
@@ -64,14 +64,28 @@
             </div>
         </div>
         <div class="row">
-            <div id="cat" class="col-4">
-                <div id="dc-cat-rowchart">
-                    <h3 style="display: inline-block">Category 
-                    <button type="button" 
-                            class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="visibility: hidden"
-                            @click="resetChart('dc-cat-rowchart')">Reset</button>
-                    </h3>
+            <div class="col-4">
+                <div class="row">
+                    <div id="cat" class="col-12">
+                        <div id="dc-cat-rowchart">
+                            <h3 style="display: inline-block" class="mb-0">Category 
+                            <button type="button" 
+                                    class="btn btn-danger btn-sm btn-rounded reset mb-0" 
+                                    style="visibility: hidden"
+                                    @click="resetChart('dc-cat-rowchart')">Reset</button>
+                            </h3>
+                        </div>
+                    </div>
+                    <div id="grp" class="col-12">
+                        <div id="dc-grp-rowchart">
+                            <h3 style="display: inline-block" class="mb-0">Type 
+                            <button type="button" 
+                                    class="btn btn-danger btn-sm btn-rounded reset mb-0" 
+                                    style="visibility: hidden"
+                                    @click="resetChart('dc-grp-rowchart')">Reset</button>
+                            </h3>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div id="majcom" class="col-8">
@@ -106,14 +120,14 @@
         <div class="row">
             <div id="grade" class="col-4">
                 <div id="dc-grade-rowchart">
-                    <h3 style="display: inline-block">Grade 
+                    <h3 class="mb-0" style="display: inline-block">Grade 
                     <button type="button" 
-                            class="btn btn-danger btn-sm btn-rounded reset" 
+                            class="btn btn-danger btn-sm btn-rounded reset mb-0" 
                             style="visibility: hidden"
                             @click="resetChart('dc-grade-rowchart')">Reset</button>
                     </h3>
-                    <br>
-                    <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                    <br class="mb-0">
+                    <span class="mt-0 mb-0" style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
                 </div>
             </div>
             <div id="afscFamily" class="col-8">
@@ -127,18 +141,24 @@
                 </div>
             </div>
         </div>
-        <div class="row">
-            <div id="afscGroup" class="col-12">
-                <div id="dc-afscGroup-barchart">
-                    <h3>AFSC Group <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                    <button type="button" 
-                            class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="visibility: hidden"
-                            @click="resetChart('dc-afscGroup-barchart')">Reset</button>
-                    </h3>
-                </div>
-            </div>
-        </div>
+        <largeBarChart :id="'afsc'"
+                       :dimension="afscDim"
+                       :group="afscGroup"
+                       :groupAll="afscGroup.all()"
+                       :widthFactor="0.90"
+                       :aspectRatio="4"
+                       :minHeight="200"
+                       :selected="selected"
+                       :ylabel="ylabel"
+                       :reducer="manningAdd"
+                       :accumulator="manningInitial"
+                       :numBars="30"
+                       :margin="{top: 10, left: 40, right: 30, bottom: 80}"
+                       :colorScale="afscColorScale"
+                       :colorFunction="colorFun"
+                       :title="'AFSC Group'"
+                       :loaded="loaded">
+        </largeBarChart>
         <div class="row">
             <div id="base" class="col-12">
                 <div id="dc-base-barchart">
@@ -166,6 +186,24 @@
                 </div>
             </div>
         </div>
+        <largeBarChart :id="'unit'"
+                       :dimension="unitDim"
+                       :group="unitGroup"
+                       :groupAll="unitGroup.all()"
+                       :widthFactor="0.90"
+                       :aspectRatio="chartSpecs.unitChart.aspectRatio"
+                       :minHeight="chartSpecs.unitChart.minHeight"
+                       :selected="selected"
+                       :ylabel="ylabel"
+                       :reducer="manningAdd"
+                       :accumulator="manningInitial"
+                       :numBars="30"
+                       :margin="chartSpecs.unitChart.margins"
+                       :colorScale="unitColorScale"
+                       :colorFunction="colorFun"
+                       :title="'Units'"
+                       :loaded="loaded">
+        </largeBarChart>
         <div class="row">
             <div class="col-12">
                 <h4>Filtered Records</h4>
@@ -208,6 +246,7 @@ import Loader from '@/components/Loader'
 import searchBox from '@/components/searchBox'
 import { store } from '@/store/store'
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome' 
+import largeBarChart from '@/components/largeBarChart'
 
     export default {
         data() {
@@ -220,11 +259,17 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 loaded: false ,
                 baseColor: chartSpecs.baseChart.color,
                 majcomColor: chartSpecs.majcomChart.color,
+                manningGoal: 95,
                 items: [],
                 dataTable: {},
                 sortedVar: '',
                 sortOrder: d3.ascending,
                 width: document.documentElement.clientWidth,
+                unitColor: chartSpecs.unitChart.color,
+                unitColorScale: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color),
+                afscColor: ["#016c59","#d62728"],
+                afscColorScale: d3.scale.ordinal().domain(['good','under']).range(["#016c59","#d62728"]),
+                chartSpecs: chartSpecs,
                 columns: [ 
                     {title: 'Unit', field: 'unit', sort_state: "ascending", selected: true, width: "20%"},
                     {title: 'MPF', field: 'mpf', sort_state: "descending", selected: false, width: "10%"},
@@ -246,6 +291,18 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
           allGroup: function(){
             return this.ndx.groupAll()
           },
+          unitDim: function() {
+            return this.ndx.dimension(function(d) {return d.unit;})
+          },
+          unitGroup: function() {
+            return this.unitDim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)  
+          },
+          afscDim: function() {
+              return this.ndx.dimension(function(d) {return d.afsc_group.substr(0,3)}); 
+          },
+          afscGroup: function() {
+            return this.afscDim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial);
+          },
           itemDim() {
               return this.ndx.dimension(function(d) {return d});
           },
@@ -265,6 +322,47 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
           }
         },
         methods: {
+            dcRowColorFun: function(d,i) {
+                return d.value['percent'] < this.manningGoal ? 3 : (i >= 3 ? i + 1 : i);
+            },
+            dcBarColorFun: function(d,i) {
+                return d.value['percent'] >= this.manningGoal ? 'good' : 'under';
+            },
+            colorFun: function(d, colorScale, colorDomain) {
+                if (d.value['percent'] >= this.manningGoal) {
+                    return colorScale(colorDomain[0]) 
+                } else {
+                    return colorScale(colorDomain[1])
+                } 
+            },
+            //reduce functions
+            manningAdd: function(p,v) {
+                p.asgn = p.asgn + +v.asgn
+                p.auth = p.auth + +v.auth
+                p.stp = p.stp + +v.stp
+                //if divide by 0, set to 0, and if NaN, set to zero
+                p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
+                p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
+                return p
+            },
+            manningRemove: function(p,v) {
+                p.asgn = p.asgn - +v.asgn
+                p.auth = p.auth - +v.auth
+                p.stp = p.stp - +v.stp
+                //if divide by 0, set to 0, and if NaN, set to zero
+                p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
+                p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
+                return p
+            },
+            manningInitial: function() {
+                return {
+                    asgn: 0,
+                    auth: 0,
+                    stp: 0,
+                    percent: 0,
+                    stpPercent: 0,
+                }
+            },
             setTableData: function() {
                 this.items = this.itemDim.top(Infinity).map((d) => {
                     return {
@@ -345,7 +443,8 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
         components: {
             'loader': Loader,
             searchBox,
-            FontAwesomeIcon 
+            FontAwesomeIcon,
+            largeBarChart
         },
         created: function(){
           console.log('created')
@@ -354,7 +453,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
             console.log('mounted')
 
             //load local data (works for both dev and prod) 
-            d3.json('./data/pacing_data.json',(error,data) => {
+            d3.json('./data/pacing_data_afsc.json',(error,data) => {
                 this.data = data.data;   
                 this.asDate = data.ASOFDATE;
                 //apply formats so we have decoded variables globally
@@ -413,51 +512,6 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     }
                 }
 
-                //cat
-                var catConfig = {};
-                catConfig.id = 'cat';
-                catConfig.dim = this.ndx.dimension(function (d) {
-                    return d.unit_cat;
-                })
-                catConfig.group = catConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
-                catConfig.minHeight = 100 
-                catConfig.aspectRatio = 3
-                catConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
-                catConfig.colors = d3.scale.category10()
-                var catChart = dchelpers.getRowChart(catConfig)
-                catChart
-                    .controlsUseVisibility(true)
-                    .valueAccessor((d)=> {
-                        return d.value[this.selected];
-                    })
-
-                //Majcom
-                var majcomConfig = {}
-                majcomConfig.id = 'majcom'
-                majcomConfig.dim = this.ndx.dimension(function(d){return d.majcom})
-                var majcomPercent = majcomConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
-                majcomConfig.group = removeEmptyBins(majcomPercent)
-                majcomConfig.minHeight = chartSpecs.majcomChart.minHeight 
-                majcomConfig.aspectRatio = chartSpecs.majcomChart.aspectRatio 
-                majcomConfig.margins = chartSpecs.majcomChart.margins 
-                majcomConfig.colors = [chartSpecs.majcomChart.color]
-                var majcomChart = dchelpers.getOrdinalBarChart(majcomConfig)
-                majcomChart
-                    .elasticX(true)
-                    .controlsUseVisibility(true)
-                    .valueAccessor((d) => {
-                        return d.value[this.selected]
-                    })
-                    .ordinalColors(["#1976d2","#ff4500"])
-                    .on('pretransition', (chart)=> {
-                        chart.selectAll('g.x text')
-                        .style('text-anchor', 'end')
-                        .attr('transform', 'translate(-8,0)rotate(-45)')
-                        .on('click', (d)=>{
-                            this.submit(d, 'dc-majcom-barchart')
-                        })
-                    })
-
                 //Number Display for Auth, Asgn, STP - show total for filtered content
                 var auth = this.ndx.groupAll().reduceSum(function(d) { return +d.auth })
                 var authND = dc.numberDisplay("#auth")
@@ -491,7 +545,74 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number%</span>"
                     })
-                    
+
+                //cat
+                var catConfig = {};
+                catConfig.id = 'cat';
+                catConfig.dim = this.ndx.dimension(function (d) {
+                    return d.unit_cat;
+                })
+                catConfig.group = catConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
+                catConfig.minHeight = 100 
+                catConfig.aspectRatio = 4
+                catConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
+                catConfig.colors = d3.scale.category10().domain([0,1,2,3])
+                var catChart = dchelpers.getRowChart(catConfig)
+                catChart
+                    .controlsUseVisibility(true)
+                    .colorAccessor(this.dcRowColorFun)
+                    .valueAccessor((d)=> {
+                        return d.value[this.selected];
+                    })
+
+                //grp
+                var grpDecode = {'ENL': 'Enlisted', 'OFF': 'Officer'}
+                var grpConfig = {};
+                grpConfig.id = 'grp';
+                grpConfig.dim = this.ndx.dimension(function (d) {
+                    return grpDecode[d.grp];
+                })
+                grpConfig.group = grpConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
+                grpConfig.minHeight = 100 
+                grpConfig.aspectRatio = 4
+                grpConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
+                grpConfig.colors = d3.scale.ordinal().domain([0,1,2,3]).range(["#31a354","#756bb1","#636363","#d62728"])
+                var grpChart = dchelpers.getRowChart(grpConfig)
+                grpChart
+                    .controlsUseVisibility(true)
+                    .colorAccessor(this.dcRowColorFun)
+                    .valueAccessor((d)=> {
+                        return d.value[this.selected];
+                    })
+
+
+                //Majcom
+                var majcomConfig = {}
+                majcomConfig.id = 'majcom'
+                majcomConfig.dim = this.ndx.dimension(function(d){return d.majcom})
+                var majcomPercent = majcomConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
+                majcomConfig.group = removeEmptyBins(majcomPercent)
+                majcomConfig.minHeight = chartSpecs.majcomChart.minHeight 
+                majcomConfig.aspectRatio = chartSpecs.majcomChart.aspectRatio 
+                majcomConfig.margins = chartSpecs.majcomChart.margins 
+                majcomConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.majcomChart.color)
+                var majcomChart = dchelpers.getOrdinalBarChart(majcomConfig)
+                majcomChart
+                    .elasticX(true)
+                    .controlsUseVisibility(true)
+                    .colorAccessor(this.dcBarColorFun)
+                    .valueAccessor((d) => {
+                        return d.value[this.selected]
+                    })
+                    .on('pretransition', (chart)=> {
+                        chart.selectAll('g.x text')
+                        .style('text-anchor', 'end')
+                        .attr('transform', 'translate(-8,0)rotate(-45)')
+                        .on('click', (d)=>{
+                            this.submit(d, 'dc-majcom-barchart')
+                        })
+                    })
+
                 //grade
                 var gradeConfig = {};
                 gradeConfig.id = 'grade';
@@ -502,17 +623,18 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 gradeConfig.minHeight = 200 
                 gradeConfig.aspectRatio = 2
                 gradeConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
-                gradeConfig.colors = d3.scale.category10()
+                gradeConfig.colors = d3.scale.category10().domain([0,1,2,3,4,5,6,7,8,9])
                 var gradeChart = dchelpers.getRowChart(gradeConfig)
                 gradeChart
                     .controlsUseVisibility(true)
+                    .colorAccessor(this.dcRowColorFun)
                     .valueAccessor((d)=> {
                         return d.value[this.selected];
                     })
                     .ordering(function(d){
                       return formats.gradeOrder[d.key]
                     })                                    
-                
+
                 //afscFamily
                 var afscFamilyConfig = {}
                 afscFamilyConfig.id = 'afscFamily'
@@ -521,11 +643,12 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 afscFamilyConfig.minHeight = 200 
                 afscFamilyConfig.aspectRatio = 3 
                 afscFamilyConfig.margins = {top: 10, left: 40, right: 30, bottom: 90}
-                afscFamilyConfig.colors = ["#108b52"] 
+                afscFamilyConfig.colors = d3.scale.ordinal().domain(['good','under']).range(this.afscColor)
                 var afscFamilyChart = dchelpers.getOrdinalBarChart(afscFamilyConfig)
                 afscFamilyChart
                     .elasticX(true)
                     .controlsUseVisibility(true)
+                    .colorAccessor(this.dcBarColorFun)
                     .valueAccessor((d)=> {
                         return d.value[this.selected];
                     })
@@ -538,34 +661,6 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                         })
                     });
 
-                //afscGroup
-                var afscGroupConfig = {}
-                afscGroupConfig.id = 'afscGroup'
-                afscGroupConfig.dim = this.ndx.dimension(function(d){
-                    return d.afsc_group.substr(0,3)
-                })
-                afscGroupConfig.group = removeEmptyBins(afscGroupConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial))
-                afscGroupConfig.minHeight = 200 
-                afscGroupConfig.aspectRatio = 4 
-                afscGroupConfig.margins = {top: 10, left: 40, right: 30, bottom: 80}
-                afscGroupConfig.colors = ["#108b52"] 
-                var afscGroupChart = dchelpers.getOrdinalBarChart(afscGroupConfig)
-
-                afscGroupChart
-                    .elasticX(true)
-                    .controlsUseVisibility(true)
-                    .valueAccessor((d)=> {
-                        return d.value[this.selected];
-                    })
-                    .on('pretransition', (chart)=> {
-                        chart.selectAll('g.x text')
-                        .style('text-anchor', 'end')
-                        .attr('transform', 'translate(-6,0) rotate(-45)')
-                        .on('click', (d)=>{
-                            this.submit(d, 'dc-afscGroup-barchart')
-                        })
-                    });
-
                 //base(mpf)
                 var baseConfig = {}
                 baseConfig.id = 'base'
@@ -575,11 +670,12 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 baseConfig.minHeight = chartSpecs.baseChart.minHeight 
                 baseConfig.aspectRatio = chartSpecs.baseChart.aspectRatio 
                 baseConfig.margins = chartSpecs.baseChart.margins 
-                baseConfig.colors = [chartSpecs.baseChart.color]
+                baseConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
                 var baseChart = dchelpers.getOrdinalBarChart(baseConfig)
                 baseChart
                     .elasticX(true)
                     .controlsUseVisibility(true)
+                    .colorAccessor(this.dcBarColorFun)
                     .valueAccessor((d) => {
                         return d.value[this.selected]
                     })
@@ -755,12 +851,12 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     temp = setTimeout(dc.redrawAll(), 500)
                 }
 
-                var vm = this
-                dc.chartRegistry.list().forEach((chart) => {
-                    chart.on("filtered", function() {
-                       vm.setTableData(); 
-                    })
-                })
+                //var vm = this
+                //dc.chartRegistry.list().forEach((chart) => {
+                //    chart.on("filtered", function() {
+                //       vm.setTableData(); 
+                //    })
+                //})
 
                 //create charts
                 dc.renderAll()
@@ -796,6 +892,9 @@ th {
 th:hover {
     opacity: 1.0;
 }
+table td {
+    word-wrap: break-word;
+}
 .sortedColumn {
     opacity: 1.0;
 }
@@ -816,5 +915,20 @@ th:hover {
 }
 .fade-enter-to, .fade-leave {
     opacity: 1;
+}
+.axis line,
+.axis path {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+.axis text {
+    font-family: sans-serif; 
+    font-size: 11px;
+    transform: translate(-18,0) rotate(45deg);
+}
+rect:hover {
+    cursor: pointer;
+    opacity: 0.5;
 }
 </style>

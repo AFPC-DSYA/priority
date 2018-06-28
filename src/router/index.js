@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Manning from '@/components/manning'
-import test from '@/components/manning_test'
+import AFSC from '@/components/afscManning'
 
 Vue.use(Router)
 
@@ -13,9 +13,9 @@ export default new Router({
       component: Manning 
     },
     {
-      path: '/test',
-      name: 'manning_test',
-      component: test 
+        path: '/afsc',
+        name: 'afsc',
+        component: AFSC
     }
   ]
 })
