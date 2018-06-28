@@ -31,7 +31,7 @@ Props:
     accumulator: function that returns initial object that reducer can accumulate on
     numBars: default number of bars to display on chart
     margin: object giving top, right, bottom, and right margins (all numbers)
-    colorScale: d3 scale that returns a color (needs domain and range)
+    colorScale: d3 scale that returns a color (needs domain and range - ensure range is an array of color values)
     colorFunction: function that tells chart how to choose colors for different bars  
     title: string for chart title
     loaded: Boolean indicating where data has been loaded
@@ -124,7 +124,7 @@ export default {
         },
         colorFunction: {
             type: Function,
-            required: false, //if not supplied, only uses first color in range by using first element in domain
+            required: false, //if not supplied, only uses first color in range
         },
         title: {
             type: String,
@@ -169,11 +169,8 @@ export default {
                      .orient("left")
                      .ticks(5);
         },
-        dataAll: function() {
-            return this.removeEmptyBins(this.group).all().sort((a,b) => (b.value[this.selected] || b.value) - (a.value[this.selected] || a.value));
-        },
         maxLevel: function() {
-            return Math.floor((this.dataAll.length-1)/this.lastBar);
+            return Math.floor((this.dataAll().length-1)/this.lastBar);
         }
     },
     watch: {
@@ -211,6 +208,9 @@ export default {
                 }
             }
         },
+        dataAll: function() {
+            return this.removeEmptyBins(this.group).all().sort((a,b) => (b.value[this.selected] === undefined ? b.value : b.value[this.selected]) - (a.value[this.selected] === undefined ? a.value : a.value[this.selected]));
+        },
         filterAll: function(all) {
              //all is boolean. true for all, false for partial
              var all = all == undefined ? true : all 
@@ -231,24 +231,23 @@ export default {
              this.dimension.filterAll()
              this.level = 0
              this.original = true
-             this.valSort = true
              dc.redrawAll()
         },
         updateData: function() {
             //data to display now
-            this.data = this.dataAll.slice(this.lastBar*this.level,this.lastBar*(this.level+1))
+            this.data = this.dataAll().slice(this.lastBar*this.level,this.lastBar*(this.level+1))
             //remaining data that gets group into others
-            this.nextData = this.dataAll.slice(this.lastBar*(this.level+1))
+            this.nextData = this.dataAll().slice(this.lastBar*(this.level+1))
             // pull out value object from all data
             var nextVal = this.nextData.map(d => d.value)
             // make "Others" object with correct properties/values
             // note: accumulator is a function so calling it returns an empty object 
             var othersObj = {key: "Others", value: nextVal.reduce(this.reducer, this.accumulator())}
             this.data.push(othersObj)
-            this.data = this.data.filter(d => (d.value[this.selected] || d.value) != 0)
+            this.data = this.data.filter(d => (d.value[this.selected] === undefined ? d.value : d.value[this.selected]) != 0)
             // sorting by key and values 
             if (this.valSort == true) {
-                this.data.sort((a,b) => (b.value[this.selected] || b.value) - (a.value[this.selected] || a.value)) 
+                this.data.sort((a,b) => (b.value[this.selected] === undefined ? b.value : b.value[this.selected]) - (a.value[this.selected] === undefined ? a.value : a.value[this.selected])) 
             } else {
                 this.data.sort((a,b) => b.key < a.key)
             } 
@@ -274,13 +273,13 @@ export default {
             }
         },
         updateFilters: function(d) {
-            if (this.original === true || (this.level == this.maxLevel && this.data.every(d=>this.filters.includes(d.key)))) {
+            if (this.original === true || (this.level == this.maxLevel && this.data.every(d=>_.includes(this.filters,d.key)))) {
                 // if at original display for level, we have to reset all filters so the clicked bar can be filtered, also
                 // if at last level and all data elements are currently filtered, reset filters
                 this.filters = []    
             }                         
             //if clicked item filtered, remove filter
-            if (this.filters.includes(d.key)) {
+            if (_.includes(this.filters,d.key)) {
                 if (d.key === "Others") {
                     this.filters = []
                 } else {
@@ -324,7 +323,7 @@ export default {
                 .property("disabled",true)
                 .style("cursor","default")
                 .style("opacity", 0.5);
-            this.dimension.filterFunction(d => this.filters.includes(d))
+            this.dimension.filterFunction(d => _.includes(this.filters,d))
             dc.redrawAll()
         },
         render: function() {
@@ -365,7 +364,7 @@ export default {
                                         // reset filters and reapply for new level
                                         vm.filters = [] 
                                         vm.filters = vm.filters.concat(vm.data.map(d => d.key).concat(vm.nextData.map(g => g.key)))
-                                        vm.dimension.filterFunction(d => vm.filters.includes(d))
+                                        vm.dimension.filterFunction(d => _.includes(vm.filters,d))
                                     }
                                     console.log(vm.filters)
                                     dc.redrawAll();
@@ -398,7 +397,7 @@ export default {
                                .attr("type","range")
                                .classed("form-control",true)
                                .attr("min",2)
-                               .attr("max",Math.min(this.dataAll.length,60))
+                               .attr("max",Math.min(this.dataAll().length,60))
                                .attr("step",1)
                                .attr("value",this.lastBar)
                                .style('cursor','pointer')
@@ -444,23 +443,23 @@ export default {
                         return vm.xScale(d.key)
                     })
                     .attr("y", function(d) {
-                        return vm.yScale((d.value[vm.selected] || d.value));
+                        return vm.yScale((d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]));
                     })
                     .attr("width", this.xScale.rangeBand())
                     .attr("height", function(d) {
-                        return vm.h-vm.yScale((d.value[vm.selected] || d.value));
+                        return vm.h-vm.yScale((d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]));
                     })
                     //color bars
                     .attr("fill", function(d) {
                         // if filtered, make desired color
-                        if (vm.filters.includes(d.key)) {
+                        if (_.includes(vm.filters,d.key)) {
                             // use color scale and color domain to set color
-                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(vm.colorScale.domain()[0]); 
+                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(); 
                         } 
                         // if no filters, rever to default color
                         else if (vm.filters.length == 0){
                             // use color scale and color domain to set color
-                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(vm.colorScale.domain()[0]); 
+                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(); 
                         }
                         else {
                             return "gray";
@@ -475,7 +474,7 @@ export default {
                     })
                     .append("title")
                     .text(function(d) {
-                        return d.key + ': ' + (d.value[vm.selected] || d.value);
+                        return d.key + ': ' + (d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]);
                     })
                     ;
 
@@ -555,22 +554,22 @@ export default {
                     })
                     .append("title")
                     .text(function(d) {
-                        return d.key + ': ' + (d.value[vm.selected] || d.value);
+                        return d.key + ': ' + (d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]);
                     })
                     ;
 
                 bars.select("title")
                     .text(function(d) {
-                        return d.key + ': ' + (d.value[vm.selected] || d.value);
+                        return d.key + ': ' + (d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]);
                     });
 
                 //defines bar color and specifies where entering bars end up
                 bars.attr("fill", function(d) {
-                        if (vm.filters.includes(d.key)) {
-                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(vm.colorScale.domain()[0]); 
+                        if (_.includes(vm.filters, d.key)) {
+                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(); 
                         } 
                         else if (vm.filters.length == 0){
-                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(vm.colorScale.domain()[0]); 
+                            return typeof vm.colorFunction === "function" ? vm.colorFunction(d,vm.colorScale,vm.colorScale.domain()) : vm.colorScale(); 
                         }
                         else {
                             return "gray";
@@ -583,10 +582,10 @@ export default {
                     })
                     .attr("width", vm.xScale.rangeBand())
                     .attr("y", function(d) {
-                        return vm.yScale((d.value[vm.selected] || d.value));
+                        return vm.yScale((d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]));
                     })
                     .attr("height", function(d) {
-                        return vm.h-vm.yScale((d.value[vm.selected] || d.value));
+                        return vm.h-vm.yScale((d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]));
                     })
                     ;
 
@@ -641,6 +640,20 @@ export default {
 } 
 </script>
 
-<style scoped>
-    
+<style> /* should be scoped */
+.axis line,
+.axis path {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+.axis text {
+    font-family: sans-serif; 
+    font-size: 11px;
+    transform: translate(-18,0) rotate(45deg);
+}
+rect:hover {
+    cursor: pointer;
+    opacity: 0.5;
+}
 </style>
