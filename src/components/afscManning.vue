@@ -267,8 +267,8 @@ import largeBarChart from '@/components/largeBarChart'
                 width: document.documentElement.clientWidth,
                 unitColor: chartSpecs.unitChart.color,
                 unitColorScale: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color),
-                afscColor: ["#016c59","#d62728"],
-                afscColorScale: d3.scale.ordinal().domain(['good','under']).range(["#016c59","#d62728"]),
+                afscColor: ["#2ca25f","#d62728"],
+                afscColorScale: d3.scale.ordinal().domain(['good','under']).range(["#2ca25f","#d62728"]),
                 chartSpecs: chartSpecs,
                 columns: [ 
                     {title: 'Unit', field: 'unit', sort_state: "ascending", selected: true, width: "20%"},
@@ -556,7 +556,7 @@ import largeBarChart from '@/components/largeBarChart'
                 catConfig.minHeight = 100 
                 catConfig.aspectRatio = 4
                 catConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
-                catConfig.colors = d3.scale.category10().domain([0,1,2,3])
+                catConfig.colors = d3.scale.ordinal().domain([0,1,2,3]).range(['#238b55','#238b35','#238b45','#d62728'])
                 var catChart = dchelpers.getRowChart(catConfig)
                 catChart
                     .controlsUseVisibility(true)
@@ -576,7 +576,7 @@ import largeBarChart from '@/components/largeBarChart'
                 grpConfig.minHeight = 100 
                 grpConfig.aspectRatio = 4
                 grpConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
-                grpConfig.colors = d3.scale.ordinal().domain([0,1,2,3]).range(["#31a354","#756bb1","#636363","#d62728"])
+                grpConfig.colors = d3.scale.ordinal().domain([0,1,2,3]).range(["#238b55","#238b35","#636363","#d62728"])
                 var grpChart = dchelpers.getRowChart(grpConfig)
                 grpChart
                     .controlsUseVisibility(true)
@@ -623,7 +623,7 @@ import largeBarChart from '@/components/largeBarChart'
                 gradeConfig.minHeight = 200 
                 gradeConfig.aspectRatio = 2
                 gradeConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
-                gradeConfig.colors = d3.scale.category10().domain([0,1,2,3,4,5,6,7,8,9])
+                gradeConfig.colors = d3.scale.ordinal().domain([0,1,2,3,4]).range(["#addd8e","#78c679","#61ab5d","#d62728","#51ab5d","#41ab5d","#338443","#238443","#138443","#006d2c"])
                 var gradeChart = dchelpers.getRowChart(gradeConfig)
                 gradeChart
                     .controlsUseVisibility(true)

@@ -490,7 +490,7 @@ import largeBarChart from '@/components/largeBarChart'
                 catConfig.minHeight = 100 
                 catConfig.aspectRatio = 3
                 catConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
-                catConfig.colors = d3.scale.category10().domain([0,1,2,3])
+                catConfig.colors = d3.scale.ordinal().domain([0,1,2,3]).range(['#238b55','#238b35','#238b45','#d62728'])
                 var catChart = dchelpers.getRowChart(catConfig)
                 catChart
                     .controlsUseVisibility(true)
