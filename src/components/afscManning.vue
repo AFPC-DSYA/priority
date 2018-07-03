@@ -461,7 +461,6 @@ import largeBarChart from '@/components/largeBarChart'
                     this.data[i].majcom = formats.majFormat[this.data[i].majcom]
                     this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
                     this.data[i].grade = formats.gradeFormat[this.data[i].grade]
-                    //this.data[i].percent = this.data[i].asgn/this.data[i].auth
                 }
                 renderCharts()
             })
@@ -827,6 +826,7 @@ import largeBarChart from '@/components/largeBarChart'
                 //Download Raw Data button
                 d3.select('#download')
                 .on('click', ()=>{
+                    //TODO: find a better way then majcomConfig.dim - may not always have this
                     var data = majcomConfig.dim.top(Infinity);
                     var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
 
@@ -836,7 +836,7 @@ import largeBarChart from '@/components/largeBarChart'
                             myFilters += ' (' + d.filters() + ')'
                     })
 
-                    FileSaver.saveAs(blob, 'PERSTAT Officer_Manning' + ' ' + store.state.asDate + myFilters + ' .csv');
+                    FileSaver.saveAs(blob, 'Priority_Units_Manning' + '_' + this.asDate + myFilters + '.csv');
                 });
 
                 // after DOM updated redraw to make chart widths update

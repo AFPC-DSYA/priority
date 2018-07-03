@@ -324,16 +324,10 @@ import largeBarChart from '@/components/largeBarChart'
                 this.dataTable
                     .order(isAscendingOrder ? d3.ascending : d3.descending);
 
-                //cleaner sort on grade
-                if (col.field == 'grade') {
-                    this.dataTable.sortBy(function(v) {
-                        return formats.gradeOrder[v[col.field]];
-                    } )
-                } else {
-                    this.dataTable.sortBy(function(v) {
-                        return v[col.field];
-                    } )
-                }
+                //sort by column
+                this.dataTable.sortBy(function(v) {
+                    return v[col.field];
+                } )
 
                 this.dataTable.redraw();
             },
@@ -394,8 +388,6 @@ import largeBarChart from '@/components/largeBarChart'
                 for (let i = 0; i < this.data.length; i++) {
                     this.data[i].majcom = formats.majFormat[this.data[i].majcom]
                     this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
-                    this.data[i].grade = formats.gradeFormat[this.data[i].grade]
-                    //this.data[i].percent = this.data[i].asgn/this.data[i].auth
                 }
                 renderCharts()
             })
@@ -684,25 +676,21 @@ import largeBarChart from '@/components/largeBarChart'
                 //    ;
                 //}
 
-
-
-
-
-                    
-
                 //Download Raw Data button
                 d3.select('#download')
                 .on('click', ()=>{
+                    //TODO: find a better way then majcomConfig.dim - may not always have this
                     var data = majcomConfig.dim.top(Infinity);
                     var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
 
                     var myFilters = '';
                     dc.chartRegistry.list().forEach((d)=>{
-                        if (d.filters()[0])
+                        if (d.filters()[0]) {
                             myFilters += ' (' + d.filters() + ')'
+                        }
                     })
 
-                    FileSaver.saveAs(blob, 'PERSTAT Officer_Manning' + ' ' + store.state.asDate + myFilters + ' .csv');
+                    FileSaver.saveAs(blob, 'Priority_Units_Manning' + '_' + this.asDate + myFilters + '.csv');
                 });
 
                 // after DOM updated redraw to make chart widths update
