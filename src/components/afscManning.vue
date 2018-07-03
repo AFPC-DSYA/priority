@@ -207,6 +207,9 @@
         <div class="row">
             <div class="col-12">
                 <h4>Filtered Records</h4>
+                <span>
+                    Showing <span id="beginHead"></span>-<span id="endHead"></span> of <span id="sizeHead"></span>
+                </span>
                 <table class="table table-hover table-bordered" 
                        style="table-layout: fixed;" id="dc-data-table">
                     <thead>
@@ -732,6 +735,12 @@ import largeBarChart from '@/components/largeBarChart'
                     dataTable.beginSlice(tableOffset);
                     dataTable.endSlice(tableOffset + tablePageSize);
 
+                    //update header
+                    d3.select("span#beginHead")
+                        .text(end === 0 ? tableOffset : tableOffset + 1);
+                    d3.select("span#endHead")
+                        .text(end);
+                    d3.select('span#sizeHead').text(totalFiltered);
                     //update paging and footer
                     d3.select("span#begin")
                         .text(end === 0 ? tableOffset : tableOffset + 1);
