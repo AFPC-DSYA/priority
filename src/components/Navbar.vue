@@ -9,6 +9,7 @@
         <ul class="navbar-nav mr-auto">
           <router-link class="nav-item" to="/" tag="li" active-class="active" exact><a class="nav-link">Units</a></router-link>
           <router-link class="nav-item" to="/afsc" tag="li" active-class="active"><a class="nav-link">AFSC</a></router-link>
+          <router-link class="nav-item" to="/history" tag="li" active-class="active"><a class="nav-link">History</a></router-link>
         </ul>
       </div>
     </nav>

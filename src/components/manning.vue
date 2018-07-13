@@ -12,22 +12,22 @@
         <div class="row pt-2"> 
             <div id="radioSelect" class="col form-group">
                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio1" value="percent" v-model="selected" @click="radioButton">
+                    <input class="custom-control-input" name="radio" type="radio" id="radio1" value="percent" v-model="type" @click="radioButton">
                     <span class="custom-control-indicator"></span>
                     <span class="custom-control-description">Percentage</span>
                 </label>
                 <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="selected" @click="radioButton">
+                    <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="type" @click="radioButton">
                     <span class="custom-control-indicator"></span>
                     <span class="custom-control-description">Assigned</span>
                 </label>
                 <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio3" value="auth" v-model="selected" @click="radioButton">
+                    <input class="custom-control-input" name="radio" type="radio" id="radio3" value="auth" v-model="type" @click="radioButton">
                     <span class="custom-control-indicator"></span>
                     <span class="custom-control-description">Authorized</span>
                 </label>
                 <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="selected" @click="radioButton">
+                    <input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="type" @click="radioButton">
                     <span class="custom-control-indicator"></span>
                     <span class="custom-control-description">STP</span>
                 </label>
@@ -39,6 +39,43 @@
                 <button type="button" 
                         class="btn btn-danger btn-rounded btn-sm waves-effect" 
                         @click="resetAll">Reset All</button>
+            </div>
+        </div>
+        <div class="row">
+            <div id="radioPeriod" class="col form-group">
+               <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio5" value="curr" v-model="period" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">Current</span>
+                </label>
+                <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio6" value="3" v-model="period" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">3 Months</span>
+                </label>
+                <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio7" value="6" v-model="period" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">6 Months</span>
+                </label>
+                <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio8" value="9" v-model="period" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">9 Months</span>
+                </label>
+            </div>
+            <div class="col-auto" id="legend">
+                <p class="mb-0 pb-0 pl-4" style="font-size:20px">Legend</p> 
+                <ul class="mt-0 pt-0" style="list-style-type: none">
+                    <li>
+                        <span :style="[{'background-color': '#2ca25f'},rect]"></span>
+                        <span :style="label">Manning >= 95%</span>
+                    </li> 
+                    <li>
+                        <span :style="[{'background-color': '#d62728'},rect]"></span>
+                        <span :style="label">Manning < 95%</span>
+                    </li>
+                </ul>
             </div>
         </div>
         <div class="row">
@@ -154,24 +191,26 @@
                 <span>
                     Showing <span id="beginHead"></span>-<span id="endHead"></span> of <span id="sizeHead"></span>
                 </span>
-                <table class="table table-hover table-bordered" 
-                       style="table-layout: fixed;" id="dc-data-table">
-                    <thead>
-                        <tr class="table-header">
-                            <th v-for="header in columns"
-                                :class="{sortedColumn: header.selected}"
-                                style="cursor: pointer;"
-                                @click="sortColumn(header)"
-                                width="header.width*width">
-                                {{header.title}}
-                                <span v-show="header.selected">
-                                    <font-awesome-icon v-show="header.sort_state === 'ascending'" icon="arrow-up"></font-awesome-icon>
-                                    <font-awesome-icon v-show="header.sort_state === 'descending'" icon="arrow-down"></font-awesome-icon>
-                                </span>
-                            </th>
-                        </tr>
-                    </thead>
-                </table>
+                <div style="overflow-x: scroll;">
+                    <table class="table table-hover table-bordered" 
+                           id="dc-data-table">
+                        <thead>
+                            <tr class="table-header">
+                                <th v-for="header in columns"
+                                    :class="{sortedColumn: header.selected}"
+                                    style="cursor: pointer;"
+                                    @click="sortColumn(header)"
+                                    width="header.width*width">
+                                    {{header.title}}
+                                    <span v-show="header.selected">
+                                        <font-awesome-icon v-show="header.sort_state === 'ascending'" icon="arrow-up"></font-awesome-icon>
+                                        <font-awesome-icon v-show="header.sort_state === 'descending'" icon="arrow-down"></font-awesome-icon>
+                                    </span>
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
                 <div class="col-12" id="paging">
                     Showing <span id="begin"></span>-<span id="end"></span> of <span id="size"></span>
                     <button id="Prev" class="btn btn-sm btn-secondary" value="Prev">Prev</button>
@@ -200,13 +239,22 @@ import largeBarChart from '@/components/largeBarChart'
             return {
                 data: [],
                 asDate: '',
-                selected: "percent",
+                type: "percent",
+                period: "curr",
                 searchMajcom: "",
                 searchBase: "",
                 loaded: false ,
                 baseColor: chartSpecs.baseChart.color,
                 majcomColor: chartSpecs.majcomChart.color,
                 manningGoal: 95,
+                rect: {
+                    'width': '14px',
+                    'height': '14px',
+                    'display': 'inline-block',
+                },
+                label: {
+                    'margin-left': '10px',
+                },
                 items: [],
                 dataTable: {},
                 sortedVar: '',
@@ -220,10 +268,22 @@ import largeBarChart from '@/components/largeBarChart'
                     {title: 'MPF', field: 'mpf', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'MAJCOM', field: 'majcom', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'PASCODE', field: 'pascode', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Asgn', field: 'asgn', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Auth', field: 'auth', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'STP', field: 'stp', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Percent', field: 'percent', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn', field: 'asgncurr', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Auth', field: 'authcurr', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'STP', field: 'stpcurr', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Percent', field: 'percentcurr', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn3', field: 'asgn3', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Auth3', field: 'auth3', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'STP3', field: 'stp3', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Percent3', field: 'percent3', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn6', field: 'asgn6', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Auth6', field: 'auth6', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'STP6', field: 'stp6', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Percent6', field: 'percent6', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn9', field: 'asgn9', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Auth9', field: 'auth9', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'STP9', field: 'stp9', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Percent9', field: 'percent9', sort_state: "descending", selected: false, width: "10%"},
                 ]
             }
         },
@@ -244,29 +304,35 @@ import largeBarChart from '@/components/largeBarChart'
               return this.ndx.dimension(function(d) {return d});
           },
           ylabel: function() {
-            if (this.selected === "percent") {
+            if (_.includes(this.selected,"percent")) {
                 return "Manning Percent (%)"
             }
-            else if (this.selected === "asgn") {
+            else if (_.includes(this.selected,"asgn")) {
                 return "Assigned"
             }
-            else if (this.selected === "stp") {
+            else if (_.includes(this.selected,"stp")) {
                 return "STP"
             }
             else {
                 return "Authorized"
             }
-          }
+          },
+          selected: function() {
+            return this.type + this.period;
+          },
+          colorVar: function() {
+            return 'percent'+this.period;
+          },
         },
         methods: {
             dcRowColorFun: function(d,i) {
-                return d.value['percent'] >= this.manningGoal ? i : 3;
+                return d.value[this.colorVar] >= this.manningGoal ? i : 3;
             },
             dcBarColorFun: function(d,i) {
-                return d.value['percent'] >= this.manningGoal ? 'good' : 'under';
+                return d.value[this.colorVar] >= this.manningGoal ? 'good' : 'under';
             },
             unitColorFun: function(d, colorScale, colorDomain) {
-                if (d.value['percent'] >= this.manningGoal) {
+                if (d.value[this.colorVar] >= this.manningGoal) {
                     return colorScale(colorDomain[0]) 
                 } else {
                     return colorScale(colorDomain[1])
@@ -274,30 +340,93 @@ import largeBarChart from '@/components/largeBarChart'
             },
             //reduce functions
             manningAdd: function(p,v) {
-                p.asgn = p.asgn + +v.asgn
-                p.auth = p.auth + +v.auth
-                p.stp = p.stp + +v.stp
+                //current
+                p.asgncurr = p.asgncurr + +v.asgncurr
+                p.authcurr = p.authcurr + +v.authcurr
+                p.stpcurr = p.stpcurr + +v.stpcurr
                 //if divide by 0, set to 0, and if NaN, set to zero
-                p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
-                p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
+                p.percentcurr = p.asgncurr/p.authcurr === Infinity ? 0 : Math.round((p.asgncurr/p.authcurr)*1000)/10 || 0
+                p.stpPercentcurr = p.stpcurr/p.authcurr === Infinity ? 0 : Math.round((p.stpcurr/p.authcurr)*1000)/10 || 0
+                //3month
+                p.asgn3 = p.asgn3 + +v.asgn3
+                p.auth3 = p.auth3 + +v.auth3
+                p.stp3 = p.stp3 + +v.stp3
+                //if divide by 0, set to 0, and if NaN, set to zero
+                p.percent3 = p.asgn3/p.auth3 === Infinity ? 0 : Math.round((p.asgn3/p.auth3)*1000)/10 || 0
+                p.stpPercent3 = p.stp3/p.auth3 === Infinity ? 0 : Math.round((p.stp3/p.auth3)*1000)/10 || 0
+                //6month
+                p.asgn6 = p.asgn6 + +v.asgn6
+                p.auth6 = p.auth6 + +v.auth6
+                p.stp6 = p.stp6 + +v.stp6
+                //if divide by 0, set to 0, and if NaN, set to zero
+                p.percent6 = p.asgn6/p.auth6 === Infinity ? 0 : Math.round((p.asgn6/p.auth6)*1000)/10 || 0
+                p.stpPercent6 = p.stp6/p.auth6 === Infinity ? 0 : Math.round((p.stp6/p.auth6)*1000)/10 || 0
+                //9month
+                p.asgn9 = p.asgn9 + +v.asgn9
+                p.auth9 = p.auth9 + +v.auth9
+                p.stp9 = p.stp9 + +v.stp9
+                //if divide by 0, set to 0, and if NaN, set to zero
+                p.percent9 = p.asgn9/p.auth9 === Infinity ? 0 : Math.round((p.asgn9/p.auth9)*1000)/10 || 0
+                p.stpPercent9 = p.stp9/p.auth9 === Infinity ? 0 : Math.round((p.stp9/p.auth9)*1000)/10 || 0
                 return p
             },
             manningRemove: function(p,v) {
-                p.asgn = p.asgn - +v.asgn
-                p.auth = p.auth - +v.auth
-                p.stp = p.stp - +v.stp
+                //current
+                p.asgncurr = p.asgncurr - +v.asgncurr
+                p.authcurr = p.authcurr - +v.authcurr
+                p.stpcurr = p.stpcurr - +v.stpcurr
                 //if divide by 0, set to 0, and if NaN, set to zero
-                p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
-                p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
+                p.percentcurr = p.asgncurr/p.authcurr === Infinity ? 0 : Math.round((p.asgncurr/p.authcurr)*1000)/10 || 0
+                p.stpPercentcurr = p.stpcurr/p.authcurr === Infinity ? 0 : Math.round((p.stpcurr/p.authcurr)*1000)/10 || 0
+                //3month
+                p.asgn3 = p.asgn3 - +v.asgn3
+                p.auth3 = p.auth3 - +v.auth3
+                p.stp3 = p.stp3 - +v.stp3
+                //if divide by 0, set to 0, and if NaN, set to zero
+                p.percent3 = p.asgn3/p.auth3 === Infinity ? 0 : Math.round((p.asgn3/p.auth3)*1000)/10 || 0
+                p.stpPercent3 = p.stp3/p.auth3 === Infinity ? 0 : Math.round((p.stp3/p.auth3)*1000)/10 || 0
+                //6month
+                p.asgn6 = p.asgn6 - +v.asgn6
+                p.auth6 = p.auth6 - +v.auth6
+                p.stp6 = p.stp6 - +v.stp6
+                //if divide by 0, set to 0, and if NaN, set to zero
+                p.percent6 = p.asgn6/p.auth6 === Infinity ? 0 : Math.round((p.asgn6/p.auth6)*1000)/10 || 0
+                p.stpPercent6 = p.stp6/p.auth6 === Infinity ? 0 : Math.round((p.stp6/p.auth6)*1000)/10 || 0
+                //9month
+                p.asgn9 = p.asgn9 - +v.asgn9
+                p.auth9 = p.auth9 - +v.auth9
+                p.stp9 = p.stp9 - +v.stp9
+                //if divide by 0, set to 0, and if NaN, set to zero
+                p.percent9 = p.asgn9/p.auth9 === Infinity ? 0 : Math.round((p.asgn9/p.auth9)*1000)/10 || 0
+                p.stpPercent9 = p.stp9/p.auth9 === Infinity ? 0 : Math.round((p.stp9/p.auth9)*1000)/10 || 0
                 return p
             },
             manningInitial: function() {
                 return {
-                    asgn: 0,
-                    auth: 0,
-                    stp: 0,
-                    percent: 0,
-                    stpPercent: 0,
+                    //current
+                    asgncurr: 0,
+                    authcurr: 0,
+                    stpcurr: 0,
+                    percentcurr: 0,
+                    stpPercentcurr: 0,
+                    //3month
+                    asgn3: 0,
+                    auth3: 0,
+                    stp3: 0,
+                    percent3: 0,
+                    stpPercent3: 0,
+                    //6month
+                    asgn6: 0,
+                    auth6: 0,
+                    stp6: 0,
+                    percent6: 0,
+                    stpPercent6: 0,
+                    //9month
+                    asgn9: 0,
+                    auth9: 0,
+                    stp9: 0,
+                    percent9: 0,
+                    stpPercent9: 0,
                 }
             },
             setTableData: function() {
@@ -404,30 +533,93 @@ import largeBarChart from '@/components/largeBarChart'
 
                 //reduce functions
                 function manningAdd(p,v) {
-                    p.asgn = p.asgn + +v.asgn
-                    p.auth = p.auth + +v.auth
-                    p.stp = p.stp + +v.stp
+                    //current
+                    p.asgncurr = p.asgncurr + +v.asgncurr
+                    p.authcurr = p.authcurr + +v.authcurr
+                    p.stpcurr = p.stpcurr + +v.stpcurr
                     //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
-                    p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
+                    p.percentcurr = p.asgncurr/p.authcurr === Infinity ? 0 : Math.round((p.asgncurr/p.authcurr)*1000)/10 || 0
+                    p.stpPercentcurr = p.stpcurr/p.authcurr === Infinity ? 0 : Math.round((p.stpcurr/p.authcurr)*1000)/10 || 0
+                    //3month
+                    p.asgn3 = p.asgn3 + +v.asgn3
+                    p.auth3 = p.auth3 + +v.auth3
+                    p.stp3 = p.stp3 + +v.stp3
+                    //if divide by 0, set to 0, and if NaN, set to zero
+                    p.percent3 = p.asgn3/p.auth3 === Infinity ? 0 : Math.round((p.asgn3/p.auth3)*1000)/10 || 0
+                    p.stpPercent3 = p.stp3/p.auth3 === Infinity ? 0 : Math.round((p.stp3/p.auth3)*1000)/10 || 0
+                    //6month
+                    p.asgn6 = p.asgn6 + +v.asgn6
+                    p.auth6 = p.auth6 + +v.auth6
+                    p.stp6 = p.stp6 + +v.stp6
+                    //if divide by 0, set to 0, and if NaN, set to zero
+                    p.percent6 = p.asgn6/p.auth6 === Infinity ? 0 : Math.round((p.asgn6/p.auth6)*1000)/10 || 0
+                    p.stpPercent6 = p.stp6/p.auth6 === Infinity ? 0 : Math.round((p.stp6/p.auth6)*1000)/10 || 0
+                    //9month
+                    p.asgn9 = p.asgn9 + +v.asgn9
+                    p.auth9 = p.auth9 + +v.auth9
+                    p.stp9 = p.stp9 + +v.stp9
+                    //if divide by 0, set to 0, and if NaN, set to zero
+                    p.percent9 = p.asgn9/p.auth9 === Infinity ? 0 : Math.round((p.asgn9/p.auth9)*1000)/10 || 0
+                    p.stpPercent9 = p.stp9/p.auth9 === Infinity ? 0 : Math.round((p.stp9/p.auth9)*1000)/10 || 0
                     return p
                 }
                 function manningRemove(p,v) {
-                    p.asgn = p.asgn - +v.asgn
-                    p.auth = p.auth - +v.auth
-                    p.stp = p.stp - +v.stp
+                    //current
+                    p.asgncurr = p.asgncurr - +v.asgncurr
+                    p.authcurr = p.authcurr - +v.authcurr
+                    p.stpcurr = p.stpcurr - +v.stpcurr
                     //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
-                    p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
+                    p.percentcurr = p.asgncurr/p.authcurr === Infinity ? 0 : Math.round((p.asgncurr/p.authcurr)*1000)/10 || 0
+                    p.stpPercentcurr = p.stpcurr/p.authcurr === Infinity ? 0 : Math.round((p.stpcurr/p.authcurr)*1000)/10 || 0
+                    //3month
+                    p.asgn3 = p.asgn3 - +v.asgn3
+                    p.auth3 = p.auth3 - +v.auth3
+                    p.stp3 = p.stp3 - +v.stp3
+                    //if divide by 0, set to 0, and if NaN, set to zero
+                    p.percent3 = p.asgn3/p.auth3 === Infinity ? 0 : Math.round((p.asgn3/p.auth3)*1000)/10 || 0
+                    p.stpPercent3 = p.stp3/p.auth3 === Infinity ? 0 : Math.round((p.stp3/p.auth3)*1000)/10 || 0
+                    //6month
+                    p.asgn6 = p.asgn6 - +v.asgn6
+                    p.auth6 = p.auth6 - +v.auth6
+                    p.stp6 = p.stp6 - +v.stp6
+                    //if divide by 0, set to 0, and if NaN, set to zero
+                    p.percent6 = p.asgn6/p.auth6 === Infinity ? 0 : Math.round((p.asgn6/p.auth6)*1000)/10 || 0
+                    p.stpPercent6 = p.stp6/p.auth6 === Infinity ? 0 : Math.round((p.stp6/p.auth6)*1000)/10 || 0
+                    //9month
+                    p.asgn9 = p.asgn9 - +v.asgn9
+                    p.auth9 = p.auth9 - +v.auth9
+                    p.stp9 = p.stp9 - +v.stp9
+                    //if divide by 0, set to 0, and if NaN, set to zero
+                    p.percent9 = p.asgn9/p.auth9 === Infinity ? 0 : Math.round((p.asgn9/p.auth9)*1000)/10 || 0
+                    p.stpPercent9 = p.stp9/p.auth9 === Infinity ? 0 : Math.round((p.stp9/p.auth9)*1000)/10 || 0
                     return p
                 }
                 function manningInitial() {
                     return {
-                        asgn: 0,
-                        auth: 0,
-                        stp: 0,
-                        percent: 0,
-                        stpPercent: 0,
+                        //current
+                        asgncurr: 0,
+                        authcurr: 0,
+                        stpcurr: 0,
+                        percentcurr: 0,
+                        stpPercentcurr: 0,
+                        //3month
+                        asgn3: 0,
+                        auth3: 0,
+                        stp3: 0,
+                        percent3: 0,
+                        stpPercent3: 0,
+                        //6month
+                        asgn6: 0,
+                        auth6: 0,
+                        stp6: 0,
+                        percent6: 0,
+                        stpPercent6: 0,
+                        //9month
+                        asgn9: 0,
+                        auth9: 0,
+                        stp9: 0,
+                        percent9: 0,
+                        stpPercent9: 0,
                     }
                 }
                 //remove empty function (es6 syntax to keep correct scope)
@@ -442,35 +634,32 @@ import largeBarChart from '@/components/largeBarChart'
                 }
 
                 //Number Display for Auth, Asgn, STP - show total for filtered content
-                var auth = this.ndx.groupAll().reduceSum(function(d) { return +d.auth })
+                var ndGroup = this.ndx.groupAll().reduce(manningAdd,manningRemove,manningInitial)
                 var authND = dc.numberDisplay("#auth")
-                authND.group(auth)
+                authND.group(ndGroup)
                     .formatNumber(d3.format("d"))
-                    .valueAccessor(function(d) { return d;})
+                    .valueAccessor((d) => { return d['auth' + this.period];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
-                var asgn = this.ndx.groupAll().reduceSum(function(d) { return +d.asgn})
                 var asgnND = dc.numberDisplay("#asgn")
-                asgnND.group(asgn)
+                asgnND.group(ndGroup)
                     .formatNumber(d3.format("d"))
-                    .valueAccessor(function(d) {return d;})
+                    .valueAccessor((d) => {return d['asgn' + this.period];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
-                var stp = this.ndx.groupAll().reduceSum(function(d) { return +d.stp})
                 var stpND = dc.numberDisplay("#stp")
-                stpND.group(stp)
+                stpND.group(ndGroup)
                     .formatNumber(d3.format("d"))
-                    .valueAccessor(function(d) {return d;})
+                    .valueAccessor((d) => {return d['stp' + this.period];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
-                var percentGroup = this.ndx.groupAll().reduce(manningAdd,manningRemove,manningInitial)
                 var percentND = dc.numberDisplay("#percent")
-                percentND.group(percentGroup)
+                percentND.group(ndGroup)
                     .formatNumber(d3.format("r"))
-                    .valueAccessor(function(d) {return d.percent})
+                    .valueAccessor((d) => {return d[this.colorVar]})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number%</span>"
                     })
@@ -620,7 +809,7 @@ import largeBarChart from '@/components/largeBarChart'
                     .size(Infinity)
                     //give columns an array of functions for returning variables
                     .columns(this.columns.map(d=> {
-                        if (d.field == 'percent') {
+                        if (_.includes(d.field,'percent')) {
                             return (v) => Math.round(v[d.field]*1000)/10 + '%';
                         } else {
                             return (v) => v[d.field];   
@@ -748,9 +937,6 @@ div[id*="-barchart"] .x.axis text{
 
 div[id*="-rowchart"] g.row text{
     fill: black;
-}
-table td {
-    word-wrap: break-word;
 }
 th {
     opacity: 0.8;
