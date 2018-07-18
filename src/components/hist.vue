@@ -46,25 +46,14 @@
             </div>
         </div>
         <div class="row">
-            <div id="lineDate" class="col-12">
-                <div id="dc-date-linechart">
+            <div id="dateLine" class="col-12">
+                <div id="dc-dateLine-linechart">
                     <h3>Date
                         <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
                         <button type="button" 
                                 class="btn btn-danger btn-sm btn-rounded reset" 
                                 style="visibility: hidden"
-                                @click="resetChart('dc-date-linechart')">Reset</button>
-                    </h3>
-                </div> 
-            </div>
-            <div id="date" class="col-12">
-                <div id="dc-date-barchart">
-                    <h3>Date 
-                        <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                        <button type="button" 
-                                class="btn btn-danger btn-sm btn-rounded reset" 
-                                style="visibility: hidden"
-                                @click="resetChart('dc-date-barchart')">Reset</button>
+                                @click="resetChart('dc-dateLine-linechart')">Reset</button>
                     </h3>
                 </div> 
             </div>
@@ -388,65 +377,97 @@ import largeBarChart from '@/components/largeBarChart'
                     })
 
 
-                //Date bar chart
-                var dateConfig = {}
-                dateConfig.id = 'date'
-                dateConfig.dim = this.ndx.dimension(function(d){return d.date})
-                var datePercent = dateConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
-                dateConfig.group = removeEmptyBins(datePercent)
-                dateConfig.minHeight = chartSpecs.majcomChart.minHeight 
-                dateConfig.aspectRatio = chartSpecs.majcomChart.aspectRatio 
-                dateConfig.margins = chartSpecs.majcomChart.margins 
-                dateConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.majcomChart.color)
-                var dateChart = dchelpers.getOrdinalBarChart(dateConfig)
-                dateChart
-                    .elasticX(true)
-                    .controlsUseVisibility(true)
-                    .colorAccessor(this.dcBarColorFun)
-                    .valueAccessor((d) => {
-                        return d.value[this.selected]
-                    })
-                    .on('pretransition', (chart)=> {
-                        chart.selectAll('g.x text')
-                        .style('text-anchor', 'end')
-                        .attr('transform', 'translate(-8,0)rotate(-45)')
-                        .on('click', (d)=>{
-                            this.submit(d, 'dc-date-barchart')
-                        })
-                    })
-
                 //date line chart
-                var dateLineChart = dc.lineChart("#dc-date-linechart")
-                dateLineChart
-                    .margins(chartSpecs.majcomChart.margins)
-                    .elasticY(true)
-                    .width(800)
-                    .height(480)
-                    .group(dateConfig.group)
-                    .dimension(dateConfig.dim)
-                    .x(d3.scale.ordinal())
-                    .xUnits(dc.units.ordinal)
-                    .brushOn(false)
-                    .xyTipsOn(true)
-                    .dotRadius(6)
-                    .renderDataPoints({
+                var lineConfig = {}
+                lineConfig.id = 'dateLine'
+                lineConfig.dim = this.ndx.dimension(function(d) {return d.date})
+                lineConfig.group = lineConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
+                lineConfig.minHeight = 400
+                lineConfig.aspectRatio = 3
+                lineConfig.margins = {top: 40, left: 40, right: 40, bottom: 40}
+                lineConfig.x = d3.scale.ordinal()
+                lineConfig.xUnits = dc.units.ordinal
+                lineConfig.brush = false
+                lineConfig.tips = true
+                lineConfig.radius = 6
+                lineConfig.dataPoints = {
                         fillOpacity: 0.8,
                         strokeOpacity: 0.8,
                         radius: 4,
-                    })
+                }
+                console.log(JSON.stringify(lineConfig.group.all()))
+                var dateLineChart = dchelpers.getLineChart(lineConfig)
+                dateLineChart
                     .valueAccessor((d) => {
                         return d.value[this.selected]
                     })
-                    //.on('pretransition', (chart) => {
-                    //    if (this.selected === 'percent') {
-                    //        var horiz = 95
-                    //        var extraData = [
-                    //            {x: 0, y: chart.y()(horiz)},
-                    //            
-                    //        ]
-                    //    }
-                    //})
-                ;
+                    .on('renderlet', (chart) => {
+                        if (this.selected === 'percent') {
+                            //create horizontal line
+                            var horiz = 95
+                            var extraData= [
+                                {x: 0, y: chart.y()(horiz)},
+                                {x: chart.width(), y: chart.y()(horiz)}
+                            ]
+                        } else {
+                            //remove horizontal line
+                            var extraData= []
+                        }
+
+                        var line = d3.svg.line()
+                                    .x(function(d) {return d.x;})
+                                    .y(function(d) {return d.y;})
+                                    .interpolate('linear');
+
+                        var path = chart.select('g.chart-body')
+                                        .selectAll('path.extra')
+                                        .data(extraData);
+                        path.enter()
+                            .append('path')
+                            .attr('d',line(extraData))
+                            .attr('class', 'extra')
+                            .attr('stroke','red')
+                            .style("stroke-dasharray", ("3, 3"));
+
+                        path.exit()
+                            .transition()
+                            .duration(200)
+                            .style('opacity',0)
+                            .remove();
+
+                    });
+
+                //var dateLineChart = dc.lineChart("#dc-date-linechart")
+                //dateLineChart
+                //    .margins(chartSpecs.majcomChart.margins)
+                //    .elasticY(true)
+                //    .width(800)
+                //    .height(480)
+                //    .group(dateConfig.group)
+                //    .dimension(dateConfig.dim)
+                //    .x(d3.scale.ordinal())
+                //    .xUnits(dc.units.ordinal)
+                //    .brushOn(false)
+                //    .xyTipsOn(true)
+                //    .dotRadius(6)
+                //    .renderDataPoints({
+                //        fillOpacity: 0.8,
+                //        strokeOpacity: 0.8,
+                //        radius: 4,
+                //    })
+                //    .valueAccessor((d) => {
+                //        return d.value[this.selected]
+                //    })
+                //    //.on('pretransition', (chart) => {
+                //    //    if (this.selected === 'percent') {
+                //    //        var horiz = 95
+                //    //        var extraData = [
+                //    //            {x: 0, y: chart.y()(horiz)},
+                //    //            
+                //    //        ]
+                //    //    }
+                //    //})
+                //;
 
                     
 
@@ -590,7 +611,7 @@ import largeBarChart from '@/components/largeBarChart'
                 d3.select('#download')
                 .on('click', ()=>{
                     //TODO: find a better way then majcomConfig.dim - may not always have this
-                    var data = majcomConfig.dim.top(Infinity);
+                    var data = tableDim.top(Infinity);
                     var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
 
                     var myFilters = '';

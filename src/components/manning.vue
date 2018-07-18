@@ -513,7 +513,7 @@ import largeBarChart from '@/components/largeBarChart'
             console.log('mounted')
 
             //load local data (works for both dev and prod) 
-            d3.json('./data/pacing_data.json',(error,data) => {
+            d3.json('./data/priority_data.json',(error,data) => {
                 this.data = data.data;   
                 this.asDate = data.ASOFDATE;
                 //apply formats so we have decoded variables globally
@@ -878,7 +878,7 @@ import largeBarChart from '@/components/largeBarChart'
                 d3.select('#download')
                 .on('click', ()=>{
                     //TODO: find a better way then majcomConfig.dim - may not always have this
-                    var data = majcomConfig.dim.top(Infinity);
+                    var data = tableDim.top(Infinity);
                     var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
 
                     var myFilters = '';

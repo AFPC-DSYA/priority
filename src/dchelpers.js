@@ -54,6 +54,30 @@ var getRowChart = (config)=>{
   })
   return chart
 }
+var getLineChart = (config)=>{
+  config = updateChartConfig(config)
+  var chart = dc.lineChart("#dc-"+config.id+"-linechart")
+  chart
+  .width(config.width)
+  .minHeight(config.minHeight)
+  .height(config.height)
+  .margins(config.margins)
+  .elasticX(true)
+  .elasticY(true)
+  .dimension(config.dim)
+  .group(config.group)
+  .x(config.x)
+  .xUnits(config.xUnits)
+  .brushOn(config.brush)
+  .xyTipsOn(config.tips)
+  .dotRadius(config.radius)
+  .renderDataPoints(config.dataPoints)
+  .on('preRedraw', function(c){
+    preRedraw(c, config)
+  })
+  return chart
+}
+
 var getPieChart = (config)=>{
     config = updateChartConfig(config)
     var chart = dc.pieChart("#dc-"+config.id+"-piechart")
@@ -158,5 +182,6 @@ module.exports = {
   preRedraw: preRedraw,
   getBrushBarChart: getBrushBarChart,
   getPieChart: getPieChart,
-  getGeoChart: getGeoChart
+  getGeoChart: getGeoChart,
+  getLineChart: getLineChart,
 }

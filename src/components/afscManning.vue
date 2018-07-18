@@ -326,6 +326,8 @@ import largeBarChart from '@/components/largeBarChart'
                     {title: 'MPF', field: 'mpf', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'MAJCOM', field: 'majcom', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'PASCODE', field: 'pascode', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'AFSC', field: 'afsc_group', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Grade', field: 'grade', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Asgn', field: 'asgncurr', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Auth', field: 'authcurr', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'STP', field: 'stpcurr', sort_state: "descending", selected: false, width: "10%"},
@@ -583,7 +585,7 @@ import largeBarChart from '@/components/largeBarChart'
             console.log('mounted')
 
             //load local data (works for both dev and prod) 
-            d3.json('./data/pacing_data_afsc.json',(error,data) => {
+            d3.json('./data/priority_data_afsc.json',(error,data) => {
                 this.data = data.data;   
                 this.asDate = data.ASOFDATE;
                 //apply formats so we have decoded variables globally
@@ -1024,7 +1026,7 @@ import largeBarChart from '@/components/largeBarChart'
                 d3.select('#download')
                 .on('click', ()=>{
                     //TODO: find a better way then majcomConfig.dim - may not always have this
-                    var data = majcomConfig.dim.top(Infinity);
+                    var data = tableDim.top(Infinity);
                     var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
 
                     var myFilters = '';
