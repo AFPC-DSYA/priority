@@ -177,8 +177,6 @@
                             style="visibility: hidden"
                             @click="resetChart('dc-grade-rowchart')">Reset</button>
                     </h3>
-                    <br class="mb-0">
-                    <span class="mt-0 mb-0" style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
                 </div>
             </div>
             <div id="afscFamily" class="col-8">

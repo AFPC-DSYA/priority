@@ -452,19 +452,22 @@ import largeBarChart from '@/components/largeBarChart'
 
                     })
 
+                var padPercent = 0.05
                 dateLineChart.yAxisMin = () => {
                     var yMin = d3.min(lineConfig.group.all(), d => d.value[this.selected])
-                    var yRange = dateLineChart.yAxisMax() - yMin
+                    var yMax = d3.max(lineConfig.group.all(), d => d.value[this.selected])
+                    var yRange = yMax - yMin
                     if (this.selected === 'percent') {
-                        return Math.min(yMin - Math.round(yRange * 0.05),90);
+                        return Math.min(yMin - Math.round(yRange * padPercent),90);
                     } else {
-                        return yMin - Math.round(yRange * 0.05);
+                        return yMin - Math.round(yRange * padPercent);
                     }
                 }
                 dateLineChart.yAxisMax = () => {
+                    var yMin = d3.min(lineConfig.group.all(), d => d.value[this.selected])
                     var yMax = d3.max(lineConfig.group.all(), d => d.value[this.selected])
-                    var yRange = yMax - 0 
-                    return yMax + Math.round(yRange * 0.05);
+                    var yRange = yMax - yMin 
+                    return yMax + Math.round(yRange * padPercent);
                 }
 
                 //var dateLineChart = dc.lineChart("#dc-date-linechart")
