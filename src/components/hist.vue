@@ -467,7 +467,11 @@ import largeBarChart from '@/components/largeBarChart'
                     var yMin = d3.min(lineConfig.group.all(), d => d.value[this.selected])
                     var yMax = d3.max(lineConfig.group.all(), d => d.value[this.selected])
                     var yRange = yMax - yMin 
-                    return yMax + Math.round(yRange * padPercent);
+                    if (this.selected === 'percent') {
+                        return Math.max(yMax + Math.round(yRange * padPercent),100);
+                    } else {
+                        return yMax + Math.round(yRange * padPercent);
+                    }
                 }
 
                 //var dateLineChart = dc.lineChart("#dc-date-linechart")
