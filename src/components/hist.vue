@@ -31,6 +31,13 @@
                     <span class="custom-control-indicator"></span>
                     <span class="custom-control-description">STP</span>
                 </label>
+                <span data-toggle="tooltip" 
+                      data-placement="right"
+                      title="Use the radio buttons to toggle between manning percentage, assigned, authorized, and STP (student, transient, personnel holdee). The charts show the selected data element.">
+                    <fontAwesomeIcon icon="info-circle" 
+                                     >
+                    </fontAwesomeIcon>
+                </span>
             </div>
             <div class="col-auto">
                 <button type="button" id="download"
@@ -58,7 +65,15 @@
                 </div> 
             </div>
             <div class="col-12">
-                <h4>Filtered Records</h4>
+                <h4>Filtered Records
+                    <span data-toggle="tooltip" 
+                          data-placement="right"
+                          title="In the follow table, click the column headers to sort by the column and toggle between ascending or descending. Use the scroll bar at the bottom of the table to see additional columns. Click the Next and Prev buttons at the bottom of the table to see additional rows.">
+                        <fontAwesomeIcon icon="info-circle" 
+                                         size="xs">
+                        </fontAwesomeIcon>
+                    </span>
+                </h4>
                 <span>
                     Showing <span id="beginHead"></span>-<span id="endHead"></span> of <span id="sizeHead"></span>
                 </span>
@@ -384,7 +399,7 @@ import largeBarChart from '@/components/largeBarChart'
                 lineConfig.group = lineConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
                 lineConfig.minHeight = 400
                 lineConfig.aspectRatio = 3
-                lineConfig.margins = {top: 40, left: 40, right: 40, bottom: 40}
+                lineConfig.margins = {top: 10, left: 60, right: 40, bottom: 40}
                 lineConfig.x = d3.scale.ordinal()
                 lineConfig.xUnits = dc.units.ordinal
                 lineConfig.brush = false
@@ -435,7 +450,22 @@ import largeBarChart from '@/components/largeBarChart'
                             .style('opacity',0)
                             .remove();
 
-                    });
+                    })
+
+                dateLineChart.yAxisMin = () => {
+                    var yMin = d3.min(lineConfig.group.all(), d => d.value[this.selected])
+                    var yRange = dateLineChart.yAxisMax() - yMin
+                    if (this.selected === 'percent') {
+                        return Math.min(yMin - Math.round(yRange * 0.05),90);
+                    } else {
+                        return yMin - Math.round(yRange * 0.05);
+                    }
+                }
+                dateLineChart.yAxisMax = () => {
+                    var yMax = d3.max(lineConfig.group.all(), d => d.value[this.selected])
+                    var yRange = yMax - 0 
+                    return yMax + Math.round(yRange * 0.05);
+                }
 
                 //var dateLineChart = dc.lineChart("#dc-date-linechart")
                 //dateLineChart

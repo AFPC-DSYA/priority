@@ -31,6 +31,13 @@
                     <span class="custom-control-indicator"></span>
                     <span class="custom-control-description">STP</span>
                 </label>
+                <span data-toggle="tooltip" 
+                      data-placement="right"
+                      title="Use the radio buttons to toggle between manning percentage, assigned, authorized, and STP (student, transient, personnel holdee). The charts show the selected data element.">
+                    <fontAwesomeIcon icon="info-circle" 
+                                     >
+                    </fontAwesomeIcon>
+                </span>
             </div>
             <div class="col-auto">
                 <button type="button" id="download"
@@ -63,6 +70,13 @@
                     <span class="custom-control-indicator"></span>
                     <span class="custom-control-description">9 Months</span>
                 </label>
+                <span data-toggle="tooltip" 
+                      data-placement="right"
+                      title="Use the radio buttons to toggle between current data and projected data. The projected data show snapshots at 3, 6, or 9 months from the date in the top right corner of the page.">
+                    <fontAwesomeIcon icon="info-circle" 
+                                     >
+                    </fontAwesomeIcon>
+                </span>
             </div>
             <div class="col-auto" id="legend">
                 <p class="mb-0 pb-0 pl-4" style="font-size:20px">Legend</p> 
@@ -187,7 +201,16 @@
         </largeBarChart>
         <div class="row">
             <div class="col-12">
-                <h4>Filtered Records</h4>
+                <h4>Filtered Records
+                    <span data-toggle="tooltip" 
+                          data-placement="right"
+                          title="In the follow table, click the column headers to sort by the column and toggle between ascending or descending. Use the scroll bar at the bottom of the table to see additional columns. Click the Next and Prev buttons at the bottom of the table to see additional rows.">
+                        <fontAwesomeIcon icon="info-circle" 
+                                         size="xs">
+                        </fontAwesomeIcon>
+                    </span>
+                
+                </h4>
                 <span>
                     Showing <span id="beginHead"></span>-<span id="endHead"></span> of <span id="sizeHead"></span>
                 </span>
