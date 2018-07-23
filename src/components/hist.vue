@@ -300,6 +300,9 @@ import largeBarChart from '@/components/largeBarChart'
         },
         created: function(){
           console.log('created')
+          $(function() {
+            $('[data-toggle="tooltip"]').tooltip()
+          })
         },
         mounted() {
             console.log('mounted')
