@@ -34,6 +34,15 @@ const webpackConfig = merge(baseWebpackConfig, {
     new webpack.DefinePlugin({
       'process.env': env
     }),
+    new webpack.DefinePlugin({
+      //PROD BUILD - HIS MUST be run for PROD DEPLOYMENT
+      'check_portal': '"INSANE"',
+      'axios_url': '"https://starsraw.afpc.randolph.af.mil/SASStoredProcess/do"',
+      'axios_url_priority_data': '"https://starsraw.afpc.randolph.af.mil/SASStoredProcess/do"',
+      'axios_url_priority_data_afsc': '"https://starsraw.afpc.randolph.af.mil/SASStoredProcess/do"',
+      'axios_url_priority_hist': '"https://starsraw.afpc.randolph.af.mil/SASStoredProcess/do"',
+      'AXIOS_PROGRAM':'"/STARS_PROJECTS/Reports/Priority_Manning/StoredProcess/Priority_Manning"',   
+    }),
     new UglifyJsPlugin({
       uglifyOptions: {
         compress: {

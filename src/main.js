@@ -37,13 +37,74 @@ fontawesome.library.add(faSpinner,faQuestionCircle, faInfoCircle, faArrowUp, faA
 
 import { store } from '@/store/store'
 
-Vue.config.productionTip = false
+if (store.state.sanity != check_portal){
+	var querystring = require('querystring');
+	const formData = {
+		_PROGRAM: AXIOS_PROGRAM,
+		nPage:"sanity"
+	}
+	var myData = axios.post(axios_url, querystring.stringify(formData))
+	.then(function(response){
+		var mySanity = response.data.sanity;
+		if (mySanity != 'INSANE'){
+				window.location.href = 'https://starsraw.afpc.randolph.af.mil';
+		} else {
+				store.state.sanity = 'INSANE'
+		}
+	}).then(function(){
+		Vue.config.productionTip = false
 
-/* eslint-disable no-new */
-new Vue({
-  el: '#app',
-  router,
-  store,
-  components: { App },
-  template: '<App/>'
-})
+		/* eslint-disable no-new */
+		new Vue({
+		  el: '#app',
+		  router,
+		  store,
+		  components: { App },
+		  template: '<App/>'
+		})
+	}).catch(function(error){
+		console.log(error)
+		window.location.href = 'https://starsraw.afpc.randolph.af.mil';
+	})
+} else {
+	Vue.config.productionTip = false
+
+	/* eslint-disable no-new */
+	new Vue({
+	  el: '#app',
+	  router,
+	  store,
+	  components: { App },
+	  template: '<App/>'
+	})
+}
+
+// router.beforeEach((to, from, next) => {
+// 	 //PROD:
+//    	//if (store.state.sanity == "SANE"){
+// 	 	if (store.state.sanity != check_portal){
+// 	 	  	var querystring = require('querystring');
+//           	const formData = {
+//             	_PROGRAM: AXIOS_PROGRAM,
+//             	nPage:"sanity"
+//           	}
+//           	var myData = axios.post(axios_url, querystring.stringify(formData))
+//           	.then(function(response){
+//             	var mySanity = response.data.sanity;
+//             	if (mySanity != 'INSANE'){
+//               		window.location.href = 'https://starsraw.afpc.randolph.af.mil';
+//             	} else {
+//               		store.state.sanity = 'INSANE'
+//               		next();
+//               		//alert('AUTHENTICATED')
+//             	}
+//           	}).catch(function(error){
+//             	console.log(error)
+//             	window.location.href = 'https://starsraw.afpc.randolph.af.mil';
+//           	})
+//         } else {
+//           next();
+//         }
+// 	//}
+// })
+

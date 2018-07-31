@@ -538,18 +538,40 @@ import largeBarChart from '@/components/largeBarChart'
         },
         mounted() {
             console.log('mounted')
+            var querystring = require('querystring');
 
-            //load local data (works for both dev and prod) 
-            d3.json('./data/priority_data.json',(error,data) => {
-                this.data = data.data;   
-                this.asDate = data.ASOFDATE;
+            const formData = {
+              '_PROGRAM': AXIOS_PROGRAM,
+              'nPage':"getData",
+              'dataName': "priority_data.json",
+            }
+            axios.defaults.headers.get['Accepts'] = 'application/json'
+            axios.post(axios_url_priority_data, querystring.stringify(formData)).then(response => { 
+                this.data = response.data.data;   
+                this.asDate = response.data.ASOFDATE;
                 //apply formats so we have decoded variables globally
                 for (let i = 0; i < this.data.length; i++) {
                     this.data[i].majcom = formats.majFormat[this.data[i].majcom]
                     this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
                 }
+                console.log(this.data) 
                 renderCharts()
-            })
+            }).catch(function (error) {
+                console.log('AXIOS ERROR')
+                console.log(error.response);
+            });
+
+            //load local data (works for both dev and prod) 
+            // d3.json('./data/priority_data.json',(error,data) => {
+            //     this.data = data.data;   
+            //     this.asDate = data.ASOFDATE;
+            //     //apply formats so we have decoded variables globally
+            //     for (let i = 0; i < this.data.length; i++) {
+            //         this.data[i].majcom = formats.majFormat[this.data[i].majcom]
+            //         this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
+            //     }
+            //     renderCharts()
+            // })
 
             var renderCharts = () => {
 

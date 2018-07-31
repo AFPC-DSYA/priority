@@ -51,9 +51,10 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     new webpack.DefinePlugin({
       'check_portal': '"SANE"',
       'axios_url': '"http://localhost:5005/api"',
-      'axios_url_enl_man': '"http://localhost:5005/api/enlisted_post"',
-      'axios_url_off_man': '"http://localhost:5005/api/officer_post"',
-      'axios_url_adman': '"http://localhost:5005/api/admanning_post"'
+      'axios_url_priority_data': '"http://localhost:5005/api/priority_data"',
+      'axios_url_priority_data_afsc': '"http://localhost:5005/api/priority_data_afsc"',
+      'axios_url_priority_hist': '"http://localhost:5005/api/priority_hist"',
+      'AXIOS_PROGRAM':'"/STARS_PROJECTS/Reports/Priority_Manning/StoredProcess/Priority_Manning"', 
     }),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.
