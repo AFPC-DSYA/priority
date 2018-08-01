@@ -241,6 +241,49 @@
                 </div>
             </div>
         </div>
+        <v-card>
+            <v-card-title>
+                <h4>Filtered Records</h4>
+                <v-spacer></v-spacer>
+                <v-text-field
+                    v-model="search"
+                    append-icon="search"
+                    label="search"
+                    single-line
+                    hide-details>
+                </v-text-field>
+            </v-card-title>
+            <v-data-table
+                :headers="columns"
+                :items="items"
+                :search="search">
+                <template slot="items" slot-scope="props">
+                    <td>{{props.item.unit}}</td>
+                    <td>{{props.item.mpf}}</td>
+                    <td>{{props.item.majcom}}</td>
+                    <td>{{props.item.pascode}}</td>
+                    <td>{{props.item.asgncurr}}</td>
+                    <td>{{props.item.authcurr}}</td>
+                    <td>{{props.item.stpcurr}}</td>
+                    <td>{{props.item.percentcurr}}</td>
+                    <td>{{ props.item.asgn3 }}</td>
+                    <td>{{ props.item.auth3 }}</td>
+                    <td>{{ props.item.stp3 }}</td>
+                    <td>{{ props.item.percent3 }}</td>
+                    <td>{{ props.item.asgn6 }}</td>
+                    <td>{{ props.item.auth6 }}</td>
+                    <td>{{ props.item.stp6 }}</td>
+                    <td>{{ props.item.percent6 }}</td>
+                    <td>{{ props.item.asgn9 }}</td>
+                    <td>{{ props.item.auth9 }}</td>
+                    <td>{{ props.item.stp9 }}</td>
+                    <td>{{ props.item.percent9 }}</td>
+                </template>
+                <v-alert slot="no-results" :value="true" color="error" icon="warning">
+                    Your search for "{{ search }}" found no results.
+                </v-alert>
+            </v-data-table>
+        </v-card>
         </div>
         </transition-group>
     </div>
@@ -266,6 +309,7 @@ import largeBarChart from '@/components/largeBarChart'
                 period: "curr",
                 searchMajcom: "",
                 searchBase: "",
+                search: "",
                 loaded: false ,
                 baseColor: chartSpecs.baseChart.color,
                 majcomColor: chartSpecs.majcomChart.color,
@@ -278,7 +322,6 @@ import largeBarChart from '@/components/largeBarChart'
                 label: {
                     'margin-left': '10px',
                 },
-                items: [],
                 dataTable: {},
                 sortedVar: '',
                 sortOrder: d3.ascending,
@@ -287,26 +330,26 @@ import largeBarChart from '@/components/largeBarChart'
                 unitColorScale: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color),
                 chartSpecs: chartSpecs,
                 columns: [ 
-                    {title: 'Unit', field: 'unit', sort_state: "ascending", selected: true, width: "20%"},
-                    {title: 'MPF', field: 'mpf', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'MAJCOM', field: 'majcom', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'PASCODE', field: 'pascode', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Asgn', field: 'asgncurr', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Auth', field: 'authcurr', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'STP', field: 'stpcurr', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Percent', field: 'percentcurr', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Asgn3', field: 'asgn3', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Auth3', field: 'auth3', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'STP3', field: 'stp3', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Percent3', field: 'percent3', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Asgn6', field: 'asgn6', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Auth6', field: 'auth6', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'STP6', field: 'stp6', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Percent6', field: 'percent6', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Asgn9', field: 'asgn9', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Auth9', field: 'auth9', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'STP9', field: 'stp9', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Percent9', field: 'percent9', sort_state: "descending", selected: false, width: "10%"},
+                    {text: 'Unit', value: 'unit', sortable: true},
+                    {text: 'MPF', value: 'mpf', sortable: true},
+                    {text: 'MAJCOM', value: 'majcom', sortable: true},
+                    {text: 'PASCODE', value: 'pascode', sortable: true},
+                    {text: 'Asgn', value: 'asgncurr', sortable: true},
+                    {text: 'Auth', value: 'authcurr', sortable: true},
+                    {text: 'STP', value: 'stpcurr', sortable: true},
+                    {text: 'Percent', value: 'percentcurr', sortable: true},
+                    {text: 'Asgn3', value: 'asgn3', sortable: true},
+                    {text: 'Auth3', value: 'auth3', sortable: true},
+                    {text: 'STP3', value: 'stp3', sortable: true},
+                    {text: 'Percent3', value: 'percent3', sortable: true},
+                    {text: 'Asgn6', value: 'asgn6', sortable: true},
+                    {text: 'Auth6', value: 'auth6', sortable: true},
+                    {text: 'STP6', value: 'stp6', sortable: true},
+                    {text: 'Percent6', value: 'percent6', sortable: true},
+                    {text: 'Asgn9', value: 'asgn9', sortable: true},
+                    {text: 'Auth9', value: 'auth9', sortable: true},
+                    {text: 'STP9', value: 'stp9', sortable: true},
+                    {text: 'Percent9', value: 'percent9', sortable: true},
                 ]
             }
         },
@@ -325,6 +368,9 @@ import largeBarChart from '@/components/largeBarChart'
           },
           itemDim() {
               return this.ndx.dimension(function(d) {return d});
+          },
+          items: function() {
+                return this.itemDim.top(Infinity);
           },
           ylabel: function() {
             if (_.includes(this.selected,"percent")) {
@@ -451,19 +497,6 @@ import largeBarChart from '@/components/largeBarChart'
                     percent9: 0,
                     stpPercent9: 0,
                 }
-            },
-            setTableData: function() {
-                this.items = this.itemDim.top(Infinity).map((d) => {
-                    return {
-                        pascode: d.pascode,
-                        unit: d.unit,
-                        majcom: d.majcom,
-                        mpf: d.mpf,
-                        asgn: d.asgn,
-                        auth: d.auth,
-                        stp: d.stp
-                    }
-                }) 
             },
             sortColumn: function(col) {
                 for (let i = 0; i < this.columns.length; i++) {
