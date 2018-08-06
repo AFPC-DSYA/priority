@@ -31,9 +31,9 @@ import axios from 'axios'
 axios.defaults.headers.get['Accepts'] = 'applicaton/json'
 
 //import bootstrap
-import 'bootstrap'
-import 'bootstrap/dist/css/bootstrap.min.css'
-import '../node_modules/mdbootstrap/css/mdb.min.css'
+//import 'bootstrap'
+//import 'bootstrap/dist/css/bootstrap.min.css'
+//import '../node_modules/mdbootstrap/css/mdb.min.css'
 //import dc styling globally
 import '../node_modules/dc/dc.css'
 

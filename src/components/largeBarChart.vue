@@ -15,7 +15,9 @@ USAGE:
                    :colorScale="unitColorScale"
                    :colorFunction="unitColorFun"
                    :title="'Units'"
-                   :loaded="loaded">
+                   :loaded="loaded"
+                   :sortBy="value"
+                   :orderBy="desc">
     </largeBarChart>
 
 Props:
@@ -35,13 +37,15 @@ Props:
     colorFunction: function that tells chart how to choose colors for different bars  
     title: string for chart title
     loaded: Boolean indicating where data has been loaded
+    sortBy: key or value.  If this prop is used, you must also use orderBy
+    orderBy: asc or desc.  If this prop is used, you must also use sortBy
 
 ###########################################-->
 <template>
     <div class ="row">
         <div :id="this.id + 'wrapper'" class="col-12">
             <div :id="this.id + 'title'" class="row">
-                <h3 class="col-12">{{ title }} 
+                <h3 class="col-12 mb-0 pb-0">{{ title }} 
                     <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
                     <span data-toggle="tooltip" 
                           data-placement="bottom"
@@ -143,6 +147,14 @@ export default {
         loaded: {
             type: Boolean,
             required: true,
+        },
+        sortBy: {
+            type: String,
+            required: false,
+        },
+        orderBy: {
+            type: String,
+            required: false,
         }
     },
     components: {
@@ -160,6 +172,12 @@ export default {
         },
         maxVal: function() {
             return this.minMax[1]
+        },
+        sortedBy: function() {
+            return this.sortBy || 'value';
+        },
+        orderedBy: function() {
+            return this.orderBy || 'desc';
         },
         xScale: function() {
             return d3.scale.ordinal()
@@ -221,13 +239,41 @@ export default {
                 }
             }
         },
-        dataAll: function() {
-            if (this.allSort == true) {
-                return this.removeEmptyBins(this.group).all().sort((a,b) => (b.value[this.selected] === undefined ? b.value : b.value[this.selected]) - (a.value[this.selected] === undefined ? a.value : a.value[this.selected]));
+        sortKey: function(order) {
+            console.log(order)
+            if (order == 'desc') {
+                return this.removeEmptyBins(this.group).all().sort((a,b) => b.key.localeCompare(a.key));
             } else {
                 return this.removeEmptyBins(this.group).all().sort((a,b) => a.key.localeCompare(b.key));
             }
         },
+        sortValue: function(order) {
+            console.log(order)
+            if (order == 'desc') {
+                return this.removeEmptyBins(this.group).all().sort((a,b) => (b.value[this.selected] === undefined ? b.value : b.value[this.selected]) - (a.value[this.selected] === undefined ? a.value : a.value[this.selected]));
+            } else {
+                return this.removeEmptyBins(this.group).all().sort((a,b) => (a.value[this.selected] === undefined ? a.value : a.value[this.selected]) - (b.value[this.selected] === undefined ? b.value : b.value[this.selected]));
+            }
+            
+        },
+        dataAll: function() {    
+            //allSort toggles between key and value sort 
+            if (this.allSort == true) {
+                //sortedBy is initial sort type (key or value), orderedBy is ascending or descending
+                if (this.sortedBy == "value") {
+                    return this.sortValue(this.orderedBy);
+                } else {
+                    return this.sortKey(this.orderedBy);
+                }
+            } else {
+                if (this.sortedBy == "value") {
+                    return this.sortKey('asc');
+                } else {
+                    return this.sortValue('desc');
+                }
+            }
+        },
+
         filterAll: function(all) {
              //all is boolean. true for all, false for partial
              console.log('filterAll: no filters')
@@ -409,17 +455,19 @@ export default {
                                         .selectAll("h3")
                                         .append("div")
                                         .attr("id",this.id + "slider-container")
-                                        .style("display","inline-block");
+                                        .style("display","inline-block")
+                                        .classed("mb-0 pb-0",true);
 
                 sliderContainer.append("label")
                    .attr("id",this.id + "slider-label")
+                   .classed("pt-0 pb-0 mt-0 mb-0",true)
                    .text("Bars Displayed: " + Number(this.lastBar + 1))
                    .style("font-size","12px");
 
                 sliderContainer.append("input")
                                .attr("id", this.id + "slider")
                                .attr("type","range")
-                               .classed("form-control slider",true)
+                               .classed("form-control slider pt-0 pb-0 mt-0 mb-0",true)
                                .attr("min",1)
                                .attr("max",Math.min(this.dataAll().length,60))
                                .attr("value",this.data.length)
@@ -449,8 +497,10 @@ export default {
                             .attr("id",this.id + "svg")
                             .attr("width",this.w + this.margin.left + this.margin.right)
                             .attr("height",this.h + this.margin.top + this.margin.bottom)
+                            .classed("mt-0 pt-0",true)
                             .append("g")
                             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+
                             
                 var firstBars = svg.append("g")
                     .attr("id", this.id + "chart")

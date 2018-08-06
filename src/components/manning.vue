@@ -1,292 +1,177 @@
 <template>
-    <div class="container">
-        <div class="row">
-            <h1 class="col">Priority Units</h1>
-            <div class="col-4 text-right">
-                Data as of: <span style="font-weight:bold; color: steelblue">{{asDate}}</span>
-            </div>
-        </div>
+    <v-container fluid>
+        <v-layout row>
+            <h1 class="display-1">Priority Units</h1>
+            <v-spacer></v-spacer>
+            <v-flex xs4>
+                <v-layout justify-end row>
+                    Data as of: <span style="font-weight:bold; color: steelblue">{{asDate}}</span>
+                </v-layout>
+                <v-layout justify-end row>
+                    <v-btn id="download" color="primary">Download Raw Data</v-btn>
+                    <v-btn id="resetAllBtn" color="error" @click="resetAll">Reset All</v-btn>
+                </v-layout>
+            </v-flex>
+        </v-layout>
         <transition-group name="fade" mode="out-in">
-        <loader v-show="!loaded" key="loader"></loader>
-        <div v-show="loaded" key="content">
-        <div class="row pt-2"> 
-            <div id="radioSelect" class="col form-group">
-               <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio1" value="percent" v-model="type" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Percentage</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="type" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Assigned</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio3" value="auth" v-model="type" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Authorized</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="type" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">STP</span>
-                </label>
-                <span data-toggle="tooltip" 
-                      data-placement="right"
-                      title="Use the radio buttons to toggle between manning percentage, assigned, authorized, and STP (student, transient, personnel holdee). The charts show the selected data element.">
-                    <fontAwesomeIcon icon="info-circle" 
-                                     >
-                    </fontAwesomeIcon>
-                </span>
-            </div>
-            <div class="col-auto">
-                <button type="button" id="download"
-                                class="btn btn-info btn-rounded btn-sm waves-effect" 
-                                >Download Raw Data</button>
-                <button type="button" 
-                        class="btn btn-danger btn-rounded btn-sm waves-effect" 
-                        @click="resetAll">Reset All</button>
-            </div>
-        </div>
-        <div class="row">
-            <div id="radioPeriod" class="col form-group">
-               <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio5" value="curr" v-model="period" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Current</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio6" value="3" v-model="period" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">3 Months</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio7" value="6" v-model="period" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">6 Months</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio8" value="9" v-model="period" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">9 Months</span>
-                </label>
-                <span data-toggle="tooltip" 
-                      data-placement="right"
-                      title="Use the radio buttons to toggle between current data and projected data. The projected data show snapshots at 3, 6, or 9 months from the date in the top right corner of the page.">
-                    <fontAwesomeIcon icon="info-circle" 
-                                     >
-                    </fontAwesomeIcon>
-                </span>
-            </div>
-            <div class="col-auto" id="legend">
-                <p class="mb-0 pb-0 pl-4" style="font-size:20px">Legend</p> 
-                <ul class="mt-0 pt-0" style="list-style-type: none">
-                    <li>
-                        <span :style="[{'background-color': '#2ca25f'},rect]"></span>
-                        <span :style="label">Manning >= 95%</span>
-                    </li> 
-                    <li>
-                        <span :style="[{'background-color': '#d62728'},rect]"></span>
-                        <span :style="label">Manning < 95%</span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-auto">
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-auto">
-                Assigned:
-                <span id="asgn"></span>
-            </div>
-            <div class="col-auto">
-                STP:
-                <span id="stp"></span>
-            </div>
-            <div class="col-auto">
-                Authorized:
-                <span id="auth"></span>
-            </div>
-            <div class="col-auto">
-                Manning Percent:
-                <span id="percent"></span>
-            </div>
-        </div>
-        <div class="row">
-            <div id="cat" class="col-4">
-                <div id="dc-cat-rowchart">
-                    <h3 style="display: inline-block">Category 
-                    <button type="button" 
-                            class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="visibility: hidden"
-                            @click="resetChart('dc-cat-rowchart')">Reset</button>
-                    </h3>
-                </div>
-            </div>
-            <div id="majcom" class="col-8">
-                <div id="dc-majcom-barchart">
-                    <h3>MAJCOM <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                    <button type="button" 
-                            class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="visibility: hidden"
-                            @click="resetChart('dc-majcom-barchart')">Reset</button>
-                    </h3>
-                    <!--<searchBox-->
-                        <!--v-model:value="searchMajcom"-->
-                        <!--size="3"-->
-                        <!--label="Search MAJCOM"-->
-                        <!--@sub="submit(searchMajcom,'dc-majcom-barchart')"-->
-                        <!--button="true"-->
-                        <!--:color="majcomColor"-->
-                        <!--:btnColor="majcomColor"-->
-                    <!--</searchBox>-->
-                    <!-- <form class="form-inline">
-                        <div class="form-group">
-                            <input id="searchMajcom" v-model="searchMajcom" placeholder="Search MAJCOM" @keydown.enter="submit(searchMajcom,'dc-majcom-barchart')">
-                            <button class="btn btn-primary btn-sm" @click.stop.prevent="submit(searchMajcom,'dc-majcom-barchart')">Submit</button>
-                        </div>
-                    </form> -->
-                    <!--<div id="app" class="container">-->
-                            <!--<autocomplete :suggestions="suggestions" v-model="searchMajcom"></autocomplete>-->
-                    <!--</div>-->
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div id="base" class="col-12">
-                <div id="dc-base-barchart">
-                    <h3>Base <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                    <button type="button" 
-                            class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="visibility: hidden"
-                            @click="resetChart('dc-base-barchart')">Reset</button>
-                    </h3>
-                    <!--<searchBox-->
-                        <!--v-model:value="searchBase"-->
-                        <!--size="3"-->
-                        <!--label="Search Installation"-->
-                        <!--@sub="submit(searchBase,'dc-base-barchart')"-->
-                        <!--button="true"-->
-                        <!--:color="baseColor"-->
-                        <!--:btnColor="baseColor"-->
-                    <!--</searchBox>-->
-                     <!--<form class="form-inline">-->
-                        <!--<div class="form-group">-->
-                            <!--<input id="searchBase" v-model="searchBase" placeholder="Search Installation" @keydown.enter="submit(searchBase,'dc-base-barchart')">-->
-                            <!--<button class="btn btn-primary btn-sm" @click.stop.prevent="submit(searchBase,'dc-base-barchart')">Submit</button>-->
-                        <!--</div>-->
-                    <!--</form> -->
-                </div>
-            </div>
-        </div>
-        <largeBarChart :id="'unit'"
-                       :dimension="unitDim"
-                       :group="unitGroup"
-                       :groupAll="unitGroup.all()"
-                       :widthFactor="0.90"
-                       :aspectRatio="chartSpecs.unitChart.aspectRatio"
-                       :minHeight="chartSpecs.unitChart.minHeight"
-                       :selected="selected"
-                       :ylabel="ylabel"
-                       :reducer="manningAdd"
-                       :accumulator="manningInitial"
-                       :numBars="30"
-                       :margin="chartSpecs.unitChart.margins"
-                       :colorScale="unitColorScale"
-                       :colorFunction="unitColorFun"
-                       :title="'Units'"
-                       :loaded="loaded">
-        </largeBarChart>
-        <div class="row">
-            <div class="col-12">
-                <h4>Filtered Records
-                    <span data-toggle="tooltip" 
-                          data-placement="right"
-                          title="In the follow table, click the column headers to sort by the column and toggle between ascending or descending. Use the scroll bar at the bottom of the table to see additional columns. Click the Next and Prev buttons at the bottom of the table to see additional rows.">
-                        <fontAwesomeIcon icon="info-circle" 
-                                         size="xs">
-                        </fontAwesomeIcon>
-                    </span>
-                
-                </h4>
-                <span>
-                    Showing <span id="beginHead"></span>-<span id="endHead"></span> of <span id="sizeHead"></span>
-                </span>
-                <div style="overflow-x: scroll;">
-                    <table class="table table-hover table-bordered" 
-                           id="dc-data-table">
-                        <thead>
-                            <tr class="table-header">
-                                <th v-for="header in columns"
-                                    :class="{sortedColumn: header.selected}"
-                                    style="cursor: pointer;"
-                                    @click="sortColumn(header)"
-                                    width="header.width*width">
-                                    {{header.title}}
-                                    <span v-show="header.selected">
-                                        <font-awesome-icon v-show="header.sort_state === 'ascending'" icon="arrow-up"></font-awesome-icon>
-                                        <font-awesome-icon v-show="header.sort_state === 'descending'" icon="arrow-down"></font-awesome-icon>
-                                    </span>
-                                </th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-                <div class="col-12" id="paging">
-                    Showing <span id="begin"></span>-<span id="end"></span> of <span id="size"></span>
-                    <button id="Prev" class="btn btn-sm btn-secondary" value="Prev">Prev</button>
-                    <button id="Next" class="btn btn-sm btn-secondary" value="Next">Next</button>
-                </div>
-            </div>
-        </div>
-        <v-card>
-            <v-card-title>
-                <h4>Filtered Records</h4>
-                <v-spacer></v-spacer>
-                <v-text-field
-                    v-model="search"
-                    append-icon="search"
-                    label="search"
-                    single-line
-                    hide-details>
-                </v-text-field>
-            </v-card-title>
-            <v-data-table
-                :headers="columns"
-                :items="items"
-                :search="search">
-                <template slot="items" slot-scope="props">
-                    <td>{{props.item.unit}}</td>
-                    <td>{{props.item.mpf}}</td>
-                    <td>{{props.item.majcom}}</td>
-                    <td>{{props.item.pascode}}</td>
-                    <td>{{props.item.asgncurr}}</td>
-                    <td>{{props.item.authcurr}}</td>
-                    <td>{{props.item.stpcurr}}</td>
-                    <td>{{props.item.percentcurr}}</td>
-                    <td>{{ props.item.asgn3 }}</td>
-                    <td>{{ props.item.auth3 }}</td>
-                    <td>{{ props.item.stp3 }}</td>
-                    <td>{{ props.item.percent3 }}</td>
-                    <td>{{ props.item.asgn6 }}</td>
-                    <td>{{ props.item.auth6 }}</td>
-                    <td>{{ props.item.stp6 }}</td>
-                    <td>{{ props.item.percent6 }}</td>
-                    <td>{{ props.item.asgn9 }}</td>
-                    <td>{{ props.item.auth9 }}</td>
-                    <td>{{ props.item.stp9 }}</td>
-                    <td>{{ props.item.percent9 }}</td>
-                </template>
-                <v-alert slot="no-results" :value="true" color="error" icon="warning">
-                    Your search for "{{ search }}" found no results.
-                </v-alert>
-            </v-data-table>
-        </v-card>
-        </div>
+            <loader v-show="!loaded" key="loader"></loader>
+            <v-container fluid v-show="loaded" key="content" class="pt-0">
+                <v-layout row>
+                    <v-flex>
+                        <v-layout row> 
+                            <v-radio-group id="radioSelect" v-model="type" height="0px" @click="radioButton" row>
+                                <v-radio v-for="(item,index) in typeNames" 
+                                            color="primary"
+                                            :key="item" 
+                                            :label="item" 
+                                            :value="typeElements[index]"></v-radio>
+                            </v-radio-group>
+                        </v-layout>
+                        <v-layout row>
+                            <v-radio-group id="radioPeriod" v-model="period" height="0px" @click="radioButton" row>
+                                <v-radio v-for="(item,index) in periodNames" 
+                                            color="primary"
+                                            :key="item" 
+                                            :label="item" 
+                                            :value="periodElements[index]"></v-radio>
+                            </v-radio-group>
+                        </v-layout>
+                    </v-flex>
+                    <v-flex id="legend">
+                        <p class="mb-0 pb-0 pl-4" style="font-size:20px">Legend</p> 
+                        <ul class="mt-0 pt-0" style="list-style-type: none">
+                            <li>
+                                <span :style="[{'background-color': '#2ca25f'},rect]"></span>
+                                <span :style="label">Manning >= 95%</span>
+                            </li> 
+                            <li>
+                                <span :style="[{'background-color': '#d62728'},rect]"></span>
+                                <span :style="label">Manning < 95%</span>
+                            </li>
+                        </ul>
+                    </v-flex>
+                </v-layout>
+                <v-layout row>
+                    <div class="pr-4">
+                        Assigned:
+                        <span id="asgn"></span>
+                    </div>
+                    <div class="pr-4">
+                        STP:
+                        <span id="stp"></span>
+                    </div>
+                    <div class="pr-4">
+                        Authorized:
+                        <span id="auth"></span>
+                    </div>
+                    <div class="pr-4">
+                        Manning Percent:
+                        <span id="percent"></span>
+                    </div>
+                </v-layout>
+                <v-layout row>
+                    <v-flex id="cat" xs4>
+                        <v-card>
+                            <div id="dc-cat-rowchart">
+                                <h3 class="headline">Category 
+                                <v-btn small color="error" class="reset" 
+                                        style="visibility: hidden"
+                                        @click="resetChart('dc-cat-rowchart')">Reset</v-btn>
+                                </h3>
+                            </div>
+                        </v-card>
+                    </v-flex>
+                    <v-flex id="majcom" xs8>
+                        <v-card>
+                            <div id="dc-majcom-barchart">
+                                <h3 class="headline">MAJCOM <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                                <v-btn small color="error" class="reset" 
+                                        style="visibility: hidden"
+                                        @click="resetChart('dc-majcom-barchart')">Reset</v-btn>
+                                </h3>
+                            </div>
+                        </v-card>
+                    </v-flex>
+                </v-layout>
+                <v-layout row>
+                    <v-flex id="base" xs12>
+                        <v-card>
+                            <div id="dc-base-barchart">
+                                <h3 class="headline">Base <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                                <v-btn small color="error" class="reset" 
+                                        style="visibility: hidden"
+                                        @click="resetChart('dc-base-barchart')">Reset</v-btn>
+                                </h3>
+                            </div>
+                        </v-card>
+                    </v-flex>
+                </v-layout>
+                <largeBarChart :id="'unit'"
+                               :dimension="unitDim"
+                               :group="unitGroup"
+                               :groupAll="unitGroup.all()"
+                               :widthFactor="0.90"
+                               :aspectRatio="chartSpecs.unitChart.aspectRatio"
+                               :minHeight="chartSpecs.unitChart.minHeight"
+                               :selected="selected"
+                               :ylabel="ylabel"
+                               :reducer="manningAdd"
+                               :accumulator="manningInitial"
+                               :numBars="30"
+                               :margin="chartSpecs.unitChart.margins"
+                               :colorScale="unitColorScale"
+                               :colorFunction="unitColorFun"
+                               :title="'Units'"
+                               :loaded="loaded">
+                </largeBarChart>
+                <v-layout row>
+                    <v-card>
+                        <v-card-title>
+                            <h4>Filtered Records</h4>
+                            <v-spacer></v-spacer>
+                            <v-text-field
+                                v-model="search"
+                                append-icon="search"
+                                label="search"
+                                single-line
+                                hide-details>
+                            </v-text-field>
+                        </v-card-title>
+                        <v-data-table
+                            :headers="columns"
+                            :items="items"
+                            :search="search">
+                            <template slot="items" slot-scope="props">
+                                <td>{{props.item.unit}}</td>
+                                <td>{{props.item.mpf}}</td>
+                                <td>{{props.item.majcom}}</td>
+                                <td>{{props.item.pascode}}</td>
+                                <td>{{props.item.asgncurr}}</td>
+                                <td>{{props.item.authcurr}}</td>
+                                <td>{{props.item.stpcurr}}</td>
+                                <td>{{props.item.percentcurr}}</td>
+                                <td>{{ props.item.asgn3 }}</td>
+                                <td>{{ props.item.auth3 }}</td>
+                                <td>{{ props.item.stp3 }}</td>
+                                <td>{{ props.item.percent3 }}</td>
+                                <td>{{ props.item.asgn6 }}</td>
+                                <td>{{ props.item.auth6 }}</td>
+                                <td>{{ props.item.stp6 }}</td>
+                                <td>{{ props.item.percent6 }}</td>
+                                <td>{{ props.item.asgn9 }}</td>
+                                <td>{{ props.item.auth9 }}</td>
+                                <td>{{ props.item.stp9 }}</td>
+                                <td>{{ props.item.percent9 }}</td>
+                            </template>
+                            <v-alert slot="no-results" :value="true" color="error" icon="warning">
+                                Your search for "{{ search }}" found no results.
+                            </v-alert>
+                        </v-data-table>
+                    </v-card>
+                </v-layout>
+            </v-container>
         </transition-group>
-    </div>
+    </v-container>
 </template>
 
 <script>
@@ -306,7 +191,11 @@ import largeBarChart from '@/components/largeBarChart'
                 data: [],
                 asDate: '',
                 type: "percent",
+                typeNames: ["Percentage","Assigned","Authorized","STP"],
+                typeElements: ["percent","asgn","auth","stp"],
                 period: "curr",
+                periodNames: ["Current","3 Months","6 Months","9 Months"],
+                periodElements: ["curr","3","6","9"],
                 searchMajcom: "",
                 searchBase: "",
                 search: "",
@@ -392,6 +281,11 @@ import largeBarChart from '@/components/largeBarChart'
           colorVar: function() {
             return 'percent'+this.period;
           },
+        },
+        watch: {
+            selected: function() {
+                console.log(this.selected)
+            }   
         },
         methods: {
             dcRowColorFun: function(d,i) {
