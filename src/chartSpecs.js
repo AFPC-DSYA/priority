@@ -8,7 +8,7 @@ var baseChart = {
 var unitChart = {
     minHeight: 260,
     aspectRatio: 3.2,
-    margins: {top: 10, left: 85, right: 30, bottom: 140},
+    margins: {top: 10, left: 50, right: 30, bottom: 140},
     color: ["#2ca25f","#d62728"]
 }
 

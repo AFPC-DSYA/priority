@@ -122,17 +122,18 @@
                                :colorScale="unitColorScale"
                                :colorFunction="unitColorFun"
                                :title="'Units'"
-                               :loaded="loaded">
+                               :loaded="loaded"
+                               :vuetify="true">
                 </largeBarChart>
                 <v-layout row>
                     <v-card>
                         <v-card-title>
-                            <h4>Filtered Records</h4>
+                            <h4 class="headline">Filtered Records</h4>
                             <v-spacer></v-spacer>
                             <v-text-field
                                 v-model="search"
                                 append-icon="search"
-                                label="search"
+                                label="Search"
                                 single-line
                                 hide-details>
                             </v-text-field>
@@ -140,28 +141,29 @@
                         <v-data-table
                             :headers="columns"
                             :items="items"
+                            item-key="text"
                             :search="search">
                             <template slot="items" slot-scope="props">
-                                <td>{{props.item.unit}}</td>
+                                <td style="min-width: 200px;">{{props.item.unit}}</td>
                                 <td>{{props.item.mpf}}</td>
                                 <td>{{props.item.majcom}}</td>
                                 <td>{{props.item.pascode}}</td>
                                 <td>{{props.item.asgncurr}}</td>
                                 <td>{{props.item.authcurr}}</td>
                                 <td>{{props.item.stpcurr}}</td>
-                                <td>{{props.item.percentcurr}}</td>
+                                <td>{{ String(Math.round(props.item.percentcurr*1000)/10) + '%' }}</td>
                                 <td>{{ props.item.asgn3 }}</td>
                                 <td>{{ props.item.auth3 }}</td>
                                 <td>{{ props.item.stp3 }}</td>
-                                <td>{{ props.item.percent3 }}</td>
+                                <td>{{ String(Math.round(props.item.percent3*1000)/10) + '%' }}</td>
                                 <td>{{ props.item.asgn6 }}</td>
                                 <td>{{ props.item.auth6 }}</td>
                                 <td>{{ props.item.stp6 }}</td>
-                                <td>{{ props.item.percent6 }}</td>
+                                <td>{{ String(Math.round(props.item.percent6*1000)/10) + '%' }}</td>
                                 <td>{{ props.item.asgn9 }}</td>
                                 <td>{{ props.item.auth9 }}</td>
                                 <td>{{ props.item.stp9 }}</td>
-                                <td>{{ props.item.percent9 }}</td>
+                                <td>{{ String(Math.round(props.item.percent9*1000)/10) + '%' }}</td>
                             </template>
                             <v-alert slot="no-results" :value="true" color="error" icon="warning">
                                 Your search for "{{ search }}" found no results.
@@ -219,26 +221,26 @@ import largeBarChart from '@/components/largeBarChart'
                 unitColorScale: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color),
                 chartSpecs: chartSpecs,
                 columns: [ 
-                    {text: 'Unit', value: 'unit', sortable: true},
-                    {text: 'MPF', value: 'mpf', sortable: true},
-                    {text: 'MAJCOM', value: 'majcom', sortable: true},
-                    {text: 'PASCODE', value: 'pascode', sortable: true},
-                    {text: 'Asgn', value: 'asgncurr', sortable: true},
-                    {text: 'Auth', value: 'authcurr', sortable: true},
-                    {text: 'STP', value: 'stpcurr', sortable: true},
-                    {text: 'Percent', value: 'percentcurr', sortable: true},
-                    {text: 'Asgn3', value: 'asgn3', sortable: true},
-                    {text: 'Auth3', value: 'auth3', sortable: true},
-                    {text: 'STP3', value: 'stp3', sortable: true},
-                    {text: 'Percent3', value: 'percent3', sortable: true},
-                    {text: 'Asgn6', value: 'asgn6', sortable: true},
-                    {text: 'Auth6', value: 'auth6', sortable: true},
-                    {text: 'STP6', value: 'stp6', sortable: true},
-                    {text: 'Percent6', value: 'percent6', sortable: true},
-                    {text: 'Asgn9', value: 'asgn9', sortable: true},
-                    {text: 'Auth9', value: 'auth9', sortable: true},
-                    {text: 'STP9', value: 'stp9', sortable: true},
-                    {text: 'Percent9', value: 'percent9', sortable: true},
+                    {text: 'Unit', align: 'left', value: 'unit', sortable: true, width: "300px"},
+                    {text: 'MPF', value: 'mpf', sortable: true, width: "300px"},
+                    {text: 'MAJCOM', value: 'majcom', sortable: true, width: "300px"},
+                    {text: 'PASCODE', value: 'pascode', sortable: true, width: "100px"},
+                    {text: 'Asgn', value: 'asgncurr', sortable: true, width: "50px"},
+                    {text: 'Auth', value: 'authcurr', sortable: true, width: "50px"},
+                    {text: 'STP', value: 'stpcurr', sortable: true, width: "50px"},
+                    {text: 'Percent', value: 'percentcurr', sortable: true, width: "50px"},
+                    {text: 'Asgn3', value: 'asgn3', sortable: true, width: "50px"},
+                    {text: 'Auth3', value: 'auth3', sortable: true, width: "50px"},
+                    {text: 'STP3', value: 'stp3', sortable: true, width: "50px"},
+                    {text: 'Percent3', value: 'percent3', sortable: true, width: "50px"},
+                    {text: 'Asgn6', value: 'asgn6', sortable: true, width: "50px"},
+                    {text: 'Auth6', value: 'auth6', sortable: true, width: "50px"},
+                    {text: 'STP6', value: 'stp6', sortable: true, width: "50px"},
+                    {text: 'Percent6', value: 'percent6', sortable: true, width: "50px"},
+                    {text: 'Asgn9', value: 'asgn9', sortable: true, width: "50px"},
+                    {text: 'Auth9', value: 'auth9', sortable: true, width: "50px"},
+                    {text: 'STP9', value: 'stp9', sortable: true, width: "50px"},
+                    {text: 'Percent9', value: 'percent9', sortable: true, width: "50px"},
                 ]
             }
         },
@@ -458,10 +460,6 @@ import largeBarChart from '@/components/largeBarChart'
         },
         created: function(){
           console.log('created')
-          $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-          })
-
         },
         mounted() {
             console.log('mounted')
@@ -714,142 +712,6 @@ import largeBarChart from '@/components/largeBarChart'
                         })
                     })
 
-                //create data table
-                //var tableUnits = d3.sum(this.columns, function(d) {return d.width;})
-                //console.log(tableUnits)
-                //var table = d3.select("#table")
-                //    .append("table")
-                //    .attr("id","dc-data-table")
-                //    .attr("class", "table table-hover")
-                //    .style("background", "#eee")
-                //    .style("table-layout","fixed")
-                //    .style("text-align", "left")
-                //    .append("thead")
-                //    .append("tr")
-                //    .attr("class", "header")
-                //    .style("padding", "0px")
-                //    .style("background-color", "#ddd")
-                //    .style("display", "table-header-group")
-                //    .style("color", "#333");
-
-                var dataTable = dc.dataTable("#dc-data-table")
-
-                var tableOffset = 0
-                var tablePageSize = 10
-
-                function nextPage() {
-                    tableOffset += tablePageSize;
-                    dataTable.redraw();
-                }
-                function prevPage() {
-                    tableOffset -= tablePageSize;
-                    dataTable.redraw();
-                }
-                d3.select('#Prev')
-                    .on("click", prevPage);
-                d3.select('#Next')
-                    .on("click", nextPage);
-
-                var updateTable = () => {
-                    var totalFiltered = this.ndx.groupAll().value();
-                    var end = tableOffset + tablePageSize > totalFiltered ? totalFiltered : tableOffset + tablePageSize;
-                    tableOffset = tableOffset >= totalFiltered ? Math.floor((totalFiltered - 1)/tablePageSize)*tablePageSize : tableOffset;
-                    tableOffset = tableOffset < 0 ? 0 : tableOffset;
-
-                    dataTable.beginSlice(tableOffset);
-                    dataTable.endSlice(tableOffset + tablePageSize);
-
-                    //update header
-                    d3.select("span#beginHead")
-                        .text(end === 0 ? tableOffset : tableOffset + 1);
-                    d3.select("span#endHead")
-                        .text(end);
-                    d3.select('span#sizeHead').text(totalFiltered);
-                    //update paging and footer
-                    d3.select("span#begin")
-                        .text(end === 0 ? tableOffset : tableOffset + 1);
-                    d3.select("span#end")
-                        .text(end);
-                    d3.select('#Prev')
-                        .attr('disabled', tableOffset - tablePageSize < 0 ? 'true' : null);
-                    d3.select("#Next")
-                        .attr('disabled', tableOffset + tablePageSize >= totalFiltered ? 'true' : null);
-                    d3.select('span#size').text(totalFiltered);
-                }
-
-                var tableDim = this.ndx.dimension(d => d.unit)
-                dataTable.width(this.width)
-                    .height(800)
-                    .dimension(tableDim)
-                    .group(d => 'Showing first 100')
-                    .size(Infinity)
-                    //give columns an array of functions for returning variables
-                    .columns(this.columns.map(d=> {
-                        if (_.includes(d.field,'percent')) {
-                            return (v) => Math.round(v[d.field]*1000)/10 + '%';
-                        } else {
-                            return (v) => v[d.field];   
-                        }
-                    }))
-                    .showGroups(false)
-                    .sortBy(d => d.unit)
-                    .order(d3.ascending)
-                    .on("preRender", updateTable)
-                    .on("preRedraw", updateTable)
-                    //.on("renderlet", function(table) {
-                    //    console.log(d3.select("#dc-data-table tr"))
-                    //})
-                    ;
-
-                this.dataTable = dataTable
-
-                //table.selectAll("th")
-                //.data(this.columns)
-                //.enter()
-                //.append("th")
-                //.attr("class", (d, i) => '_'+i+' th_'+d.title)
-                //.text(d => d.title)
-                //.style("line-height", "1em")
-                //.style("border", "0px")
-                //.style("padding", "5px")
-                //.style("font-weight", "normal")
-                //.style("cursor", "pointer")
-                //.on("click", v => {
-                //    dataTable.sortBy(d => d[v.field])
-                //    if (this.sortedVar == v.field) {
-                //        //toggle sort order
-                //        this.sortOrder = this.sortOrder == d3.ascending ? d3.descending: d3.ascending
-                //        dataTable.order(this.sortOrder)
-                //    } else{
-                //        this.sortedVar = v.field
-                //        this.sortOrder = d3.ascending
-                //        dataTable.order(this.sortOrder)
-                //    }
-                //    //why not redraw??
-                //    dataTable.redraw()
-                //})
-
-                //var setTableStyle = () => {
-                //    d3.selectAll("#dc-data-table tbody")
-                //    .style("height", "500px")
-                //    .style("overflow-y", "auto")
-                //    .style("overflow-x", "hidden")
-                //    ;
-                //    this.columns.forEach((d,i) => {
-                //        d3.selectAll("._" + i)
-                //            .attr("width", (this.columns[i].width/tableUnits)*100+"%")
-                //    })
-                //    d3.selectAll("#dc-data-table td")
-                //    .style("color", "#333")
-                //    .style("font-size", "13px")
-                //    .style("border", "0px")
-                //    .style("float", "left")
-                //    .style("line-height", "1em")
-                //    .style("border", "0px")
-                //    .style("padding", "5px")
-                //    ;
-                //}
-
                 //Download Raw Data button
                 d3.select('#download')
                 .on('click', ()=>{
@@ -913,12 +775,6 @@ div[id*="-barchart"] .x.axis text{
 
 div[id*="-rowchart"] g.row text{
     fill: black;
-}
-th {
-    opacity: 0.8;
-}
-th:hover {
-    opacity: 1.0;
 }
 .sortedColumn {
     opacity: 1.0;
