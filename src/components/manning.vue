@@ -1,179 +1,249 @@
 <template>
-    <v-container fluid>
-        <v-layout row>
-            <h1 class="display-1">Priority Units</h1>
-            <v-spacer></v-spacer>
-            <v-flex xs4>
-                <v-layout justify-end row>
-                    Data as of: <span style="font-weight:bold; color: steelblue">{{asDate}}</span>
-                </v-layout>
-                <v-layout justify-end row>
-                    <v-btn id="download" color="primary">Download Raw Data</v-btn>
-                    <v-btn id="resetAllBtn" color="error" @click="resetAll">Reset All</v-btn>
-                </v-layout>
-            </v-flex>
-        </v-layout>
+    <div class="container">
+        <div class="row">
+            <h1 class="col">Priority Units</h1>
+            <div class="col-4 text-right">
+                Data as of: <span style="font-weight:bold; color: steelblue">{{asDate}}</span>
+            </div>
+        </div>
         <transition-group name="fade" mode="out-in">
-            <loader v-show="!loaded" key="loader"></loader>
-            <v-container fluid v-show="loaded" key="content" class="pt-0">
-                <v-layout row>
-                    <v-flex>
-                        <v-layout row> 
-                            <v-radio-group id="radioSelect" v-model="type" height="0px" @click="radioButton" row>
-                                <v-radio v-for="(item,index) in typeNames" 
-                                            color="primary"
-                                            :key="item" 
-                                            :label="item" 
-                                            :value="typeElements[index]"></v-radio>
-                            </v-radio-group>
-                        </v-layout>
-                        <v-layout row>
-                            <v-radio-group id="radioPeriod" v-model="period" height="0px" @click="radioButton" row>
-                                <v-radio v-for="(item,index) in periodNames" 
-                                            color="primary"
-                                            :key="item" 
-                                            :label="item" 
-                                            :value="periodElements[index]"></v-radio>
-                            </v-radio-group>
-                        </v-layout>
-                    </v-flex>
-                    <v-flex id="legend">
-                        <p class="mb-0 pb-0 pl-4" style="font-size:20px">Legend</p> 
-                        <ul class="mt-0 pt-0" style="list-style-type: none">
-                            <li>
-                                <span :style="[{'background-color': '#2ca25f'},rect]"></span>
-                                <span :style="label">Manning >= 95%</span>
-                            </li> 
-                            <li>
-                                <span :style="[{'background-color': '#d62728'},rect]"></span>
-                                <span :style="label">Manning < 95%</span>
-                            </li>
-                        </ul>
-                    </v-flex>
-                </v-layout>
-                <v-layout row>
-                    <div class="pr-4">
-                        Assigned:
-                        <span id="asgn"></span>
-                    </div>
-                    <div class="pr-4">
-                        STP:
-                        <span id="stp"></span>
-                    </div>
-                    <div class="pr-4">
-                        Authorized:
-                        <span id="auth"></span>
-                    </div>
-                    <div class="pr-4">
-                        Manning Percent:
-                        <span id="percent"></span>
-                    </div>
-                </v-layout>
-                <v-layout row>
-                    <v-flex id="cat" xs4>
-                        <v-card>
-                            <div id="dc-cat-rowchart">
-                                <h3 class="headline">Category 
-                                <v-btn small color="error" class="reset" 
-                                        style="visibility: hidden"
-                                        @click="resetChart('dc-cat-rowchart')">Reset</v-btn>
-                                </h3>
-                            </div>
-                        </v-card>
-                    </v-flex>
-                    <v-flex id="majcom" xs8>
-                        <v-card>
-                            <div id="dc-majcom-barchart">
-                                <h3 class="headline">MAJCOM <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                                <v-btn small color="error" class="reset" 
-                                        style="visibility: hidden"
-                                        @click="resetChart('dc-majcom-barchart')">Reset</v-btn>
-                                </h3>
-                            </div>
-                        </v-card>
-                    </v-flex>
-                </v-layout>
-                <v-layout row>
-                    <v-flex id="base" xs12>
-                        <v-card>
-                            <div id="dc-base-barchart">
-                                <h3 class="headline">Base <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                                <v-btn small color="error" class="reset" 
-                                        style="visibility: hidden"
-                                        @click="resetChart('dc-base-barchart')">Reset</v-btn>
-                                </h3>
-                            </div>
-                        </v-card>
-                    </v-flex>
-                </v-layout>
-                <largeBarChart :id="'unit'"
-                               :dimension="unitDim"
-                               :group="unitGroup"
-                               :groupAll="unitGroup.all()"
-                               :widthFactor="0.90"
-                               :aspectRatio="chartSpecs.unitChart.aspectRatio"
-                               :minHeight="chartSpecs.unitChart.minHeight"
-                               :selected="selected"
-                               :ylabel="ylabel"
-                               :reducer="manningAdd"
-                               :accumulator="manningInitial"
-                               :numBars="30"
-                               :margin="chartSpecs.unitChart.margins"
-                               :colorScale="unitColorScale"
-                               :colorFunction="unitColorFun"
-                               :title="'Units'"
-                               :loaded="loaded"
-                               :vuetify="true">
-                </largeBarChart>
-                <v-layout row>
-                    <v-card>
-                        <v-card-title>
-                            <h4 class="headline">Filtered Records</h4>
-                            <v-spacer></v-spacer>
-                            <v-text-field
-                                v-model="search"
-                                append-icon="search"
-                                label="Search"
-                                single-line
-                                hide-details>
-                            </v-text-field>
-                        </v-card-title>
-                        <v-data-table
-                            :headers="columns"
-                            :items="items"
-                            item-key="text"
-                            :search="search">
-                            <template slot="items" slot-scope="props">
-                                <td style="min-width: 200px;">{{props.item.unit}}</td>
-                                <td>{{props.item.mpf}}</td>
-                                <td>{{props.item.majcom}}</td>
-                                <td>{{props.item.pascode}}</td>
-                                <td>{{props.item.asgncurr}}</td>
-                                <td>{{props.item.authcurr}}</td>
-                                <td>{{props.item.stpcurr}}</td>
-                                <td>{{ String(Math.round(props.item.percentcurr*1000)/10) + '%' }}</td>
-                                <td>{{ props.item.asgn3 }}</td>
-                                <td>{{ props.item.auth3 }}</td>
-                                <td>{{ props.item.stp3 }}</td>
-                                <td>{{ String(Math.round(props.item.percent3*1000)/10) + '%' }}</td>
-                                <td>{{ props.item.asgn6 }}</td>
-                                <td>{{ props.item.auth6 }}</td>
-                                <td>{{ props.item.stp6 }}</td>
-                                <td>{{ String(Math.round(props.item.percent6*1000)/10) + '%' }}</td>
-                                <td>{{ props.item.asgn9 }}</td>
-                                <td>{{ props.item.auth9 }}</td>
-                                <td>{{ props.item.stp9 }}</td>
-                                <td>{{ String(Math.round(props.item.percent9*1000)/10) + '%' }}</td>
-                            </template>
-                            <v-alert slot="no-results" :value="true" color="error" icon="warning">
-                                Your search for "{{ search }}" found no results.
-                            </v-alert>
-                        </v-data-table>
-                    </v-card>
-                </v-layout>
-            </v-container>
+        <loader v-show="!loaded" key="loader"></loader>
+        <div v-show="loaded" key="content">
+        <div class="row pt-2"> 
+            <div id="radioSelect" class="col form-group">
+               <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radio" type="radio" id="radio1" value="percent" v-model="type" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">Percentage</span>
+                </label>
+                <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="type" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">Assigned</span>
+                </label>
+                <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radio" type="radio" id="radio3" value="auth" v-model="type" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">Authorized</span>
+                </label>
+                <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="type" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">STP</span>
+                </label>
+                <span data-toggle="tooltip" 
+                      data-placement="right"
+                      title="Use the radio buttons to toggle between manning percentage, assigned, authorized, and STP (student, transient, personnel holdee). The charts show the selected data element.">
+                    <fontAwesomeIcon icon="info-circle" 
+                                     >
+                    </fontAwesomeIcon>
+                </span>
+            </div>
+            <div class="col-auto">
+                <button type="button" id="download"
+                                class="btn btn-info btn-rounded btn-sm waves-effect" 
+                                >Download Raw Data</button>
+                <button type="button" 
+                        class="btn btn-danger btn-rounded btn-sm waves-effect" 
+                        @click="resetAll">Reset All</button>
+            </div>
+        </div>
+        <div class="row">
+            <div id="radioPeriod" class="col form-group">
+               <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio5" value="curr" v-model="period" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">Current</span>
+                </label>
+                <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio6" value="3" v-model="period" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">3 Months</span>
+                </label>
+                <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio7" value="6" v-model="period" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">6 Months</span>
+                </label>
+                <label class="custom-control custom-radio" >
+                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio8" value="9" v-model="period" @click="radioButton">
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">9 Months</span>
+                </label>
+                <span data-toggle="tooltip" 
+                      data-placement="right"
+                      title="Use the radio buttons to toggle between current data and projected data. The projected data show snapshots at 3, 6, or 9 months from the date in the top right corner of the page.">
+                    <fontAwesomeIcon icon="info-circle" 
+                                     >
+                    </fontAwesomeIcon>
+                </span>
+            </div>
+            <div class="col-auto" id="legend">
+                <p class="mb-0 pb-0 pl-4" style="font-size:20px">Legend</p> 
+                <ul class="mt-0 pt-0" style="list-style-type: none">
+                    <li>
+                        <span :style="[{'background-color': '#2ca25f'},rect]"></span>
+                        <span :style="label">Manning >= 95%</span>
+                    </li> 
+                    <li>
+                        <span :style="[{'background-color': '#d62728'},rect]"></span>
+                        <span :style="label">Manning < 95%</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-auto">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-auto">
+                Assigned:
+                <span id="asgn"></span>
+            </div>
+            <div class="col-auto">
+                STP:
+                <span id="stp"></span>
+            </div>
+            <div class="col-auto">
+                Authorized:
+                <span id="auth"></span>
+            </div>
+            <div class="col-auto">
+                Manning Percent:
+                <span id="percent"></span>
+            </div>
+        </div>
+        <div class="row">
+            <div id="cat" class="col-4">
+                <div id="dc-cat-rowchart">
+                    <h3 style="display: inline-block">Category 
+                    <button type="button" 
+                            class="btn btn-danger btn-sm btn-rounded reset" 
+                            style="visibility: hidden"
+                            @click="resetChart('dc-cat-rowchart')">Reset</button>
+                    </h3>
+                </div>
+            </div>
+            <div id="majcom" class="col-8">
+                <div id="dc-majcom-barchart">
+                    <h3>MAJCOM <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                    <button type="button" 
+                            class="btn btn-danger btn-sm btn-rounded reset" 
+                            style="visibility: hidden"
+                            @click="resetChart('dc-majcom-barchart')">Reset</button>
+                    </h3>
+                    <!--<searchBox-->
+                        <!--v-model:value="searchMajcom"-->
+                        <!--size="3"-->
+                        <!--label="Search MAJCOM"-->
+                        <!--@sub="submit(searchMajcom,'dc-majcom-barchart')"-->
+                        <!--button="true"-->
+                        <!--:color="majcomColor"-->
+                        <!--:btnColor="majcomColor"-->
+                    <!--</searchBox>-->
+                    <!-- <form class="form-inline">
+                        <div class="form-group">
+                            <input id="searchMajcom" v-model="searchMajcom" placeholder="Search MAJCOM" @keydown.enter="submit(searchMajcom,'dc-majcom-barchart')">
+                            <button class="btn btn-primary btn-sm" @click.stop.prevent="submit(searchMajcom,'dc-majcom-barchart')">Submit</button>
+                        </div>
+                    </form> -->
+                    <!--<div id="app" class="container">-->
+                            <!--<autocomplete :suggestions="suggestions" v-model="searchMajcom"></autocomplete>-->
+                    <!--</div>-->
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div id="base" class="col-12">
+                <div id="dc-base-barchart">
+                    <h3>Base <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                    <button type="button" 
+                            class="btn btn-danger btn-sm btn-rounded reset" 
+                            style="visibility: hidden"
+                            @click="resetChart('dc-base-barchart')">Reset</button>
+                    </h3>
+                    <!--<searchBox-->
+                        <!--v-model:value="searchBase"-->
+                        <!--size="3"-->
+                        <!--label="Search Installation"-->
+                        <!--@sub="submit(searchBase,'dc-base-barchart')"-->
+                        <!--button="true"-->
+                        <!--:color="baseColor"-->
+                        <!--:btnColor="baseColor"-->
+                    <!--</searchBox>-->
+                     <!--<form class="form-inline">-->
+                        <!--<div class="form-group">-->
+                            <!--<input id="searchBase" v-model="searchBase" placeholder="Search Installation" @keydown.enter="submit(searchBase,'dc-base-barchart')">-->
+                            <!--<button class="btn btn-primary btn-sm" @click.stop.prevent="submit(searchBase,'dc-base-barchart')">Submit</button>-->
+                        <!--</div>-->
+                    <!--</form> -->
+                </div>
+            </div>
+        </div>
+        <largeBarChart :id="'unit'"
+                       :dimension="unitDim"
+                       :group="unitGroup"
+                       :groupAll="unitGroup.all()"
+                       :widthFactor="0.90"
+                       :aspectRatio="chartSpecs.unitChart.aspectRatio"
+                       :minHeight="chartSpecs.unitChart.minHeight"
+                       :selected="selected"
+                       :ylabel="ylabel"
+                       :reducer="manningAdd"
+                       :accumulator="manningInitial"
+                       :numBars="30"
+                       :margin="chartSpecs.unitChart.margins"
+                       :colorScale="unitColorScale"
+                       :colorFunction="unitColorFun"
+                       :title="'Units'"
+                       :loaded="loaded">
+        </largeBarChart>
+        <div class="row">
+            <div class="col-12">
+                <h4>Filtered Records
+                    <span data-toggle="tooltip" 
+                          data-placement="right"
+                          title="In the follow table, click the column headers to sort by the column and toggle between ascending or descending. Use the scroll bar at the bottom of the table to see additional columns. Click the Next and Prev buttons at the bottom of the table to see additional rows.">
+                        <fontAwesomeIcon icon="info-circle" 
+                                         size="xs">
+                        </fontAwesomeIcon>
+                    </span>
+                
+                </h4>
+                <span>
+                    Showing <span id="beginHead"></span>-<span id="endHead"></span> of <span id="sizeHead"></span>
+                </span>
+                <div style="overflow-x: scroll;">
+                    <table class="table table-hover table-bordered" 
+                           id="dc-data-table">
+                        <thead>
+                            <tr class="table-header">
+                                <th v-for="header in columns"
+                                    :class="{sortedColumn: header.selected}"
+                                    style="cursor: pointer;"
+                                    @click="sortColumn(header)"
+                                    width="header.width*width">
+                                    {{header.title}}
+                                    <span v-show="header.selected">
+                                        <font-awesome-icon v-show="header.sort_state === 'ascending'" icon="arrow-up"></font-awesome-icon>
+                                        <font-awesome-icon v-show="header.sort_state === 'descending'" icon="arrow-down"></font-awesome-icon>
+                                    </span>
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div class="col-12" id="paging">
+                    Showing <span id="begin"></span>-<span id="end"></span> of <span id="size"></span>
+                    <button id="Prev" class="btn btn-sm btn-secondary" value="Prev">Prev</button>
+                    <button id="Next" class="btn btn-sm btn-secondary" value="Next">Next</button>
+                </div>
+            </div>
+        </div>
+        </div>
         </transition-group>
-    </v-container>
+    </div>
 </template>
 
 <script>
@@ -193,14 +263,9 @@ import largeBarChart from '@/components/largeBarChart'
                 data: [],
                 asDate: '',
                 type: "percent",
-                typeNames: ["Percentage","Assigned","Authorized","STP"],
-                typeElements: ["percent","asgn","auth","stp"],
                 period: "curr",
-                periodNames: ["Current","3 Months","6 Months","9 Months"],
-                periodElements: ["curr","3","6","9"],
                 searchMajcom: "",
                 searchBase: "",
-                search: "",
                 loaded: false ,
                 baseColor: chartSpecs.baseChart.color,
                 majcomColor: chartSpecs.majcomChart.color,
@@ -213,6 +278,7 @@ import largeBarChart from '@/components/largeBarChart'
                 label: {
                     'margin-left': '10px',
                 },
+                items: [],
                 dataTable: {},
                 sortedVar: '',
                 sortOrder: d3.ascending,
@@ -221,26 +287,26 @@ import largeBarChart from '@/components/largeBarChart'
                 unitColorScale: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color),
                 chartSpecs: chartSpecs,
                 columns: [ 
-                    {text: 'Unit', align: 'left', value: 'unit', sortable: true, width: "300px"},
-                    {text: 'MPF', value: 'mpf', sortable: true, width: "300px"},
-                    {text: 'MAJCOM', value: 'majcom', sortable: true, width: "300px"},
-                    {text: 'PASCODE', value: 'pascode', sortable: true, width: "100px"},
-                    {text: 'Asgn', value: 'asgncurr', sortable: true, width: "50px"},
-                    {text: 'Auth', value: 'authcurr', sortable: true, width: "50px"},
-                    {text: 'STP', value: 'stpcurr', sortable: true, width: "50px"},
-                    {text: 'Percent', value: 'percentcurr', sortable: true, width: "50px"},
-                    {text: 'Asgn3', value: 'asgn3', sortable: true, width: "50px"},
-                    {text: 'Auth3', value: 'auth3', sortable: true, width: "50px"},
-                    {text: 'STP3', value: 'stp3', sortable: true, width: "50px"},
-                    {text: 'Percent3', value: 'percent3', sortable: true, width: "50px"},
-                    {text: 'Asgn6', value: 'asgn6', sortable: true, width: "50px"},
-                    {text: 'Auth6', value: 'auth6', sortable: true, width: "50px"},
-                    {text: 'STP6', value: 'stp6', sortable: true, width: "50px"},
-                    {text: 'Percent6', value: 'percent6', sortable: true, width: "50px"},
-                    {text: 'Asgn9', value: 'asgn9', sortable: true, width: "50px"},
-                    {text: 'Auth9', value: 'auth9', sortable: true, width: "50px"},
-                    {text: 'STP9', value: 'stp9', sortable: true, width: "50px"},
-                    {text: 'Percent9', value: 'percent9', sortable: true, width: "50px"},
+                    {title: 'Unit', field: 'unit', sort_state: "ascending", selected: true, width: "20%"},
+                    {title: 'MPF', field: 'mpf', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'MAJCOM', field: 'majcom', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'PASCODE', field: 'pascode', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn', field: 'asgncurr', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Auth', field: 'authcurr', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'STP', field: 'stpcurr', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Percent', field: 'percentcurr', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn3', field: 'asgn3', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Auth3', field: 'auth3', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'STP3', field: 'stp3', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Percent3', field: 'percent3', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn6', field: 'asgn6', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Auth6', field: 'auth6', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'STP6', field: 'stp6', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Percent6', field: 'percent6', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn9', field: 'asgn9', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Auth9', field: 'auth9', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'STP9', field: 'stp9', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Percent9', field: 'percent9', sort_state: "descending", selected: false, width: "10%"},
                 ]
             }
         },
@@ -259,9 +325,6 @@ import largeBarChart from '@/components/largeBarChart'
           },
           itemDim() {
               return this.ndx.dimension(function(d) {return d});
-          },
-          items: function() {
-                return this.itemDim.top(Infinity);
           },
           ylabel: function() {
             if (_.includes(this.selected,"percent")) {
@@ -283,11 +346,6 @@ import largeBarChart from '@/components/largeBarChart'
           colorVar: function() {
             return 'percent'+this.period;
           },
-        },
-        watch: {
-            selected: function() {
-                console.log(this.selected)
-            }   
         },
         methods: {
             dcRowColorFun: function(d,i) {
@@ -394,6 +452,19 @@ import largeBarChart from '@/components/largeBarChart'
                     stpPercent9: 0,
                 }
             },
+            setTableData: function() {
+                this.items = this.itemDim.top(Infinity).map((d) => {
+                    return {
+                        pascode: d.pascode,
+                        unit: d.unit,
+                        majcom: d.majcom,
+                        mpf: d.mpf,
+                        asgn: d.asgn,
+                        auth: d.auth,
+                        stp: d.stp
+                    }
+                }) 
+            },
             sortColumn: function(col) {
                 for (let i = 0; i < this.columns.length; i++) {
                     this.columns[i].selected = false
@@ -460,6 +531,10 @@ import largeBarChart from '@/components/largeBarChart'
         },
         created: function(){
           console.log('created')
+          $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+          })
+
         },
         mounted() {
             console.log('mounted')
@@ -712,6 +787,142 @@ import largeBarChart from '@/components/largeBarChart'
                         })
                     })
 
+                //create data table
+                //var tableUnits = d3.sum(this.columns, function(d) {return d.width;})
+                //console.log(tableUnits)
+                //var table = d3.select("#table")
+                //    .append("table")
+                //    .attr("id","dc-data-table")
+                //    .attr("class", "table table-hover")
+                //    .style("background", "#eee")
+                //    .style("table-layout","fixed")
+                //    .style("text-align", "left")
+                //    .append("thead")
+                //    .append("tr")
+                //    .attr("class", "header")
+                //    .style("padding", "0px")
+                //    .style("background-color", "#ddd")
+                //    .style("display", "table-header-group")
+                //    .style("color", "#333");
+
+                var dataTable = dc.dataTable("#dc-data-table")
+
+                var tableOffset = 0
+                var tablePageSize = 10
+
+                function nextPage() {
+                    tableOffset += tablePageSize;
+                    dataTable.redraw();
+                }
+                function prevPage() {
+                    tableOffset -= tablePageSize;
+                    dataTable.redraw();
+                }
+                d3.select('#Prev')
+                    .on("click", prevPage);
+                d3.select('#Next')
+                    .on("click", nextPage);
+
+                var updateTable = () => {
+                    var totalFiltered = this.ndx.groupAll().value();
+                    var end = tableOffset + tablePageSize > totalFiltered ? totalFiltered : tableOffset + tablePageSize;
+                    tableOffset = tableOffset >= totalFiltered ? Math.floor((totalFiltered - 1)/tablePageSize)*tablePageSize : tableOffset;
+                    tableOffset = tableOffset < 0 ? 0 : tableOffset;
+
+                    dataTable.beginSlice(tableOffset);
+                    dataTable.endSlice(tableOffset + tablePageSize);
+
+                    //update header
+                    d3.select("span#beginHead")
+                        .text(end === 0 ? tableOffset : tableOffset + 1);
+                    d3.select("span#endHead")
+                        .text(end);
+                    d3.select('span#sizeHead').text(totalFiltered);
+                    //update paging and footer
+                    d3.select("span#begin")
+                        .text(end === 0 ? tableOffset : tableOffset + 1);
+                    d3.select("span#end")
+                        .text(end);
+                    d3.select('#Prev')
+                        .attr('disabled', tableOffset - tablePageSize < 0 ? 'true' : null);
+                    d3.select("#Next")
+                        .attr('disabled', tableOffset + tablePageSize >= totalFiltered ? 'true' : null);
+                    d3.select('span#size').text(totalFiltered);
+                }
+
+                var tableDim = this.ndx.dimension(d => d.unit)
+                dataTable.width(this.width)
+                    .height(800)
+                    .dimension(tableDim)
+                    .group(d => 'Showing first 100')
+                    .size(Infinity)
+                    //give columns an array of functions for returning variables
+                    .columns(this.columns.map(d=> {
+                        if (_.includes(d.field,'percent')) {
+                            return (v) => Math.round(v[d.field]*1000)/10 + '%';
+                        } else {
+                            return (v) => v[d.field];   
+                        }
+                    }))
+                    .showGroups(false)
+                    .sortBy(d => d.unit)
+                    .order(d3.ascending)
+                    .on("preRender", updateTable)
+                    .on("preRedraw", updateTable)
+                    //.on("renderlet", function(table) {
+                    //    console.log(d3.select("#dc-data-table tr"))
+                    //})
+                    ;
+
+                this.dataTable = dataTable
+
+                //table.selectAll("th")
+                //.data(this.columns)
+                //.enter()
+                //.append("th")
+                //.attr("class", (d, i) => '_'+i+' th_'+d.title)
+                //.text(d => d.title)
+                //.style("line-height", "1em")
+                //.style("border", "0px")
+                //.style("padding", "5px")
+                //.style("font-weight", "normal")
+                //.style("cursor", "pointer")
+                //.on("click", v => {
+                //    dataTable.sortBy(d => d[v.field])
+                //    if (this.sortedVar == v.field) {
+                //        //toggle sort order
+                //        this.sortOrder = this.sortOrder == d3.ascending ? d3.descending: d3.ascending
+                //        dataTable.order(this.sortOrder)
+                //    } else{
+                //        this.sortedVar = v.field
+                //        this.sortOrder = d3.ascending
+                //        dataTable.order(this.sortOrder)
+                //    }
+                //    //why not redraw??
+                //    dataTable.redraw()
+                //})
+
+                //var setTableStyle = () => {
+                //    d3.selectAll("#dc-data-table tbody")
+                //    .style("height", "500px")
+                //    .style("overflow-y", "auto")
+                //    .style("overflow-x", "hidden")
+                //    ;
+                //    this.columns.forEach((d,i) => {
+                //        d3.selectAll("._" + i)
+                //            .attr("width", (this.columns[i].width/tableUnits)*100+"%")
+                //    })
+                //    d3.selectAll("#dc-data-table td")
+                //    .style("color", "#333")
+                //    .style("font-size", "13px")
+                //    .style("border", "0px")
+                //    .style("float", "left")
+                //    .style("line-height", "1em")
+                //    .style("border", "0px")
+                //    .style("padding", "5px")
+                //    ;
+                //}
+
                 //Download Raw Data button
                 d3.select('#download')
                 .on('click', ()=>{
@@ -775,6 +986,12 @@ div[id*="-barchart"] .x.axis text{
 
 div[id*="-rowchart"] g.row text{
     fill: black;
+}
+th {
+    opacity: 0.8;
+}
+th:hover {
+    opacity: 1.0;
 }
 .sortedColumn {
     opacity: 1.0;

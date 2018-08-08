@@ -1,12 +1,10 @@
 <template>
-    <v-app>
+  <div id="app" class="container-fluid grey lighten-5">
         <app-navbar></app-navbar>
-        <v-content>
-            <v-container fluid class="mt-0 pt-0">
-                <router-view></router-view>
-            </v-container>
-        </v-content>
-    </v-app>
+        <div class="pt-5 mt-3" style="min-height: 800px;">
+            <router-view></router-view>
+        </div>
+  </div>
 </template>
 
 <script>

@@ -1,19 +1,8 @@
-//include babel-polyfill to allow vuetify to work in IE
-import 'babel-polyfill'
-
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
-import Vuetify from 'vuetify'
 import App from './App'
 import router from './router'
-
-Vue.use(Vuetify)
-
-//include vuetify css
-import 'vuetify/dist/vuetify.min.css'
-//include material design icons
-import 'material-design-icons-iconfont/dist/material-design-icons.css'
 
 //Import polyfill so IE can use Promise & Axios
 import {polyfill} from 'es6-promise'; polyfill();
@@ -31,9 +20,9 @@ import axios from 'axios'
 axios.defaults.headers.get['Accepts'] = 'applicaton/json'
 
 //import bootstrap
-//import 'bootstrap'
-//import 'bootstrap/dist/css/bootstrap.min.css'
-//import '../node_modules/mdbootstrap/css/mdb.min.css'
+import 'bootstrap'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import '../node_modules/mdbootstrap/css/mdb.min.css'
 //import dc styling globally
 import '../node_modules/dc/dc.css'
 

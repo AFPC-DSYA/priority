@@ -15,10 +15,7 @@ USAGE:
                    :colorScale="unitColorScale"
                    :colorFunction="unitColorFun"
                    :title="'Units'"
-                   :loaded="loaded"
-                   :vuetify="true"
-                   :sortBy="value"
-                   :orderBy="desc">
+                   :loaded="loaded">
     </largeBarChart>
 
 Props:
@@ -38,117 +35,23 @@ Props:
     colorFunction: function that tells chart how to choose colors for different bars  
     title: string for chart title
     loaded: Boolean indicating where data has been loaded
-    vuetify: Boolean indicating whether to use vuetify or not
-    sortBy: key or value.  If this prop is used, you must also use orderBy
-    orderBy: asc or desc.  If this prop is used, you must also use sortBy
 
 ###########################################-->
 <template>
-    <div>
-        <v-layout v-if="vuetify" row>
-            <v-flex :id="this.id + 'wrapper'" xs12>
-                <v-layout :id="this.id + 'title'" class="mb-0 pb-0" row>
-                    <h3 class="headline mb-0 pb-0">{{ title }}
-                        <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                        <v-tooltip bottom
-                                    open-delay="100"
-                                    close-delay="100"
-                                    max-width="400">
-                            <v-icon slot="activator"
-                                    style="cursor: default;">info</v-icon>
-                            <span>Click on a bar to apply a filter. Ctrl+click the 'Others' bar to see bars aggregated within 'Others'. 
-                                Pressing the 'Move up' button (displayed after Ctrl+clicking 'Others') is the opposite of Ctrl+clicking 'Others'. 
-                                Use the scroll bar to select how many bars to show.
-                            </span>
-                        </v-tooltip>
-                        <v-btn :id="this.id + 'level'"
-                                small
-                                color="success"
-                                style="visibility: hidden;"
-                                @click="moveUp()">
-                            Move Up
-                        </v-btn>
-                        <v-btn :id="this.id + 'reset'"
-                                small
-                                color="error"
-                                style="visibility: hidden;"
-                                class="reset"
-                                @click="filterAll()">
-                            Reset
-                        </v-btn>
-                        <v-btn  :id="this.id + 'sortAll'"
-                                small
-                                color="primary"
-                                @click="sortAll()"
-                                >
-                            Sort
-                        </v-btn>
-                        <v-slider   :id="this.id + 'slider'"
-                                    :label="String(lastBar + 1)"
-                                    class="pt-2 mt-2"
-                                    height="0"
-                                    :disabled="sliderDisabled"
-                                    min="1"
-                                    :max="Math.min(dataAll().length,60)" 
-                                    step="1"
-                                    v-model="lastBar"
-                                    @change="redraw()"
-                                    >
-                        </v-slider>
-                    </h3> 
-                </v-layout>
-            </v-flex>
-        </v-layout>
-        <div v-else class ="row">
-            <div :id="this.id + 'wrapper'" class="col-12">
-                <div :id="this.id + 'title'" class="row">
-                    <h3 class="col-12 mb-0 pb-0">{{ title }} 
-                        <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                        <span data-toggle="tooltip" 
-                              data-placement="bottom"
-                              title="Click on a bar to apply a filter. Ctrl+click the 'Others' bar to see bars aggregated within 'Others'. Pressing the 'Move up' button (displayed after Ctrl+clicking 'Others') is the opposite of Ctrl+clicking 'Others'. Use the scroll bar to select how many bars to show.">
-                            <fontAwesomeIcon icon="info-circle" 
-                                             size="xs"
-                                             >
-                            </fontAwesomeIcon>
-                        </span>
-                        <button :id="this.id + 'level'"
-                                class="btn btn-success btn-sm"
-                                style="visibility: hidden;"
-                                @click="moveUp()">
-                            Move Up
-                        </button>
-                        <button :id="this.id + 'reset'"
-                                class="btn btn-danger btn-sm reset"
-                                style="visibility: hidden;"
-                                @click="filterAll()">
-                            Reset
-                        </button>
-                        <button :id="this.id + 'sortAll'"
-                                class="btn btn-primary btn-sm"
-                                @click="sortAll()">
-                            Sort 
-                        </button>
-                        <div :id="this.id + 'slider-container'"
-                             style="display: inline-block;"
-                             class="mb-0 pb-0">
-                            <label  :id="this.id + 'slider-label'"
-                                    class="pt-0 pb-0 mt-0 mb-0"
-                                    style="font-size: 12px;">
-                                Bars Displayed: {{ Number(lastBar) + 1 }}
-                            </label>
-                            <input  :id="this.id + 'slider'"
-                                    type="range"
-                                    class="form-control slider pt-0 pb-0 mt-0 mb-0"
-                                    style="cursor: pointer;"
-                                    min=1
-                                    :max="Math.min(dataAll().length,60)"
-                                    step="1"
-                                    v-model="lastBar"
-                                    @change="redraw()">
-                        </div>
-                    </h3>
-                </div>
+    <div class ="row">
+        <div :id="this.id + 'wrapper'" class="col-12">
+            <div :id="this.id + 'title'" class="row">
+                <h3 class="col-12">{{ title }} 
+                    <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                    <span data-toggle="tooltip" 
+                          data-placement="bottom"
+                          title="Click on a bar to apply a filter. Ctrl+click the 'Others' bar to see bars aggregated within 'Others'. Pressing the 'Move up' button (displayed after Ctrl+clicking 'Others') is the opposite of Ctrl+clicking 'Others'. Use the scroll bar to select how many bars to show.">
+                        <fontAwesomeIcon icon="info-circle" 
+                                         size="xs"
+                                         >
+                        </fontAwesomeIcon>
+                    </span>
+                </h3>
             </div>
         </div>
     </div>
@@ -166,7 +69,6 @@ export default {
             filters: [],
             nextData: [],
             lastBar: this.numBars || 30,
-            sliderDisabled: false,
             svg: {},
             //chart object for registering with dc
             chart: {
@@ -241,18 +143,6 @@ export default {
         loaded: {
             type: Boolean,
             required: true,
-        },
-        vuetify: {
-            type: Boolean,
-            required: false,
-        },
-        sortBy: {
-            type: String,
-            required: false,
-        },
-        orderBy: {
-            type: String,
-            required: false,
         }
     },
     components: {
@@ -270,12 +160,6 @@ export default {
         },
         maxVal: function() {
             return this.minMax[1]
-        },
-        sortedBy: function() {
-            return this.sortBy || 'value';
-        },
-        orderedBy: function() {
-            return this.orderBy || 'desc';
         },
         xScale: function() {
             return d3.scale.ordinal()
@@ -337,39 +221,13 @@ export default {
                 }
             }
         },
-        sortKey: function(order) {
-            if (order == 'desc') {
-                return this.removeEmptyBins(this.group).all().sort((a,b) => b.key.localeCompare(a.key));
+        dataAll: function() {
+            if (this.allSort == true) {
+                return this.removeEmptyBins(this.group).all().sort((a,b) => (b.value[this.selected] === undefined ? b.value : b.value[this.selected]) - (a.value[this.selected] === undefined ? a.value : a.value[this.selected]));
             } else {
                 return this.removeEmptyBins(this.group).all().sort((a,b) => a.key.localeCompare(b.key));
             }
         },
-        sortValue: function(order) {
-            if (order == 'desc') {
-                return this.removeEmptyBins(this.group).all().sort((a,b) => (b.value[this.selected] === undefined ? b.value : b.value[this.selected]) - (a.value[this.selected] === undefined ? a.value : a.value[this.selected]));
-            } else {
-                return this.removeEmptyBins(this.group).all().sort((a,b) => (a.value[this.selected] === undefined ? a.value : a.value[this.selected]) - (b.value[this.selected] === undefined ? b.value : b.value[this.selected]));
-            }
-            
-        },
-        dataAll: function() {    
-            //allSort toggles between key and value sort 
-            if (this.allSort == true) {
-                //sortedBy is initial sort type (key or value), orderedBy is ascending or descending
-                if (this.sortedBy == "value") {
-                    return this.sortValue(this.orderedBy);
-                } else {
-                    return this.sortKey(this.orderedBy);
-                }
-            } else {
-                if (this.sortedBy == "value") {
-                    return this.sortKey('asc');
-                } else {
-                    return this.sortValue('desc');
-                }
-            }
-        },
-
         filterAll: function(all) {
              //all is boolean. true for all, false for partial
              console.log('filterAll: no filters')
@@ -386,7 +244,10 @@ export default {
              d3.select("#" + this.id + "level")
                  .style("visibility","hidden");
              // enable slider
-             this.sliderDisabled = !all 
+             d3.select("#" + this.id + "slider")
+                 .property("disabled", !all)
+                 .style('cursor',  all ? 'pointer' : "default")
+                 .style('opacity', all ? 1 : 0.5);
              //enable sort
              d3.select("#" + this.id + "sortAll")
                 .property("disabled",false);
@@ -412,27 +273,6 @@ export default {
         sortAll: function() {
             this.allSort = !this.allSort
             this.redraw()
-        },
-        moveUp: function() {
-            this.level = Math.max(this.level-1, 0)
-            this.direction = 'up'
-            this.original = true //always at original filter when go to new level
-            console.log('moved up')
-            this.updateData()
-
-            this.dimension.filterAll() //remove filters from dimension
-            if (this.level == 0) {
-                //if top level, always remove all filters, but if no extra data to add, do a full reset
-                this.filterAll(true)
-            }
-            else {
-                // reset filters and reapply for new level
-                this.filters = [] 
-                this.filters = this.filters.concat(this.data.map(d => d.key).concat(this.nextData.map(g => g.key)))
-                this.dimension.filterFunction(d => _.includes(this.filters,d))
-            }
-            console.log(this.filters)
-            dc.redrawAll();
         },
         nextLevel: function(d) {
             if (d.key == "Others") {
@@ -499,7 +339,10 @@ export default {
             d3.select("#" + this.id + "reset")
               .style("visibility","visible");
             //disable slider
-            this.sliderDisabled = true
+            d3.select("#" + this.id + "slider")
+                .property("disabled",true)
+                .style("cursor","default")
+                .style("opacity", 0.5);
             //disable sort button
             d3.select("#" + this.id + "sortAll")
                 .property("disabled",true);
@@ -521,13 +364,91 @@ export default {
                 this.updateData()
                 //clear any svg elements before rebuilding
                 d3.select("#" + this.id + "svg").remove();
+                //set title
+                var btnUp = d3.select("#" + this.id + "title")
+                                .selectAll("h3")
+                                .append("button")
+                                .attr("id",this.id + "level")
+                                .text("Move Up")
+                                .classed("btn btn-success btn-sm",true)
+                                .style("visibility","hidden")
+                                .on("click", function() {
+                                    vm.level = Math.max(vm.level-1, 0)
+                                    vm.direction = 'up'
+                                    vm.original = true //always at original filter when go to new level
+                                    console.log('moved up')
+                                    vm.updateData()
+
+                                    vm.dimension.filterAll() //remove filters from dimension
+                                    if (vm.level == 0) {
+                                        //if top level, always remove all filters, but if no extra data to add, do a full reset
+                                        vm.filterAll(true)
+                                    }
+                                    else {
+                                        // reset filters and reapply for new level
+                                        vm.filters = [] 
+                                        vm.filters = vm.filters.concat(vm.data.map(d => d.key).concat(vm.nextData.map(g => g.key)))
+                                        vm.dimension.filterFunction(d => _.includes(vm.filters,d))
+                                    }
+                                    console.log(vm.filters)
+                                    dc.redrawAll();
+                                })
+
+                var btnReset = d3.select("#" + this.id + "title")
+                                .selectAll("h3")
+                                .append("button")
+                                .attr("id",this.id + "reset")
+                                .text("Reset")
+                                .classed("btn btn-danger btn-sm reset",true)
+                                .style("visibility","hidden")
+                                .on("click", function() {
+                                    vm.filterAll()
+                                });
+
+                var sliderContainer = d3.select("#" + this.id + "title")
+                                        .selectAll("h3")
+                                        .append("div")
+                                        .attr("id",this.id + "slider-container")
+                                        .style("display","inline-block");
+
+                sliderContainer.append("label")
+                   .attr("id",this.id + "slider-label")
+                   .text("Bars Displayed: " + Number(this.lastBar + 1))
+                   .style("font-size","12px");
+
+                sliderContainer.append("input")
+                               .attr("id", this.id + "slider")
+                               .attr("type","range")
+                               .classed("form-control slider",true)
+                               .attr("min",1)
+                               .attr("max",Math.min(this.dataAll().length,60))
+                               .attr("value",this.data.length)
+                               .style('cursor','pointer')
+                               .on("input", function() {
+                                   //'vm' is vue context and 'this' is context for this callback 
+                                    vm.lastBar = +this.value
+                                    d3.select('#' + vm.id + 'slider-label')
+                                      .text('Bars Displayed: ' + Math.min(+this.value+1,Number(d3.select('#' + vm.id + 'slider').attr('max'))));
+                                    vm.redraw() 
+                                    this.value = vm.data.length
+                               })
+                               ;
+
+                var btnSortAll = d3.select("#" + this.id + "title")
+                                .selectAll("h3")
+                                .append("button")
+                                .attr("id",this.id + "sortAll")
+                                .text("Sort")
+                                .classed("btn btn-primary btn-sm",true)
+                                .on("click", function() {
+                                    vm.sortAll()
+                                });
 
                 var svg = d3.select("#" + this.id + "wrapper")
                             .append("svg")
                             .attr("id",this.id + "svg")
                             .attr("width",this.w + this.margin.left + this.margin.right)
                             .attr("height",this.h + this.margin.top + this.margin.bottom)
-                            .classed("mt-0 pt-0",true)
                             .append("g")
                             .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
                             
@@ -619,7 +540,7 @@ export default {
                 //calculate new width (height computed prop) 
                 this.w = document.getElementById(this.id + "wrapper").offsetWidth - this.margin.left - this.margin.right 
 
-                d3.select("#" + this.id + "level").style("visibility", this.level <= 0 ? "hidden" : "visible");
+                d3.select("#" + this.id + "level") .style("visibility", this.level <= 0 ? "hidden" : "visible");
 
                 d3.select("#" + this.id + "svg").attr("width",this.w + this.margin.left + this.margin.right)
                             .attr("height",this.h + this.margin.top + this.margin.bottom);
@@ -630,16 +551,16 @@ export default {
 
                 this.updateData()
 
-                ////update number in slider to reflect length of data
-                //d3.select('#' + this.id + 'slider-label')
-                //  .text('Bars Displayed: ' + this.data.length);
+                //update number in slider to reflect length of data
+                d3.select('#' + this.id + 'slider-label')
+                  .text('Bars Displayed: ' + this.data.length);
 
-                //d3.select('#' + this.id + 'slider')
-                //   .attr("value",this.data.length)
-                //   .attr("max",Math.min(this.dataAll().length,60));
+                d3.select('#' + this.id + 'slider')
+                   .attr("value",this.data.length)
+                   .attr("max",Math.min(this.dataAll().length,60));
 
                 //setting value with d3 doesn't work, so use document element
-                //document.getElementById(this.id + 'slider').value = this.data.length
+                document.getElementById(this.id + 'slider').value = this.data.length
 
                 //select bars for entering, updating, and exiting bars
                 var bars = d3.select("#" + this.id + "chart").selectAll("rect")
@@ -730,6 +651,10 @@ export default {
     },
     mounted: function() {
         console.log('mounted: large bar chart')
+        //initialize tooltips
+        $(function() {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
         //allow use of vue 'this' within scoped functions (need this for this.chart.filters --> function has to return vm.filters, this.filters causes the function to return itself)
         var vm = this
         //define chart object

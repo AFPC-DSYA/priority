@@ -1,25 +1,22 @@
 <template>
-    <v-toolbar dark color="primary darken-1 pb-0 mb-0">
-        <v-toolbar-title class="white--text">
-            <router-link to="/"><img src="../../static/afpc_log.png" height="30px"></router-link>
-            Priority Units
-        </v-toolbar-title>
-        <v-spacer></v-spacer>
-        <v-btn to="/" flat>Units</v-btn>
-        <v-btn to="/afsc" flat>AFSC</v-btn>
-        <v-btn to="/history" flat>History</v-btn>
-    </v-toolbar>
-
+    <nav class="navbar navbar-expand-lg navbar-dark primary-color-dark fixed-top">
+      <router-link class="white-text" to="/"><img src="../../static/afpc_log.png" height="30px"></router-link>
+      <div class="navbar-brand white-text"><router-link class="white-text" to="/">Priority Units</router-link></div>
+      <button class="navbar-toggler hoverable" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNavDropdown">
+        <ul class="navbar-nav mr-auto">
+          <router-link class="nav-item" to="/" tag="li" active-class="active" exact><a class="nav-link">Units</a></router-link>
+          <router-link class="nav-item" to="/afsc" tag="li" active-class="active"><a class="nav-link">AFSC</a></router-link>
+          <router-link class="nav-item" to="/history" tag="li" active-class="active"><a class="nav-link">History</a></router-link>
+        </ul>
+      </div>
+    </nav>
 </template>
 
 <script>
-export default {
-    data() {
-        return {
-            drawer: false
-        }
-    }
-} 
+    
 </script>
 
 <style scoped>

@@ -146,9 +146,7 @@ var getGeoChart = (config)=>{
 }
 
 var updateChartConfig = (config)=>{
-  var layout_length = document.getElementById(config.id).className.match(/(?:col\-|xs|sm|md|lg|xl)(\d+)/)[1]
-      console.log('layout length')
-    console.log(layout_length)
+  var layout_length = document.getElementById(config.id).className.match(/col\-(\d+)/)[1]
   var documentWidth = document.documentElement.clientWidth
   const smallScreenFactor = 0.96
   config.width = documentWidth > 960 ? Math.round(documentWidth*(layout_length/12)) : Math.round(documentWidth*smallScreenFactor)
