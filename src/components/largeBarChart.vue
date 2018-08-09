@@ -730,6 +730,10 @@ export default {
     },
     mounted: function() {
         console.log('mounted: large bar chart')
+        //initialize tooltips
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
         //allow use of vue 'this' within scoped functions (need this for this.chart.filters --> function has to return vm.filters, this.filters causes the function to return itself)
         var vm = this
         //define chart object
