@@ -147,24 +147,6 @@
                             style="visibility: hidden"
                             @click="resetChart('dc-majcom-barchart')">Reset</button>
                     </h3>
-                    <!--<searchBox-->
-                        <!--v-model:value="searchMajcom"-->
-                        <!--size="3"-->
-                        <!--label="Search MAJCOM"-->
-                        <!--@sub="submit(searchMajcom,'dc-majcom-barchart')"-->
-                        <!--button="true"-->
-                        <!--:color="majcomColor"-->
-                        <!--:btnColor="majcomColor"-->
-                    <!--</searchBox>-->
-                    <!-- <form class="form-inline">
-                        <div class="form-group">
-                            <input id="searchMajcom" v-model="searchMajcom" placeholder="Search MAJCOM" @keydown.enter="submit(searchMajcom,'dc-majcom-barchart')">
-                            <button class="btn btn-primary btn-sm" @click.stop.prevent="submit(searchMajcom,'dc-majcom-barchart')">Submit</button>
-                        </div>
-                    </form> -->
-                    <!--<div id="app" class="container">-->
-                            <!--<autocomplete :suggestions="suggestions" v-model="searchMajcom"></autocomplete>-->
-                    <!--</div>-->
                 </div>
             </div>
         </div>
@@ -217,21 +199,6 @@
                             style="visibility: hidden"
                             @click="resetChart('dc-base-barchart')">Reset</button>
                     </h3>
-                    <!--<searchBox-->
-                        <!--v-model:value="searchBase"-->
-                        <!--size="3"-->
-                        <!--label="Search Installation"-->
-                        <!--@sub="submit(searchBase,'dc-base-barchart')"-->
-                        <!--button="true"-->
-                        <!--:color="baseColor"-->
-                        <!--:btnColor="baseColor"-->
-                    <!--</searchBox>-->
-                     <!--<form class="form-inline">-->
-                        <!--<div class="form-group">-->
-                            <!--<input id="searchBase" v-model="searchBase" placeholder="Search Installation" @keydown.enter="submit(searchBase,'dc-base-barchart')">-->
-                            <!--<button class="btn btn-primary btn-sm" @click.stop.prevent="submit(searchBase,'dc-base-barchart')">Submit</button>-->
-                        <!--</div>-->
-                    <!--</form> -->
                 </div>
             </div>
         </div>
@@ -255,15 +222,27 @@
         </largeBarChart>
         <div class="row">
             <div class="col-12">
-                <h4>Filtered Records
-                    <span data-toggle="tooltip" 
-                          data-placement="right"
-                          title="In the follow table, click the column headers to sort by the column and toggle between ascending or descending. Use the scroll bar at the bottom of the table to see additional columns. Click the Next and Prev buttons at the bottom of the table to see additional rows.">
-                        <fontAwesomeIcon icon="info-circle" 
-                                         size="xs">
-                        </fontAwesomeIcon>
-                    </span>
-                </h4>
+                <div class="row">
+                    <h4 class="col-6">Filtered Records
+                        <span data-toggle="tooltip" 
+                              data-placement="right"
+                              title="In the follow table, click the column headers to sort by the column and toggle between ascending or descending. Use the scroll bar at the bottom of the table to see additional columns. Click the Next and Prev buttons at the bottom of the table to see additional rows.">
+                            <fontAwesomeIcon icon="info-circle" 
+                                             size="xs">
+                            </fontAwesomeIcon>
+                        </span>
+                    </h4>
+                    <div class="col-6">
+                        <searchBox
+                            v-model="search"
+                            size="8"
+                            label="Search Table"
+                            @sub="searchTable(search)"
+                            @reset="resetTable"
+                            button="true">
+                        </searchBox>
+                    </div>
+                </div>
                 <span>
                     Showing <span id="beginHead"></span>-<span id="endHead"></span> of <span id="sizeHead"></span>
                 </span>
@@ -317,8 +296,7 @@ import largeBarChart from '@/components/largeBarChart'
                 asDate: '',
                 type: "percent",
                 period: "curr",
-                searchMajcom: "",
-                searchBase: "",
+                search: "",
                 loaded: false ,
                 baseColor: chartSpecs.baseChart.color,
                 majcomColor: chartSpecs.majcomChart.color,
@@ -386,8 +364,18 @@ import largeBarChart from '@/components/largeBarChart'
           afscGroup: function() {
             return this.afscDim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial);
           },
-          itemDim() {
-              return this.ndx.dimension(function(d) {return d});
+          allDim: function() {
+              var cols = this.columns.map(d => d.field);
+              var allDim = this.ndx.dimension((g) => {
+                  return cols.map((d) => {
+                    if (_.includes(d,'percent')) {
+                        return Math.round(g[d]*1000)/10 + '%';
+                    } else {
+                        return g[d];
+                    }
+                  });
+              });
+              return allDim;
           },
           ylabel: function() {
             if (_.includes(this.selected,"percent")) {
@@ -555,7 +543,8 @@ import largeBarChart from '@/components/largeBarChart'
 
                 this.dataTable.redraw();
             },
-          resetAll: (event)=>{
+          resetAll: function(event) {
+            this.allDim.filterAll()
             dc.filterAll()
             dc.redrawAll()
           },
@@ -572,25 +561,22 @@ import largeBarChart from '@/components/largeBarChart'
                 dc.redrawAll()
             },10)
           },
-          submit: (text,id) => {
-            dc.chartRegistry.list().filter(chart=>{
-                return chart.anchorName() == id 
-            }).forEach(chart=>{
-                var mainArray = []
-                chart.dimension().group().all().forEach((d) => {
-                    mainArray.push(String(d.key))
-                })
-                var filterArray = mainArray.filter((d) => {
-                    var element = d.toUpperCase() 
-                    return element.indexOf(text.toUpperCase()) !== -1
-                })
-                chart.filter(null)
-                if (filterArray.length != mainArray.length) {
-                    chart.filter([filterArray])
+          searchTable: function(text) {
+                this.allDim.filterAll()
+                var upperText = text.toUpperCase()
+                if (text == "") {
+                    this.allDim.filterAll()
+                } else {
+                    this.allDim.filterFunction((d) => {
+                        return _.includes(JSON.stringify(d).toUpperCase(),upperText);
+                    })
                 }
-            })
+              dc.redrawAll()
+          },
+          resetTable: function() {
+            this.allDim.filterAll()
             dc.redrawAll()
-          }
+          },
         },
         components: {
             'loader': Loader,
@@ -845,9 +831,6 @@ import largeBarChart from '@/components/largeBarChart'
                         chart.selectAll('g.x text')
                         .style('text-anchor', 'end')
                         .attr('transform', 'translate(-8,0)rotate(-45)')
-                        .on('click', (d)=>{
-                            this.submit(d, 'dc-majcom-barchart')
-                        })
                     })
 
                 //grade
@@ -893,9 +876,6 @@ import largeBarChart from '@/components/largeBarChart'
                         chart.selectAll('g.x text')
                         .style('text-anchor', 'end')
                         .attr('transform', 'translate(-8,0)rotate(-45)')
-                        .on('click', (d)=>{
-                            this.submit(d, 'dc-afscFamily-barchart')
-                        })
                     });
 
                 //base(mpf)
@@ -920,9 +900,6 @@ import largeBarChart from '@/components/largeBarChart'
                         chart.selectAll('g.x text')
                         .style('text-anchor', 'end')
                         .attr('transform', 'translate(-8,0)rotate(-45)')
-                        .on('click', (d)=>{
-                            this.submit(d, 'dc-base-barchart')
-                        })
                     })
 
                 //create data table

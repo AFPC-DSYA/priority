@@ -1,10 +1,11 @@
 
 <!--##########################################
 <searchBox
-    v-model:value="searchMajcom"
-    label="Search MAJCOM"
+    v-model="search"
+    label="Search"
     size="3"
-    @sub="submit(searchMajcom,'dc-majcom-barchart')"
+    @sub="function(search)"
+    @reset="resetFunction"
     color="red"
     button="true"
     buttonLabel="Feeling Lucky"
@@ -19,24 +20,35 @@ TODO: Prevent typed text to overflow in the 'close-icon'
 		<div class="md-form">
 			<div  style="position:relative;">
                 <div class='searchTip' :style="getColor">
-                    <span v-show="searchVar.length>0">
+                    <span v-show="value.length>0">
                         {{ label }}
                     </span>
                 </div>
-		        <input 	type="text"  class="form-control" v-model="searchVar" :placeholder="label"
-										@keydown.enter.stop.prevent="action" @focus="focus = true" @blur="focus = false"
-										:style="[getShadow,getBorderBottom]">
-		        <div v-show="searchVar.length>0"
+		        <input type="text"  
+                        class="form-control" 
+                        :value="value" 
+                        @input="$emit('input',$event.target.value)"
+                        :placeholder="label"
+                        @keydown.enter.stop.prevent="doSearch" 
+                        @focus="focus = true" 
+                        @blur="focus = false"
+						:style="[getShadow,getBorderBottom]">
+		        <div v-show="value.length>0"
 		             class='searchRemove'
-		             @click="searchVar=''">
-		            <i 	class="close-icon" @mouseenter="hover=true" @mouseleave="hover=false"
-										:style="[getBackground, getIconShadow,]"></i>
+		             @click="resetSearch">
+		            <i class="close-icon" 
+                        @mouseenter="hover=true" 
+                        @mouseleave="hover=false"
+						:style="[getBackground, getIconShadow,]"></i>
 		        </div>
 		    </div>
 		</div>
 	</div>
-	<div class="col-auto" style="top:-3px">
-		<button v-if="bIf" class="btn btn-primary btn-sm" @click="action" :style="getBackgroundColor"> {{ bLabel }} </button>
+	<div class="col-auto pt-2">
+		<button v-if="bIf" 
+                class="btn btn-primary btn-sm" 
+                @click="doSearch" 
+                :style="getBackgroundColor"> {{ bLabel }} </button>
 	</div>
 </div>
 </template>
@@ -76,7 +88,6 @@ export default {
 	},
 	data(){
 		return {
-			searchVar: this.value,
 			bLabel: this.buttonLabel ? this.buttonLabel : "Search",
 			bIf: this.button ? true : false,
 			colorGiven: this.color ? this.color : "#4d8bf9",
@@ -133,21 +144,15 @@ export default {
 			else return {}
 		}
 	},
-	watch: {
-	    searchVar(val) {
-	      	//Update Parent
-	      	this.$emit('input', val);
-	    },
-	    value(val){
-	    	//Update this from Parent
-	    	this.searchVar = val;
-	    },
-	},
 	methods:{
-		action(){
+		doSearch() {
 			//tell Parent we want to submit input field
 			this.$emit('sub');
 		},
+        resetSearch() {
+            this.$emit('input','')
+            this.$emit('reset');
+        },
 		msieversion() {
 		    var ua = window.navigator.userAgent;
 		    var msie = ua.indexOf("MSIE ");

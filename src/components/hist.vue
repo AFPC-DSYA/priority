@@ -423,7 +423,7 @@ import largeBarChart from '@/components/largeBarChart'
                 lineConfig.group = lineConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
                 lineConfig.minHeight = 400
                 lineConfig.aspectRatio = 3
-                lineConfig.margins = {top: 10, left: 60, right: 40, bottom: 40}
+                lineConfig.margins = {top: 10, left: 60, right: 40, bottom: 60}
                 lineConfig.x = d3.scale.ordinal()
                 lineConfig.xUnits = dc.units.ordinal
                 lineConfig.brush = false
@@ -439,6 +439,11 @@ import largeBarChart from '@/components/largeBarChart'
                 dateLineChart
                     .valueAccessor((d) => {
                         return d.value[this.selected]
+                    })
+                    .on('pretransition', (chart)=> {
+                        chart.selectAll('g.x text')
+                        .style('text-anchor', 'end')
+                        .attr('transform', 'translate(-8,0)rotate(-45)')
                     })
                     .on('renderlet', (chart) => {
                         if (this.selected === 'percent') {

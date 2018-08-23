@@ -738,9 +738,11 @@ export default {
         var vm = this
         //define chart object
         this.chart.anchorName = this.anchorName
+        this.chart.dimension = function() { return vm.dimension }
         this.chart.redraw = this.redraw
         this.chart.render = this.render
         this.chart.filterAll = this.filterAll
+        this.chart.filter = this.filterAll 
         this.chart.filters = function() { return vm.filters }
         //register chart for dc
         dc.chartRegistry.register(this.chart)
