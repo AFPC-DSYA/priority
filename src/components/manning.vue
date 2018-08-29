@@ -191,10 +191,32 @@
                     </div>
                 </div>
                 <span>
-                    Showing <span id="beginHead"></span>-<span id="endHead"></span> of <span id="sizeHead"></span>
+                    Show
+                    <select v-model="tablePageSize" @click="dataTable.redraw">
+                        <option :value="10">10</option>
+                        <option :value="25">25</option>
+                        <option :value="50">50</option>
+                        <option :value="100">100</option>
+                    </select>
                 </span>
-                <div style="overflow-x: scroll;">
-                    <table class="table table-hover table-bordered" 
+                <span>
+                    Showing 
+                    <span id="beginHead">{{ end === 0 ? tableOffset : tableOffset + 1 }}</span> -
+                    <span id="endHead">{{ end }}</span> of 
+                    <span id="sizeHead">{{ totalFiltered }}</span>
+                    <button id="Prev" 
+                            class="btn btn-sm btn-secondary" 
+                            :disabled="tableOffset - tablePageSize < 0 ? true : null"
+                            value="Prev"
+                            @click="prevPage">Prev</button>
+                    <button id="Next" 
+                            class="btn btn-sm btn-secondary" 
+                            :disabled="tableOffset + tablePageSize >= totalFiltered ? true : null"
+                            value="Next"
+                            @click="nextPage">Next</button>
+                </span>
+                <div class="row" style="overflow-x: scroll;">
+                    <table class="table table-hover table-bordered table-sm" 
                            id="dc-data-table">
                         <thead>
                             <tr class="table-header">
@@ -202,8 +224,8 @@
                                     :class="{sortedColumn: header.selected}"
                                     style="cursor: pointer;"
                                     @click="sortColumn(header)"
-                                    width="header.width*width">
-                                    {{header.title}}
+                                    :width="header.width">
+                                    {{header.title}}<br>
                                     <span v-show="header.selected">
                                         <font-awesome-icon v-show="header.sort_state === 'ascending'" icon="arrow-up"></font-awesome-icon>
                                         <font-awesome-icon v-show="header.sort_state === 'descending'" icon="arrow-down"></font-awesome-icon>
@@ -212,11 +234,6 @@
                             </tr>
                         </thead>
                     </table>
-                </div>
-                <div class="col-12" id="paging">
-                    Showing <span id="begin"></span>-<span id="end"></span> of <span id="size"></span>
-                    <button id="Prev" class="btn btn-sm btn-secondary" value="Prev">Prev</button>
-                    <button id="Next" class="btn btn-sm btn-secondary" value="Next">Next</button>
                 </div>
             </div>
         </div>
@@ -258,6 +275,10 @@ import largeBarChart from '@/components/largeBarChart'
                 },
                 items: [],
                 dataTable: {},
+                tablePageSize: 10,
+                tableOffset: 0,
+                totalFiltered: 0,
+                end: 0,
                 sortedVar: '',
                 sortOrder: d3.ascending,
                 width: document.documentElement.clientWidth,
@@ -285,7 +306,8 @@ import largeBarChart from '@/components/largeBarChart'
                     {title: 'Auth9', field: 'auth9', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'STP9', field: 'stp9', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Percent9', field: 'percent9', sort_state: "descending", selected: false, width: "10%"},
-                ]
+                ],
+                timeArray: ['curr','3','6','9']
             }
         },
         computed: {
@@ -336,6 +358,23 @@ import largeBarChart from '@/components/largeBarChart'
           },
         },
         methods: {
+            nextPage: function() {
+                this.tableOffset += this.tablePageSize;
+                this.dataTable.redraw();
+            },
+            prevPage: function() {
+                this.tableOffset -= this.tablePageSize;
+                this.dataTable.redraw();
+            },
+            updateTable: function() {
+                this.totalFiltered = this.ndx.groupAll().value();
+                this.end = this.tableOffset + this.tablePageSize > this.totalFiltered ? this.totalFiltered : this.tableOffset + this.tablePageSize;
+                this.tableOffset = this.tableOffset >= this.totalFiltered ? Math.floor((this.totalFiltered - 1)/this.tablePageSize)*this.tablePageSize : this.tableOffset;
+                this.tableOffset = this.tableOffset < 0 ? 0 : this.tableOffset;
+
+                this.dataTable.beginSlice(this.tableOffset);
+                this.dataTable.endSlice(this.tableOffset + this.tablePageSize);
+            },
             dcRowColorFun: function(d,i) {
                 return d.value[this.colorVar] >= this.manningGoal ? i : 3;
             },
@@ -351,107 +390,40 @@ import largeBarChart from '@/components/largeBarChart'
             },
             //reduce functions
             manningAdd: function(p,v) {
-                //current
-                p.asgncurr = p.asgncurr + +v.asgncurr
-                p.authcurr = p.authcurr + +v.authcurr
-                p.stpcurr = p.stpcurr + +v.stpcurr
-                //if divide by 0, set to 0, and if NaN, set to zero
-                p.percentcurr = p.asgncurr/p.authcurr === Infinity ? 0 : Math.round((p.asgncurr/p.authcurr)*1000)/10 || 0
-                p.stpPercentcurr = p.stpcurr/p.authcurr === Infinity ? 0 : Math.round((p.stpcurr/p.authcurr)*1000)/10 || 0
-                //3month
-                p.asgn3 = p.asgn3 + +v.asgn3
-                p.auth3 = p.auth3 + +v.auth3
-                p.stp3 = p.stp3 + +v.stp3
-                //if divide by 0, set to 0, and if NaN, set to zero
-                p.percent3 = p.asgn3/p.auth3 === Infinity ? 0 : Math.round((p.asgn3/p.auth3)*1000)/10 || 0
-                p.stpPercent3 = p.stp3/p.auth3 === Infinity ? 0 : Math.round((p.stp3/p.auth3)*1000)/10 || 0
-                //6month
-                p.asgn6 = p.asgn6 + +v.asgn6
-                p.auth6 = p.auth6 + +v.auth6
-                p.stp6 = p.stp6 + +v.stp6
-                //if divide by 0, set to 0, and if NaN, set to zero
-                p.percent6 = p.asgn6/p.auth6 === Infinity ? 0 : Math.round((p.asgn6/p.auth6)*1000)/10 || 0
-                p.stpPercent6 = p.stp6/p.auth6 === Infinity ? 0 : Math.round((p.stp6/p.auth6)*1000)/10 || 0
-                //9month
-                p.asgn9 = p.asgn9 + +v.asgn9
-                p.auth9 = p.auth9 + +v.auth9
-                p.stp9 = p.stp9 + +v.stp9
-                //if divide by 0, set to 0, and if NaN, set to zero
-                p.percent9 = p.asgn9/p.auth9 === Infinity ? 0 : Math.round((p.asgn9/p.auth9)*1000)/10 || 0
-                p.stpPercent9 = p.stp9/p.auth9 === Infinity ? 0 : Math.round((p.stp9/p.auth9)*1000)/10 || 0
-                return p
+                //iterate through all time periods
+                for (var val of this.timeArray) {
+                    p['asgn' + val] = p['asgn' + val] + +v['asgn' + val]
+                    p['auth' + val] = p['auth' + val] + +v['auth' + val]
+                    p['stp' + val] = p['stp' + val] + +v['stp' + val]
+                    //if divide by 0, set to 0, and if NaN, set to zero
+                    p['percent' + val] = p['asgn' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['asgn' + val]/p['auth' + val])*1000)/10 || 0
+                    p['stpPercent' + val] = p['stp' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['stp' + val]/p['auth' + val])*1000)/10 || 0
+                }
+                return p;
             },
             manningRemove: function(p,v) {
-                //current
-                p.asgncurr = p.asgncurr - +v.asgncurr
-                p.authcurr = p.authcurr - +v.authcurr
-                p.stpcurr = p.stpcurr - +v.stpcurr
-                //if divide by 0, set to 0, and if NaN, set to zero
-                p.percentcurr = p.asgncurr/p.authcurr === Infinity ? 0 : Math.round((p.asgncurr/p.authcurr)*1000)/10 || 0
-                p.stpPercentcurr = p.stpcurr/p.authcurr === Infinity ? 0 : Math.round((p.stpcurr/p.authcurr)*1000)/10 || 0
-                //3month
-                p.asgn3 = p.asgn3 - +v.asgn3
-                p.auth3 = p.auth3 - +v.auth3
-                p.stp3 = p.stp3 - +v.stp3
-                //if divide by 0, set to 0, and if NaN, set to zero
-                p.percent3 = p.asgn3/p.auth3 === Infinity ? 0 : Math.round((p.asgn3/p.auth3)*1000)/10 || 0
-                p.stpPercent3 = p.stp3/p.auth3 === Infinity ? 0 : Math.round((p.stp3/p.auth3)*1000)/10 || 0
-                //6month
-                p.asgn6 = p.asgn6 - +v.asgn6
-                p.auth6 = p.auth6 - +v.auth6
-                p.stp6 = p.stp6 - +v.stp6
-                //if divide by 0, set to 0, and if NaN, set to zero
-                p.percent6 = p.asgn6/p.auth6 === Infinity ? 0 : Math.round((p.asgn6/p.auth6)*1000)/10 || 0
-                p.stpPercent6 = p.stp6/p.auth6 === Infinity ? 0 : Math.round((p.stp6/p.auth6)*1000)/10 || 0
-                //9month
-                p.asgn9 = p.asgn9 - +v.asgn9
-                p.auth9 = p.auth9 - +v.auth9
-                p.stp9 = p.stp9 - +v.stp9
-                //if divide by 0, set to 0, and if NaN, set to zero
-                p.percent9 = p.asgn9/p.auth9 === Infinity ? 0 : Math.round((p.asgn9/p.auth9)*1000)/10 || 0
-                p.stpPercent9 = p.stp9/p.auth9 === Infinity ? 0 : Math.round((p.stp9/p.auth9)*1000)/10 || 0
-                return p
+                //iterate through all time periods
+                for (var val of this.timeArray) {
+                    p['asgn' + val] = p['asgn' + val] - +v['asgn' + val]
+                    p['auth' + val] = p['auth' + val] - +v['auth' + val]
+                    p['stp' + val] = p['stp' + val] - +v['stp' + val]
+                    //if divide by 0, set to 0, and if NaN, set to zero
+                    p['percent' + val] = p['asgn' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['asgn' + val]/p['auth' + val])*1000)/10 || 0
+                    p['stpPercent' + val] = p['stp' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['stp' + val]/p['auth' + val])*1000)/10 || 0
+                }
+                return p;
             },
             manningInitial: function() {
-                return {
-                    //current
-                    asgncurr: 0,
-                    authcurr: 0,
-                    stpcurr: 0,
-                    percentcurr: 0,
-                    stpPercentcurr: 0,
-                    //3month
-                    asgn3: 0,
-                    auth3: 0,
-                    stp3: 0,
-                    percent3: 0,
-                    stpPercent3: 0,
-                    //6month
-                    asgn6: 0,
-                    auth6: 0,
-                    stp6: 0,
-                    percent6: 0,
-                    stpPercent6: 0,
-                    //9month
-                    asgn9: 0,
-                    auth9: 0,
-                    stp9: 0,
-                    percent9: 0,
-                    stpPercent9: 0,
+                var p = {}
+                //iterate through all time frames and add properties
+                for (var val of this.timeArray) {
+                    p['asgn' + val] = 0
+                    p['auth' + val] = 0
+                    p['stp' + val] = 0
+                    p['percent' + val] = 0
+                    p['stpPercent' + val] = 0
                 }
-            },
-            setTableData: function() {
-                this.items = this.itemDim.top(Infinity).map((d) => {
-                    return {
-                        pascode: d.pascode,
-                        unit: d.unit,
-                        majcom: d.majcom,
-                        mpf: d.mpf,
-                        asgn: d.asgn,
-                        auth: d.auth,
-                        stp: d.stp
-                    }
-                }) 
+                return p;
             },
             sortColumn: function(col) {
                 for (let i = 0; i < this.columns.length; i++) {
@@ -546,18 +518,6 @@ import largeBarChart from '@/components/largeBarChart'
                 console.log(error.response);
             });
 
-            //load local data (works for both dev and prod) 
-            // d3.json('./data/priority_data.json',(error,data) => {
-            //     this.data = data.data;   
-            //     this.asDate = data.ASOFDATE;
-            //     //apply formats so we have decoded variables globally
-            //     for (let i = 0; i < this.data.length; i++) {
-            //         this.data[i].majcom = formats.majFormat[this.data[i].majcom]
-            //         this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
-            //     }
-            //     renderCharts()
-            // })
-
             var renderCharts = () => {
 
                 this.loaded = true
@@ -565,97 +525,6 @@ import largeBarChart from '@/components/largeBarChart'
                   .dimension(this.ndx)
                   .group(this.allGroup)
 
-                //reduce functions
-                function manningAdd(p,v) {
-                    //current
-                    p.asgncurr = p.asgncurr + +v.asgncurr
-                    p.authcurr = p.authcurr + +v.authcurr
-                    p.stpcurr = p.stpcurr + +v.stpcurr
-                    //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percentcurr = p.asgncurr/p.authcurr === Infinity ? 0 : Math.round((p.asgncurr/p.authcurr)*1000)/10 || 0
-                    p.stpPercentcurr = p.stpcurr/p.authcurr === Infinity ? 0 : Math.round((p.stpcurr/p.authcurr)*1000)/10 || 0
-                    //3month
-                    p.asgn3 = p.asgn3 + +v.asgn3
-                    p.auth3 = p.auth3 + +v.auth3
-                    p.stp3 = p.stp3 + +v.stp3
-                    //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percent3 = p.asgn3/p.auth3 === Infinity ? 0 : Math.round((p.asgn3/p.auth3)*1000)/10 || 0
-                    p.stpPercent3 = p.stp3/p.auth3 === Infinity ? 0 : Math.round((p.stp3/p.auth3)*1000)/10 || 0
-                    //6month
-                    p.asgn6 = p.asgn6 + +v.asgn6
-                    p.auth6 = p.auth6 + +v.auth6
-                    p.stp6 = p.stp6 + +v.stp6
-                    //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percent6 = p.asgn6/p.auth6 === Infinity ? 0 : Math.round((p.asgn6/p.auth6)*1000)/10 || 0
-                    p.stpPercent6 = p.stp6/p.auth6 === Infinity ? 0 : Math.round((p.stp6/p.auth6)*1000)/10 || 0
-                    //9month
-                    p.asgn9 = p.asgn9 + +v.asgn9
-                    p.auth9 = p.auth9 + +v.auth9
-                    p.stp9 = p.stp9 + +v.stp9
-                    //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percent9 = p.asgn9/p.auth9 === Infinity ? 0 : Math.round((p.asgn9/p.auth9)*1000)/10 || 0
-                    p.stpPercent9 = p.stp9/p.auth9 === Infinity ? 0 : Math.round((p.stp9/p.auth9)*1000)/10 || 0
-                    return p
-                }
-                function manningRemove(p,v) {
-                    //current
-                    p.asgncurr = p.asgncurr - +v.asgncurr
-                    p.authcurr = p.authcurr - +v.authcurr
-                    p.stpcurr = p.stpcurr - +v.stpcurr
-                    //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percentcurr = p.asgncurr/p.authcurr === Infinity ? 0 : Math.round((p.asgncurr/p.authcurr)*1000)/10 || 0
-                    p.stpPercentcurr = p.stpcurr/p.authcurr === Infinity ? 0 : Math.round((p.stpcurr/p.authcurr)*1000)/10 || 0
-                    //3month
-                    p.asgn3 = p.asgn3 - +v.asgn3
-                    p.auth3 = p.auth3 - +v.auth3
-                    p.stp3 = p.stp3 - +v.stp3
-                    //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percent3 = p.asgn3/p.auth3 === Infinity ? 0 : Math.round((p.asgn3/p.auth3)*1000)/10 || 0
-                    p.stpPercent3 = p.stp3/p.auth3 === Infinity ? 0 : Math.round((p.stp3/p.auth3)*1000)/10 || 0
-                    //6month
-                    p.asgn6 = p.asgn6 - +v.asgn6
-                    p.auth6 = p.auth6 - +v.auth6
-                    p.stp6 = p.stp6 - +v.stp6
-                    //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percent6 = p.asgn6/p.auth6 === Infinity ? 0 : Math.round((p.asgn6/p.auth6)*1000)/10 || 0
-                    p.stpPercent6 = p.stp6/p.auth6 === Infinity ? 0 : Math.round((p.stp6/p.auth6)*1000)/10 || 0
-                    //9month
-                    p.asgn9 = p.asgn9 - +v.asgn9
-                    p.auth9 = p.auth9 - +v.auth9
-                    p.stp9 = p.stp9 - +v.stp9
-                    //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percent9 = p.asgn9/p.auth9 === Infinity ? 0 : Math.round((p.asgn9/p.auth9)*1000)/10 || 0
-                    p.stpPercent9 = p.stp9/p.auth9 === Infinity ? 0 : Math.round((p.stp9/p.auth9)*1000)/10 || 0
-                    return p
-                }
-                function manningInitial() {
-                    return {
-                        //current
-                        asgncurr: 0,
-                        authcurr: 0,
-                        stpcurr: 0,
-                        percentcurr: 0,
-                        stpPercentcurr: 0,
-                        //3month
-                        asgn3: 0,
-                        auth3: 0,
-                        stp3: 0,
-                        percent3: 0,
-                        stpPercent3: 0,
-                        //6month
-                        asgn6: 0,
-                        auth6: 0,
-                        stp6: 0,
-                        percent6: 0,
-                        stpPercent6: 0,
-                        //9month
-                        asgn9: 0,
-                        auth9: 0,
-                        stp9: 0,
-                        percent9: 0,
-                        stpPercent9: 0,
-                    }
-                }
                 //remove empty function (es6 syntax to keep correct scope)
                 var removeEmptyBins = (source_group) => {
                     return {
@@ -668,7 +537,7 @@ import largeBarChart from '@/components/largeBarChart'
                 }
 
                 //Number Display for Auth, Asgn, STP - show total for filtered content
-                var ndGroup = this.ndx.groupAll().reduce(manningAdd,manningRemove,manningInitial)
+                var ndGroup = this.ndx.groupAll().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
                 var authND = dc.numberDisplay("#auth")
                 authND.group(ndGroup)
                     .formatNumber(d3.format("d"))
@@ -704,7 +573,7 @@ import largeBarChart from '@/components/largeBarChart'
                 catConfig.dim = this.ndx.dimension(function (d) {
                     return d.unit_cat;
                 })
-                catConfig.group = catConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
+                catConfig.group = catConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
                 catConfig.minHeight = 100 
                 catConfig.aspectRatio = 3
                 catConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
@@ -721,7 +590,7 @@ import largeBarChart from '@/components/largeBarChart'
                 var majcomConfig = {}
                 majcomConfig.id = 'majcom'
                 majcomConfig.dim = this.ndx.dimension(function(d){return d.majcom})
-                var majcomPercent = majcomConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
+                var majcomPercent = majcomConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
                 majcomConfig.group = removeEmptyBins(majcomPercent)
                 majcomConfig.minHeight = chartSpecs.majcomChart.minHeight 
                 majcomConfig.aspectRatio = chartSpecs.majcomChart.aspectRatio 
@@ -746,7 +615,7 @@ import largeBarChart from '@/components/largeBarChart'
                 var baseConfig = {}
                 baseConfig.id = 'base'
                 baseConfig.dim = this.ndx.dimension(function(d){return d.mpf})
-                var basePercent = baseConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
+                var basePercent = baseConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
                 baseConfig.group = removeEmptyBins(basePercent)
                 baseConfig.minHeight = chartSpecs.baseChart.minHeight 
                 baseConfig.aspectRatio = chartSpecs.baseChart.aspectRatio 
@@ -769,49 +638,6 @@ import largeBarChart from '@/components/largeBarChart'
                 //data table
                 var dataTable = dc.dataTable("#dc-data-table")
 
-                var tableOffset = 0
-                var tablePageSize = 10
-
-                function nextPage() {
-                    tableOffset += tablePageSize;
-                    dataTable.redraw();
-                }
-                function prevPage() {
-                    tableOffset -= tablePageSize;
-                    dataTable.redraw();
-                }
-                d3.select('#Prev')
-                    .on("click", prevPage);
-                d3.select('#Next')
-                    .on("click", nextPage);
-
-                var updateTable = () => {
-                    var totalFiltered = this.ndx.groupAll().value();
-                    var end = tableOffset + tablePageSize > totalFiltered ? totalFiltered : tableOffset + tablePageSize;
-                    tableOffset = tableOffset >= totalFiltered ? Math.floor((totalFiltered - 1)/tablePageSize)*tablePageSize : tableOffset;
-                    tableOffset = tableOffset < 0 ? 0 : tableOffset;
-
-                    dataTable.beginSlice(tableOffset);
-                    dataTable.endSlice(tableOffset + tablePageSize);
-
-                    //update header
-                    d3.select("span#beginHead")
-                        .text(end === 0 ? tableOffset : tableOffset + 1);
-                    d3.select("span#endHead")
-                        .text(end);
-                    d3.select('span#sizeHead').text(totalFiltered);
-                    //update paging and footer
-                    d3.select("span#begin")
-                        .text(end === 0 ? tableOffset : tableOffset + 1);
-                    d3.select("span#end")
-                        .text(end);
-                    d3.select('#Prev')
-                        .attr('disabled', tableOffset - tablePageSize < 0 ? 'true' : null);
-                    d3.select("#Next")
-                        .attr('disabled', tableOffset + tablePageSize >= totalFiltered ? 'true' : null);
-                    d3.select('span#size').text(totalFiltered);
-                }
-
                 var tableDim = this.ndx.dimension(d => d.unit)
                 dataTable.width(this.width)
                     .height(800)
@@ -829,61 +655,12 @@ import largeBarChart from '@/components/largeBarChart'
                     .showGroups(false)
                     .sortBy(d => d.unit)
                     .order(d3.ascending)
-                    .on("preRender", updateTable)
-                    .on("preRedraw", updateTable)
-                    //.on("renderlet", function(table) {
-                    //    console.log(d3.select("#dc-data-table tr"))
-                    //})
+                    .on("preRender", this.updateTable)
+                    .on("preRedraw", this.updateTable)
                     ;
 
                 this.dataTable = dataTable
 
-                //table.selectAll("th")
-                //.data(this.columns)
-                //.enter()
-                //.append("th")
-                //.attr("class", (d, i) => '_'+i+' th_'+d.title)
-                //.text(d => d.title)
-                //.style("line-height", "1em")
-                //.style("border", "0px")
-                //.style("padding", "5px")
-                //.style("font-weight", "normal")
-                //.style("cursor", "pointer")
-                //.on("click", v => {
-                //    dataTable.sortBy(d => d[v.field])
-                //    if (this.sortedVar == v.field) {
-                //        //toggle sort order
-                //        this.sortOrder = this.sortOrder == d3.ascending ? d3.descending: d3.ascending
-                //        dataTable.order(this.sortOrder)
-                //    } else{
-                //        this.sortedVar = v.field
-                //        this.sortOrder = d3.ascending
-                //        dataTable.order(this.sortOrder)
-                //    }
-                //    //why not redraw??
-                //    dataTable.redraw()
-                //})
-
-                //var setTableStyle = () => {
-                //    d3.selectAll("#dc-data-table tbody")
-                //    .style("height", "500px")
-                //    .style("overflow-y", "auto")
-                //    .style("overflow-x", "hidden")
-                //    ;
-                //    this.columns.forEach((d,i) => {
-                //        d3.selectAll("._" + i)
-                //            .attr("width", (this.columns[i].width/tableUnits)*100+"%")
-                //    })
-                //    d3.selectAll("#dc-data-table td")
-                //    .style("color", "#333")
-                //    .style("font-size", "13px")
-                //    .style("border", "0px")
-                //    .style("float", "left")
-                //    .style("line-height", "1em")
-                //    .style("border", "0px")
-                //    .style("padding", "5px")
-                //    ;
-                //}
 
                 //Download Raw Data button
                 d3.select('#download')
@@ -913,13 +690,6 @@ import largeBarChart from '@/components/largeBarChart'
                     clearTimeout(temp)
                     temp = setTimeout(dc.redrawAll(), 500)
                 }
-
-                //var vm = this
-                //dc.chartRegistry.list().forEach((chart) => {
-                //    chart.on("filtered", function() {
-                //       vm.setTableData(); 
-                //    })
-                //})
 
                 //create charts
                 dc.renderAll()
