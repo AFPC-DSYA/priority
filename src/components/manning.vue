@@ -10,75 +10,71 @@
         <loader v-show="!loaded" key="loader"></loader>
         <div v-show="loaded" key="content">
         <div class="row pt-2"> 
-            <div id="radioSelect" class="col form-group">
-               <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio1" value="percent" v-model="type" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Percentage</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="type" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Assigned</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio3" value="auth" v-model="type" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Authorized</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="type" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">STP</span>
-                </label>
-                <span data-toggle="tooltip" 
-                      data-placement="right"
-                      title="Use the radio buttons to toggle between manning percentage, assigned, authorized, and STP (student, transient, personnel holdee). The charts show the selected data element.">
-                    <fontAwesomeIcon icon="info-circle" 
-                                     >
-                    </fontAwesomeIcon>
-                </span>
+            <div class="col-5">
+                <div class="row">
+                    <div id="radioSelect" class="col-12 form-group">
+                       <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio1" value="percent" v-model="type" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Percentage</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="type" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Assigned</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio3" value="auth" v-model="type" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Authorized</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="type" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">STP</span>
+                        </label>
+                        <span data-toggle="tooltip" 
+                              data-placement="right"
+                              title="Use the radio buttons to toggle between manning percentage, assigned, authorized, and STP (student, transient, personnel holdee). The charts show the selected data element.">
+                            <fontAwesomeIcon icon="info-circle" 
+                                             >
+                            </fontAwesomeIcon>
+                        </span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="radioPeriod" class="col-12 form-group">
+                       <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radioPeriod" type="radio" id="radio5" value="curr" v-model="period" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Current</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radioPeriod" type="radio" id="radio6" value="3" v-model="period" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">3 Months</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radioPeriod" type="radio" id="radio7" value="6" v-model="period" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">6 Months</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radioPeriod" type="radio" id="radio8" value="9" v-model="period" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">9 Months</span>
+                        </label>
+                        <span data-toggle="tooltip" 
+                              data-placement="right"
+                              title="Use the radio buttons to toggle between current data and projected data. The projected data show snapshots at 3, 6, or 9 months from the date in the top right corner of the page.">
+                            <fontAwesomeIcon icon="info-circle" 
+                                             >
+                            </fontAwesomeIcon>
+                        </span>
+                    </div>
+                </div>
             </div>
-            <div class="col-auto">
-                <button type="button" id="download"
-                                class="btn btn-info btn-rounded btn-sm waves-effect" 
-                                >Download Raw Data</button>
-                <button type="button" 
-                        class="btn btn-danger btn-rounded btn-sm waves-effect" 
-                        @click="resetAll">Reset All</button>
-            </div>
-        </div>
-        <div class="row">
-            <div id="radioPeriod" class="col form-group">
-               <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio5" value="curr" v-model="period" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Current</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio6" value="3" v-model="period" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">3 Months</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio7" value="6" v-model="period" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">6 Months</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radioPeriod" type="radio" id="radio8" value="9" v-model="period" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">9 Months</span>
-                </label>
-                <span data-toggle="tooltip" 
-                      data-placement="right"
-                      title="Use the radio buttons to toggle between current data and projected data. The projected data show snapshots at 3, 6, or 9 months from the date in the top right corner of the page.">
-                    <fontAwesomeIcon icon="info-circle" 
-                                     >
-                    </fontAwesomeIcon>
-                </span>
-            </div>
-            <div class="col-auto" id="legend">
+            <div class="col-3" id="legend">
                 <p class="mb-0 pb-0 pl-4" style="font-size:20px">Legend</p> 
                 <ul class="mt-0 pt-0" style="list-style-type: none">
                     <li>
@@ -90,6 +86,17 @@
                         <span :style="label">Manning < 95%</span>
                     </li>
                 </ul>
+            </div>
+            <div class="col-4">
+                <div class="float-right">
+                    <button type="button" 
+                            id="download"
+                            class="btn btn-info btn-rounded btn-sm waves-effect" 
+                                    >Download Raw Data</button>
+                    <button type="button" 
+                            class="btn btn-danger btn-rounded btn-sm waves-effect" 
+                            @click="resetAll">Reset All</button>
+                </div>
             </div>
         </div>
         <div class="row">
@@ -148,24 +155,18 @@
                 </div>
             </div>
         </div>
-        <largeBarChart :id="'unit'"
-                       :dimension="unitDim"
-                       :group="unitGroup"
-                       :groupAll="unitGroup.all()"
-                       :widthFactor="0.90"
-                       :aspectRatio="chartSpecs.unitChart.aspectRatio"
-                       :minHeight="chartSpecs.unitChart.minHeight"
-                       :selected="selected"
-                       :ylabel="ylabel"
-                       :reducer="manningAdd"
-                       :accumulator="manningInitial"
-                       :numBars="30"
-                       :margin="chartSpecs.unitChart.margins"
-                       :colorScale="unitColorScale"
-                       :colorFunction="unitColorFun"
-                       :title="'Units'"
-                       :loaded="loaded">
-        </largeBarChart>
+        <div class="row">
+            <div id="unitType" class="col-12">
+                <div id="dc-unitType-barchart">
+                    <h3>Unit Type <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                    <button type="button" 
+                            class="btn btn-danger btn-sm btn-rounded reset" 
+                            style="visibility: hidden"
+                            @click="resetChart('dc-unitType-barchart')">Reset</button>
+                    </h3>
+                </div>
+            </div>
+        </div>
         <div class="row">
             <div class="col-12">
                 <div class="row">
@@ -623,6 +624,30 @@ import largeBarChart from '@/components/largeBarChart'
                 baseConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
                 var baseChart = dchelpers.getOrdinalBarChart(baseConfig)
                 baseChart
+                    .elasticX(true)
+                    .controlsUseVisibility(true)
+                    .colorAccessor(this.dcBarColorFun)
+                    .valueAccessor((d) => {
+                        return d.value[this.selected]
+                    })
+                    .on('pretransition', (chart)=> {
+                        chart.selectAll('g.x text')
+                        .style('text-anchor', 'end')
+                        .attr('transform', 'translate(-8,0)rotate(-45)')
+                    })
+
+                //unit type
+                var unitTypeConfig = {}
+                unitTypeConfig.id = 'unitType'
+                unitTypeConfig.dim = this.ndx.dimension(function(d){return d.unit_type})
+                var unitTypePercent = unitTypeConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+                unitTypeConfig.group = removeEmptyBins(unitTypePercent)
+                unitTypeConfig.minHeight = chartSpecs.baseChart.minHeight 
+                unitTypeConfig.aspectRatio = chartSpecs.baseChart.aspectRatio 
+                unitTypeConfig.margins = chartSpecs.baseChart.margins 
+                unitTypeConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
+                var unitTypeChart = dchelpers.getOrdinalBarChart(unitTypeConfig)
+                unitTypeChart
                     .elasticX(true)
                     .controlsUseVisibility(true)
                     .colorAccessor(this.dcBarColorFun)

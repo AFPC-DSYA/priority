@@ -64,21 +64,71 @@
                     </h3>
                 </div> 
             </div>
+        </div>
+        <!--<div class="row">-->
+            <!--<div id="overview" class="col-12">-->
+                <!--<div id="dc-overview-linechart">-->
+                    <!--<h3>Overview-->
+                        <!--<span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>-->
+                        <!--<button type="button" -->
+                                <!--class="btn btn-danger btn-sm btn-rounded reset" -->
+                                <!--style="visibility: hidden"-->
+                                <!--@click="resetChart('dc-overview-linechart')">Reset</button>-->
+                    <!--</h3>-->
+                <!--</div> -->
+                
+            <!--</div>-->
+        <!--</div>-->
+        <div class="row">
             <div class="col-12">
-                <h4>Filtered Records
-                    <span data-toggle="tooltip" 
-                          data-placement="right"
-                          title="In the follow table, click the column headers to sort by the column and toggle between ascending or descending. Use the scroll bar at the bottom of the table to see additional columns. Click the Next and Prev buttons at the bottom of the table to see additional rows.">
-                        <fontAwesomeIcon icon="info-circle" 
-                                         size="xs">
-                        </fontAwesomeIcon>
-                    </span>
-                </h4>
+                <div class="row">
+                    <h4 class="col-6">Filtered Records
+                        <span data-toggle="tooltip" 
+                              data-placement="right"
+                              title="In the follow table, click the column headers to sort by the column and toggle between ascending or descending. Use the scroll bar at the bottom of the table to see additional columns. Click the Next and Prev buttons at the bottom of the table to see additional rows.">
+                            <fontAwesomeIcon icon="info-circle" 
+                                             size="xs">
+                            </fontAwesomeIcon>
+                        </span>
+                    </h4>
+                    <div class="col-6">
+                        <searchBox
+                            v-model="search"
+                            size="8"
+                            label="Search Table"
+                            @sub="searchTable(search)"
+                            @reset="resetTable"
+                            button="true">
+                        </searchBox>
+                    </div>
+                </div>
                 <span>
-                    Showing <span id="beginHead"></span>-<span id="endHead"></span> of <span id="sizeHead"></span>
+                    Show
+                    <select v-model="tablePageSize" @click="dataTable.redraw">
+                        <option :value="10">10</option>
+                        <option :value="25">25</option>
+                        <option :value="50">50</option>
+                        <option :value="100">100</option>
+                    </select>
                 </span>
-                <div style="overflow-x: scroll;">
-                    <table class="table table-hover table-bordered" 
+                <span>
+                    Showing 
+                    <span id="beginHead">{{ end === 0 ? tableOffset : tableOffset + 1 }}</span> -
+                    <span id="endHead">{{ end }}</span> of 
+                    <span id="sizeHead">{{ totalFiltered }}</span>
+                    <button id="Prev" 
+                            class="btn btn-sm btn-secondary" 
+                            :disabled="tableOffset - tablePageSize < 0 ? true : null"
+                            value="Prev"
+                            @click="prevPage">Prev</button>
+                    <button id="Next" 
+                            class="btn btn-sm btn-secondary" 
+                            :disabled="tableOffset + tablePageSize >= totalFiltered ? true : null"
+                            value="Next"
+                            @click="nextPage">Next</button>
+                </span>
+                <div class="row" style="overflow-x: scroll;">
+                    <table class="table table-hover table-bordered table-sm" 
                            id="dc-data-table">
                         <thead>
                             <tr class="table-header">
@@ -86,8 +136,8 @@
                                     :class="{sortedColumn: header.selected}"
                                     style="cursor: pointer;"
                                     @click="sortColumn(header)"
-                                    width="header.width*width">
-                                    {{header.title}}
+                                    :width="header.width">
+                                    {{header.title}}<br>
                                     <span v-show="header.selected">
                                         <font-awesome-icon v-show="header.sort_state === 'ascending'" icon="arrow-up"></font-awesome-icon>
                                         <font-awesome-icon v-show="header.sort_state === 'descending'" icon="arrow-down"></font-awesome-icon>
@@ -96,11 +146,6 @@
                             </tr>
                         </thead>
                     </table>
-                </div>
-                <div class="col-12" id="paging">
-                    Showing <span id="begin"></span>-<span id="end"></span> of <span id="size"></span>
-                    <button id="Prev" class="btn btn-sm btn-secondary" value="Prev">Prev</button>
-                    <button id="Next" class="btn btn-sm btn-secondary" value="Next">Next</button>
                 </div>
             </div>
         </div>
@@ -126,6 +171,7 @@ import largeBarChart from '@/components/largeBarChart'
                 data: [],
                 asDate: '',
                 selected: 'percent',
+                search: "",
                 loaded: false ,
                 manningGoal: 95,
                 rect: {
@@ -138,6 +184,10 @@ import largeBarChart from '@/components/largeBarChart'
                 },
                 items: [],
                 dataTable: {},
+                tablePageSize: 10,
+                tableOffset: 0,
+                totalFiltered: 0,
+                end: 0,
                 sortedVar: '',
                 sortOrder: d3.ascending,
                 width: document.documentElement.clientWidth,
@@ -158,8 +208,18 @@ import largeBarChart from '@/components/largeBarChart'
           allGroup: function(){
             return this.ndx.groupAll()
           },
-          itemDim() {
-              return this.ndx.dimension(function(d) {return d});
+          allDim: function() {
+              var cols = this.columns.map(d => d.field);
+              var allDim = this.ndx.dimension((g) => {
+                  return cols.map((d) => {
+                    if (_.includes(d,'percent')) {
+                        return Math.round(g[d]*1000)/10 + '%';
+                    } else {
+                        return g[d];
+                    }
+                  });
+              });
+              return allDim;
           },
           ylabel: function() {
             if (_.includes(this.selected,"percent")) {
@@ -177,6 +237,23 @@ import largeBarChart from '@/components/largeBarChart'
           },
         },
         methods: {
+            nextPage: function() {
+                this.tableOffset += this.tablePageSize;
+                this.dataTable.redraw();
+            },
+            prevPage: function() {
+                this.tableOffset -= this.tablePageSize;
+                this.dataTable.redraw();
+            },
+            updateTable: function() {
+                this.totalFiltered = this.ndx.groupAll().value();
+                this.end = this.tableOffset + this.tablePageSize > this.totalFiltered ? this.totalFiltered : this.tableOffset + this.tablePageSize;
+                this.tableOffset = this.tableOffset >= this.totalFiltered ? Math.floor((this.totalFiltered - 1)/this.tablePageSize)*this.tablePageSize : this.tableOffset;
+                this.tableOffset = this.tableOffset < 0 ? 0 : this.tableOffset;
+
+                this.dataTable.beginSlice(this.tableOffset);
+                this.dataTable.endSlice(this.tableOffset + this.tablePageSize);
+            },
             dcRowColorFun: function(d,i) {
                 return d.value['percent'] >= this.manningGoal ? i : 3;
             },
@@ -221,19 +298,6 @@ import largeBarChart from '@/components/largeBarChart'
                     stpPercent: 0,
                 }
             },
-            setTableData: function() {
-                this.items = this.itemDim.top(Infinity).map((d) => {
-                    return {
-                        pascode: d.pascode,
-                        unit: d.unit,
-                        majcom: d.majcom,
-                        mpf: d.mpf,
-                        asgn: d.asgn,
-                        auth: d.auth,
-                        stp: d.stp
-                    }
-                }) 
-            },
             sortColumn: function(col) {
                 for (let i = 0; i < this.columns.length; i++) {
                     this.columns[i].selected = false
@@ -255,7 +319,8 @@ import largeBarChart from '@/components/largeBarChart'
 
                 this.dataTable.redraw();
             },
-          resetAll: (event)=>{
+          resetAll: function(event){
+            this.allDim.filterAll()
             dc.filterAll()
             dc.redrawAll()
           },
@@ -272,23 +337,19 @@ import largeBarChart from '@/components/largeBarChart'
                 dc.redrawAll()
             },10)
           },
-          submit: (text,id) => {
-            dc.chartRegistry.list().filter(chart=>{
-                return chart.anchorName() == id 
-            }).forEach(chart=>{
-                var mainArray = []
-                chart.dimension().group().all().forEach((d) => {
-                    mainArray.push(String(d.key))
-                })
-                var filterArray = mainArray.filter((d) => {
-                    var element = d.toUpperCase() 
-                    return element.indexOf(text.toUpperCase()) !== -1
-                })
-                chart.filter(null)
-                if (filterArray.length != mainArray.length) {
-                    chart.filter([filterArray])
+          searchTable: function(text) {
+                this.allDim.filterAll()
+                if (text == "") {
+                    this.allDim.filterAll()
+                } else {
+                    this.allDim.filterFunction((d) => {
+                        return _.includes(JSON.stringify(d).toUpperCase(),text.toUpperCase());
+                    })
                 }
-            })
+              dc.redrawAll()
+          },
+          resetTable: function() {
+            this.allDim.filterAll()
             dc.redrawAll()
           }
         },
@@ -327,13 +388,6 @@ import largeBarChart from '@/components/largeBarChart'
                 console.log('AXIOS ERROR')
                 console.log(error.response);
             });
-
-            //load local data (works for both dev and prod) 
-            // d3.json('./data/priority_hist.json',(error,data) => {
-            //     this.data = data.data;   
-            //     this.asDate = data.ASOFDATE;
-            //     renderCharts()
-            // })
 
             var renderCharts = () => {
 
@@ -420,13 +474,13 @@ import largeBarChart from '@/components/largeBarChart'
                 var lineConfig = {}
                 lineConfig.id = 'dateLine'
                 lineConfig.dim = this.ndx.dimension(function(d) {return d.date})
-                lineConfig.group = lineConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
+                lineConfig.group = removeEmptyBins(lineConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial))
                 lineConfig.minHeight = 400
                 lineConfig.aspectRatio = 3
                 lineConfig.margins = {top: 10, left: 60, right: 40, bottom: 60}
                 lineConfig.x = d3.scale.ordinal()
                 lineConfig.xUnits = dc.units.ordinal
-                lineConfig.brush = false
+                lineConfig.brush = false 
                 lineConfig.tips = true
                 lineConfig.radius = 6
                 lineConfig.dataPoints = {
@@ -434,12 +488,12 @@ import largeBarChart from '@/components/largeBarChart'
                         strokeOpacity: 0.8,
                         radius: 4,
                 }
-                console.log(JSON.stringify(lineConfig.group.all()))
                 var dateLineChart = dchelpers.getLineChart(lineConfig)
                 dateLineChart
                     .valueAccessor((d) => {
                         return d.value[this.selected]
                     })
+                    .brushOn(true)
                     .on('pretransition', (chart)=> {
                         chart.selectAll('g.x text')
                         .style('text-anchor', 'end')
@@ -503,6 +557,41 @@ import largeBarChart from '@/components/largeBarChart'
                     }
                 }
 
+                //date overview chart
+                //var parseDate = d3.time.format("%Y-%m-%d").parse;
+                //var overviewConfig = {}
+                //overviewConfig.id = 'overview'
+                //overviewConfig.dim = this.ndx.dimension(function(d) {return parseDate(d.date)})
+                //var minDate = overviewConfig.dim.bottom(1)[0].date
+                //var maxDate = overviewConfig.dim.top(1)[0].date
+                //overviewConfig.group = overviewConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
+                //overviewConfig.minHeight = 100
+                //overviewConfig.aspectRatio = 5
+                //overviewConfig.margins = {top: 10, left: 60, right: 40, bottom: 60}
+                //overviewConfig.x = d3.time.scale().domain([minDate, maxDate])
+                //overviewConfig.xUnits = d3.time.months
+                //overviewConfig.brush = true 
+                //overviewConfig.tips = true
+                //overviewConfig.radius = 6
+                //overviewConfig.dataPoints = {
+                //        fillOpacity: 0.8,
+                //        strokeOpacity: 0.8,
+                //        radius: 4,
+                //}
+                //var overviewChart = dchelpers.getLineChart(overviewConfig)
+                //console.log('13mo. ago')
+                //console.log(d3.time.month.offset(parseDate(maxDate),-13))
+                //overviewChart
+                //    .filter(dc.filters.RangedFilter(d3.time.month.offset(parseDate(maxDate),-13),d3.time.day.offset(parseDate(maxDate),1)))
+                //    .valueAccessor((d) => {
+                //        return d.value[this.selected]
+                //    })
+                //    .brushOn(true)
+                //    .on('pretransition', (chart)=> {
+                //        chart.selectAll('g.x text')
+                //        .style('text-anchor', 'end')
+                //        .attr('transform', 'translate(-8,0)rotate(-45)')
+                //    })
                 //var dateLineChart = dc.lineChart("#dc-date-linechart")
                 //dateLineChart
                 //    .margins(chartSpecs.majcomChart.margins)
@@ -535,72 +624,9 @@ import largeBarChart from '@/components/largeBarChart'
                 //    //})
                 //;
 
-                    
-
-                //create data table
-                //var tableUnits = d3.sum(this.columns, function(d) {return d.width;})
-                //console.log(tableUnits)
-                //var table = d3.select("#table")
-                //    .append("table")
-                //    .attr("id","dc-data-table")
-                //    .attr("class", "table table-hover")
-                //    .style("background", "#eee")
-                //    .style("table-layout","fixed")
-                //    .style("text-align", "left")
-                //    .append("thead")
-                //    .append("tr")
-                //    .attr("class", "header")
-                //    .style("padding", "0px")
-                //    .style("background-color", "#ddd")
-                //    .style("display", "table-header-group")
-                //    .style("color", "#333");
-
                 var dataTable = dc.dataTable("#dc-data-table")
 
-                var tableOffset = 0
-                var tablePageSize = 10
-
-                function nextPage() {
-                    tableOffset += tablePageSize;
-                    dataTable.redraw();
-                }
-                function prevPage() {
-                    tableOffset -= tablePageSize;
-                    dataTable.redraw();
-                }
-                d3.select('#Prev')
-                    .on("click", prevPage);
-                d3.select('#Next')
-                    .on("click", nextPage);
-
-                var updateTable = () => {
-                    var totalFiltered = this.ndx.groupAll().value();
-                    var end = tableOffset + tablePageSize > totalFiltered ? totalFiltered : tableOffset + tablePageSize;
-                    tableOffset = tableOffset >= totalFiltered ? Math.floor((totalFiltered - 1)/tablePageSize)*tablePageSize : tableOffset;
-                    tableOffset = tableOffset < 0 ? 0 : tableOffset;
-
-                    dataTable.beginSlice(tableOffset);
-                    dataTable.endSlice(tableOffset + tablePageSize);
-
-                    //update header
-                    d3.select("span#beginHead")
-                        .text(end === 0 ? tableOffset : tableOffset + 1);
-                    d3.select("span#endHead")
-                        .text(end);
-                    d3.select('span#sizeHead').text(totalFiltered);
-                    //update paging and footer
-                    d3.select("span#begin")
-                        .text(end === 0 ? tableOffset : tableOffset + 1);
-                    d3.select("span#end")
-                        .text(end);
-                    d3.select('#Prev')
-                        .attr('disabled', tableOffset - tablePageSize < 0 ? 'true' : null);
-                    d3.select("#Next")
-                        .attr('disabled', tableOffset + tablePageSize >= totalFiltered ? 'true' : null);
-                    d3.select('span#size').text(totalFiltered);
-                }
-
-                var tableDim = this.ndx.dimension(d => d.unit)
+                var tableDim = this.ndx.dimension(d => d.date)
                 dataTable.width(this.width)
                     .height(800)
                     .dimension(tableDim)
@@ -617,8 +643,8 @@ import largeBarChart from '@/components/largeBarChart'
                     .showGroups(false)
                     .sortBy(d => d.unit)
                     .order(d3.ascending)
-                    .on("preRender", updateTable)
-                    .on("preRedraw", updateTable)
+                    .on("preRender", this.updateTable)
+                    .on("preRedraw", this.updateTable)
                     //.on("renderlet", function(table) {
                     //    console.log(d3.select("#dc-data-table tr"))
                     //})
@@ -626,52 +652,6 @@ import largeBarChart from '@/components/largeBarChart'
 
                 this.dataTable = dataTable
 
-                //table.selectAll("th")
-                //.data(this.columns)
-                //.enter()
-                //.append("th")
-                //.attr("class", (d, i) => '_'+i+' th_'+d.title)
-                //.text(d => d.title)
-                //.style("line-height", "1em")
-                //.style("border", "0px")
-                //.style("padding", "5px")
-                //.style("font-weight", "normal")
-                //.style("cursor", "pointer")
-                //.on("click", v => {
-                //    dataTable.sortBy(d => d[v.field])
-                //    if (this.sortedVar == v.field) {
-                //        //toggle sort order
-                //        this.sortOrder = this.sortOrder == d3.ascending ? d3.descending: d3.ascending
-                //        dataTable.order(this.sortOrder)
-                //    } else{
-                //        this.sortedVar = v.field
-                //        this.sortOrder = d3.ascending
-                //        dataTable.order(this.sortOrder)
-                //    }
-                //    //why not redraw??
-                //    dataTable.redraw()
-                //})
-
-                //var setTableStyle = () => {
-                //    d3.selectAll("#dc-data-table tbody")
-                //    .style("height", "500px")
-                //    .style("overflow-y", "auto")
-                //    .style("overflow-x", "hidden")
-                //    ;
-                //    this.columns.forEach((d,i) => {
-                //        d3.selectAll("._" + i)
-                //            .attr("width", (this.columns[i].width/tableUnits)*100+"%")
-                //    })
-                //    d3.selectAll("#dc-data-table td")
-                //    .style("color", "#333")
-                //    .style("font-size", "13px")
-                //    .style("border", "0px")
-                //    .style("float", "left")
-                //    .style("line-height", "1em")
-                //    .style("border", "0px")
-                //    .style("padding", "5px")
-                //    ;
-                //}
 
                 //Download Raw Data button
                 d3.select('#download')
