@@ -42,7 +42,7 @@ const webpackConfig = merge(baseWebpackConfig, {
       'axios_url_priority_data_afsc': '"https://starsraw.afpc.randolph.af.mil/SASStoredProcess/do"',
       'axios_url_priority_hist': '"https://starsraw.afpc.randolph.af.mil/SASStoredProcess/do"',
       'AXIOS_PROGRAM':'"/STARS_PROJECTS/Reports/Priority_Manning/StoredProcess/Priority_Manning"',  
-      'local': false  
+      'local': true
     }),
     new UglifyJsPlugin({
       uglifyOptions: {

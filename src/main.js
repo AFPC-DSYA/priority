@@ -37,7 +37,7 @@ fontawesome.library.add(faSpinner,faQuestionCircle, faInfoCircle, faArrowUp, faA
 
 import { store } from '@/store/store'
 
-if (store.state.sanity != check_portal){
+if (store.state.sanity != check_portal && !local){
 	var querystring = require('querystring');
 	const formData = {
 		_PROGRAM: AXIOS_PROGRAM,

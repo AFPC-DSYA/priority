@@ -576,31 +576,47 @@ import largeBarChart from '@/components/largeBarChart'
         mounted() {
             console.log('mounted')
 
-            var querystring = require('querystring');
-            console.log('BEFORE AXIOS')
-            const formData = {
-              '_PROGRAM': AXIOS_PROGRAM,
-              'nPage':"getData",
-              'dataName': "priority_data_afsc.json",
-            }
-            axios.defaults.headers.get['Accepts'] = 'application/json'
-            axios.post(axios_url_priority_data_afsc, querystring.stringify(formData)).then(response => { 
-                console.log('AXIOS SUCCESS') 
-                this.data = response.data.data;   
-                this.asDate = response.data.ASOFDATE;
-                //apply formats so we have decoded variables globally
-                for (let i = 0; i < this.data.length; i++) {
-                    this.data[i].majcom = formats.majFormat[this.data[i].majcom]
-                    this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
-                    this.data[i].grade = formats.gradeFormat[this.data[i].grade]
+            if (local) {
+                //load local data (works for both dev and prod) 
+                d3.json('./data/priority_data_afsc.json',(error,data) => {
+                    this.data = data.data;   
+                    this.asDate = data.ASOFDATE;
+                    //apply formats so we have decoded variables globally
+                    for (let i = 0; i < this.data.length; i++) {
+                        this.data[i].majcom = formats.majFormat[this.data[i].majcom]
+                        this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
+                        this.data[i].grade = formats.gradeFormat[this.data[i].grade]
+                    }
+                    renderCharts()
+                })
+            } else {
+                var querystring = require('querystring');
+                console.log('BEFORE AXIOS')
+                const formData = {
+                  '_PROGRAM': AXIOS_PROGRAM,
+                  'nPage':"getData",
+                  'dataName': "priority_data_afsc.json",
                 }
-                console.log(this.data) 
-                renderCharts()
-                console.log('END AXIOS SUCCESS') 
-            }).catch(function (error) {
-                console.log('AXIOS ERROR')
-                console.log(error.response);
-            });
+                axios.defaults.headers.get['Accepts'] = 'application/json'
+                axios.post(axios_url_priority_data_afsc, querystring.stringify(formData)).then(response => { 
+                    console.log('AXIOS SUCCESS') 
+                    this.data = response.data.data;   
+                    this.asDate = response.data.ASOFDATE;
+                    //apply formats so we have decoded variables globally
+                    for (let i = 0; i < this.data.length; i++) {
+                        this.data[i].majcom = formats.majFormat[this.data[i].majcom]
+                        this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
+                        this.data[i].grade = formats.gradeFormat[this.data[i].grade]
+                    }
+                    console.log(this.data) 
+                    renderCharts()
+                    console.log('END AXIOS SUCCESS') 
+                }).catch(function (error) {
+                    console.log('AXIOS ERROR')
+                    console.log(error.response);
+                });
+            }
+
 
             var renderCharts = () => {
 

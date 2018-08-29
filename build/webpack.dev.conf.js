@@ -55,6 +55,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
       'axios_url_priority_data_afsc': '"http://localhost:5005/api/priority_data_afsc"',
       'axios_url_priority_hist': '"http://localhost:5005/api/priority_hist"',
       'AXIOS_PROGRAM':'"/STARS_PROJECTS/Reports/Priority_Manning/StoredProcess/Priority_Manning"', 
+      'local': false
     }),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.
