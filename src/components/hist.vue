@@ -10,42 +10,84 @@
         <loader v-show="!loaded" key="loader"></loader>
         <div v-show="loaded" key="content">
         <div class="row pt-2"> 
-            <div id="radioSelect" class="col form-group">
-               <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio1" value="percent" v-model="selected" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Percentage</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="selected" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Assigned</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio3" value="auth" v-model="selected" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Authorized</span>
-                </label>
-                <label class="custom-control custom-radio" >
-                    <input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="selected" @click="radioButton">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">STP</span>
-                </label>
-                <span data-toggle="tooltip" 
-                      data-placement="right"
-                      title="Use the radio buttons to toggle between manning percentage, assigned, authorized, and STP (student, transient, personnel holdee). The charts show the selected data element.">
-                    <fontAwesomeIcon icon="info-circle" 
-                                     >
-                    </fontAwesomeIcon>
-                </span>
+            <div class="col-8">
+                <div class="row">
+                    <div id="radioSelect" class="col form-group">
+                       <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio1" value="percent" v-model="metric" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Percentage</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="metric" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Assigned</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio3" value="auth" v-model="metric" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Authorized</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="metric" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">STP</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio5" value="avg_level" v-model="metric" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Average Level</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio6" value="avg_tos" v-model="metric" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Average TOS</span>
+                        </label>
+                        <span data-toggle="tooltip" 
+                              data-placement="right"
+                              title="Use the radio buttons to toggle between manning percentage, assigned, authorized, STP (student, transient, personnel holdee), average skill level, and average TOS (time on station). The line chart will update to show the selected data element.">
+                            <fontAwesomeIcon icon="info-circle" 
+                                             >
+                            </fontAwesomeIcon>
+                        </span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="radioType" class="col-12 form-group">
+                       <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radioType" type="radio" id="radioType1" value="total" v-model="type" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Combined</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radioType" type="radio" id="radioType2" value="off" v-model="type" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Officer</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radioType" type="radio" id="radioType3" value="enl" v-model="type" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Enlisted</span>
+                        </label>
+                        <span data-toggle="tooltip" 
+                              data-placement="right"
+                              title="Use the radio buttons to toggle between combined officer and enlisted, officer only, and enlisted only data. The line chart will update upon clicking the radio buttons.">
+                            <fontAwesomeIcon icon="info-circle" 
+                                             >
+                            </fontAwesomeIcon>
+                        </span>
+                    </div>
+                </div>
             </div>
-            <div class="col-auto">
-                <button type="button" id="download"
-                                class="btn btn-info btn-rounded btn-sm waves-effect" 
-                                >Download Raw Data</button>
-                <button type="button" 
-                        class="btn btn-danger btn-rounded btn-sm waves-effect" 
-                        @click="resetAll">Reset All</button>
+            <div class="col-4">
+                <div class="float-right">
+                    <button type="button" id="download"
+                                    class="btn btn-info btn-rounded btn-sm waves-effect" 
+                                    >Download Raw Data</button>
+                    <button type="button" 
+                            class="btn btn-danger btn-rounded btn-sm waves-effect" 
+                            @click="resetAll">Reset All</button>
+                </div>
             </div>
         </div>
         <div class="row">
@@ -85,7 +127,7 @@
                     <h4 class="col-6">Filtered Records
                         <span data-toggle="tooltip" 
                               data-placement="right"
-                              title="In the follow table, click the column headers to sort by the column and toggle between ascending or descending. Use the scroll bar at the bottom of the table to see additional columns. Click the Next and Prev buttons at the bottom of the table to see additional rows.">
+                              title="In the following table, click the column headers to sort by the column and toggle between ascending or descending. Use the scroll bar at the bottom of the table to see additional columns. Click the Next and Prev buttons at the bottom of the table to see additional rows.">
                             <fontAwesomeIcon icon="info-circle" 
                                              size="xs">
                             </fontAwesomeIcon>
@@ -170,7 +212,8 @@ import largeBarChart from '@/components/largeBarChart'
             return {
                 data: [],
                 asDate: '',
-                selected: 'percent',
+                metric: 'percent',
+                type: 'total',
                 search: "",
                 loaded: false ,
                 manningGoal: 95,
@@ -193,12 +236,27 @@ import largeBarChart from '@/components/largeBarChart'
                 width: document.documentElement.clientWidth,
                 chartSpecs: chartSpecs,
                 columns: [ 
-                    {title: 'Date', field: 'date', sort_state: "ascending", selected: true, width: "20%"},
-                    {title: 'Asgn', field: 'asgn', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Auth', field: 'auth', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'STP', field: 'stp', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Percent', field: 'percent', sort_state: "descending", selected: false, width: "10%"},
-                ]
+                    {title: 'Date', field: 'date', sort_state: "ascending", selected: true, width: "10%"},
+                    {title: 'Total Asgn', field: 'total_asgn', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Total Auth', field: 'total_auth', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Total STP', field: 'total_stp', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Total Percent', field: 'total_percent', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Total Avg Level', field: 'total_avg_level', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Total Avg TOS', field: 'total_avg_tos', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Off Asgn', field: 'off_asgn', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Off Auth', field: 'off_auth', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Off STP', field: 'off_stp', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Off Percent', field: 'off_percent', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Off Avg Level', field: 'off_avg_level', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Off Avg TOS', field: 'off_avg_tos', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Enl Asgn', field: 'enl_asgn', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Enl Auth', field: 'enl_auth', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Enl STP', field: 'enl_stp', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Enl Percent', field: 'enl_percent', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Enl Avg Level', field: 'enl_avg_level', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Enl Avg TOS', field: 'enl_avg_tos', sort_state: "descending", selected: false, width: "10%"},
+                ],
+                types: ['total','off','enl']
             }
         },
         computed: {
@@ -231,9 +289,18 @@ import largeBarChart from '@/components/largeBarChart'
             else if (_.includes(this.selected,"stp")) {
                 return "STP"
             }
-            else {
-                return "Authorized"
+            else if (_.includes(this.selected,"auth")) {
+                return "Authorized";
             }
+            else if (_.includes(this.selected,"level")) {
+                return "Skill Level";
+            }
+            else {
+                return "TOS"
+            }
+          },
+          selected: function() {
+            return this.type + '_' + this.metric;
           },
         },
         methods: {
@@ -255,13 +322,13 @@ import largeBarChart from '@/components/largeBarChart'
                 this.dataTable.endSlice(this.tableOffset + this.tablePageSize);
             },
             dcRowColorFun: function(d,i) {
-                return d.value['percent'] >= this.manningGoal ? i : 3;
+                return d.value[this.type + '_percent'] >= this.manningGoal ? i : 3;
             },
             dcBarColorFun: function(d,i) {
-                return d.value['percent'] >= this.manningGoal ? 'good' : 'under';
+                return d.value[this.type + '_percent'] >= this.manningGoal ? 'good' : 'under';
             },
             unitColorFun: function(d, colorScale, colorDomain) {
-                if (d.value['percent'] >= this.manningGoal) {
+                if (d.value[this.type + '_percent'] >= this.manningGoal) {
                     return colorScale(colorDomain[0]) 
                 } else {
                     return colorScale(colorDomain[1])
@@ -270,33 +337,42 @@ import largeBarChart from '@/components/largeBarChart'
             //reduce functions
             manningAdd: function(p,v) {
                 //ent
-                p.asgn = p.asgn + +v.asgn
-                p.auth = p.auth + +v.auth
-                p.stp = p.stp + +v.stp
-                //if divide by 0, set to 0, and if NaN, set to zero
-                p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
-                p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
+                for (var group of this.types) {
+                    p[group + '_asgn'] = p[group + '_asgn'] + +v[group + '_asgn']
+                    p[group + '_auth'] = p[group + '_auth'] + +v[group + '_auth']
+                    p[group + '_stp'] = p[group + '_stp'] + +v[group + '_stp']
+                    p[group + '_percent'] = p[group + '_asgn']/p[group + '_auth'] === Infinity ? 0 : Math.round((p[group + '_asgn']/p[group + '_auth'])*1000)/10 || 0
+                    p[group + '_stpPercent'] = p[group + '_stp']/p[group + '_auth'] === Infinity ? 0 : Math.round((p[group + '_stp']/p[group + '_auth'])*1000)/10 || 0
+                    p[group + '_avg_level'] = p[group + '_avg_level'] + +v[group + '_avg_level']
+                    p[group + '_avg_tos'] = p[group + '_avg_tos'] + +v[group + '_avg_tos']
+                }
                 return p
             },
             manningRemove: function(p,v) {
                 //ent
-                p.asgn = p.asgn - +v.asgn
-                p.auth = p.auth - +v.auth
-                p.stp = p.stp - +v.stp
-                //if divide by 0, set to 0, and if NaN, set to zero
-                p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
-                p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
+                for (var group of this.types) {
+                    p[group + '_asgn'] = p[group + '_asgn'] - +v[group + '_asgn']
+                    p[group + '_auth'] = p[group + '_auth'] - +v[group + '_auth']
+                    p[group + '_stp'] = p[group + '_stp'] - +v[group + '_stp']
+                    p[group + '_percent'] = p[group + '_asgn']/p[group + '_auth'] === Infinity ? 0 : Math.round((p[group + '_asgn']/p[group + '_auth'])*1000)/10 || 0
+                    p[group + '_stpPercent'] = p[group + '_stp']/p[group + '_auth'] === Infinity ? 0 : Math.round((p[group + '_stp']/p[group + '_auth'])*1000)/10 || 0
+                    p[group + '_avg_level'] = p[group + '_avg_level'] - +v[group + '_avg_level']
+                    p[group + '_avg_tos'] = p[group + '_avg_tos'] - +v[group + '_avg_tos']
+                }
                 return p
             },
             manningInitial: function() {
-                return {
-                    //ent
-                    asgn: 0,
-                    auth: 0,
-                    stp: 0,
-                    percent: 0,
-                    stpPercent: 0,
+                var p = {}
+                for (var group of this.types) {
+                    p[group + '_asgn'] = 0
+                    p[group + '_auth'] = 0
+                    p[group + '_stp'] = 0
+                    p[group + '_percent'] = 0
+                    p[group + '_stpPercent'] = 0
+                    p[group + '_avg_level'] = 0
+                    p[group + '_avg_tos'] = 0
                 }
+                return p;
             },
             sortColumn: function(col) {
                 for (let i = 0; i < this.columns.length; i++) {
@@ -405,37 +481,6 @@ import largeBarChart from '@/components/largeBarChart'
                   .dimension(this.ndx)
                   .group(this.allGroup)
 
-                //reduce functions
-                function manningAdd(p,v) {
-                    //current
-                    p.asgn = p.asgn + +v.asgn
-                    p.auth = p.auth + +v.auth
-                    p.stp = p.stp + +v.stp
-                    //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
-                    p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
-                    return p
-                }
-                function manningRemove(p,v) {
-                    //current
-                    p.asgn = p.asgn - +v.asgn
-                    p.auth = p.auth - +v.auth
-                    p.stp = p.stp - +v.stp
-                    //if divide by 0, set to 0, and if NaN, set to zero
-                    p.percent = p.asgn/p.auth === Infinity ? 0 : Math.round((p.asgn/p.auth)*1000)/10 || 0
-                    p.stpPercent = p.stp/p.auth === Infinity ? 0 : Math.round((p.stp/p.auth)*1000)/10 || 0
-                    return p
-                }
-                function manningInitial() {
-                    return {
-                        //current
-                        asgn: 0,
-                        auth: 0,
-                        stp: 0,
-                        percent: 0,
-                        stpPercent: 0,
-                    }
-                }
                 //remove empty function (es6 syntax to keep correct scope)
                 var removeEmptyBins = (source_group) => {
                     return {
@@ -448,7 +493,7 @@ import largeBarChart from '@/components/largeBarChart'
                 }
 
                 //Number Display for Auth, Asgn, STP - show total for filtered content
-                var ndGroup = this.ndx.groupAll().reduce(manningAdd,manningRemove,manningInitial)
+                var ndGroup = this.ndx.groupAll().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
                 var authND = dc.numberDisplay("#auth")
                 authND.group(ndGroup)
                     .formatNumber(d3.format("d"))
@@ -483,7 +528,9 @@ import largeBarChart from '@/components/largeBarChart'
                 var lineConfig = {}
                 lineConfig.id = 'dateLine'
                 lineConfig.dim = this.ndx.dimension(function(d) {return d.date})
-                lineConfig.group = removeEmptyBins(lineConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial))
+                lineConfig.group = removeEmptyBins(lineConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial))
+                console.log('group!')
+                console.log(lineConfig.group.all())
                 lineConfig.minHeight = 400
                 lineConfig.aspectRatio = 3
                 lineConfig.margins = {top: 10, left: 60, right: 40, bottom: 60}
@@ -509,7 +556,7 @@ import largeBarChart from '@/components/largeBarChart'
                         .attr('transform', 'translate(-8,0)rotate(-45)')
                     })
                     .on('renderlet', (chart) => {
-                        if (this.selected === 'percent') {
+                        if (_.includes(this.selected,'percent')) {
                             //create horizontal line
                             var horiz = 95
                             var extraData= [
@@ -536,6 +583,11 @@ import largeBarChart from '@/components/largeBarChart'
                             .attr('stroke','red')
                             .style("stroke-dasharray", ("3, 3"));
 
+                        path.transition()
+                            .duration(200)
+                            .delay(0)
+                            .attr('d',line(extraData));
+
                         path.exit()
                             .transition()
                             .duration(200)
@@ -549,7 +601,7 @@ import largeBarChart from '@/components/largeBarChart'
                     var yMin = d3.min(lineConfig.group.all(), d => d.value[this.selected])
                     var yMax = d3.max(lineConfig.group.all(), d => d.value[this.selected])
                     var yRange = yMax - yMin
-                    if (this.selected === 'percent') {
+                    if (_.includes(this.selected,'percent')) {
                         return Math.min(yMin - Math.round(yRange * padPercent),90);
                     } else {
                         return yMin - Math.round(yRange * padPercent);
@@ -559,7 +611,7 @@ import largeBarChart from '@/components/largeBarChart'
                     var yMin = d3.min(lineConfig.group.all(), d => d.value[this.selected])
                     var yMax = d3.max(lineConfig.group.all(), d => d.value[this.selected])
                     var yRange = yMax - yMin 
-                    if (this.selected === 'percent') {
+                    if (_.includes(this.selected,'percent')) {
                         return Math.max(yMax + Math.round(yRange * padPercent),100);
                     } else {
                         return yMax + Math.round(yRange * padPercent);
