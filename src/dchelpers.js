@@ -29,7 +29,7 @@ var getBrushBarChart = (config)=>{
     .group(config.group)
     .brushOn(true)
     .x(config.x)
-    .xUnits(function() {return config.xUnits})
+    .xUnits(function() {return config.xUnits;})
     .elasticY(true)
     .colors(config.colors)
     .on('preRedraw', function(c){
