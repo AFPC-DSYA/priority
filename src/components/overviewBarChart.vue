@@ -1,23 +1,32 @@
 <template>
     <div class="row">
         <div :id="'overview' + id" class="col-12">
+            <h3 class="mb-0 pb-0"> {{ title }}
+                <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                <span data-toggle="tooltip" 
+                      data-placement="right"
+                      title="Use the slider on the top bar chart to filter the bottom bar chart. Each chart has it's own reset.">
+                    <FontAwesomeIcon icon="info-circle" 
+                                     size="xs"
+                                     >
+                    </FontAwesomeIcon>
+                </span>
+                <button type="button" 
+                        class="btn btn-danger btn-sm btn-rounded reset" 
+                        :id="'btn-overview-' + id + '-reset'"
+                        style="visibility: hidden"
+                        @click="resetChart('dc-overview' + id + '-barchart')">
+                    Reset Top
+                </button>
+                <button type="button" 
+                        :id="'btn-' + id + '-reset'"
+                        class="btn btn-danger btn-sm btn-rounded reset" 
+                        style="visibility: hidden"
+                        @click="resetChart('dc-' + id + '-barchart')">
+                    Reset Bottom
+                </button>
+            </h3>
             <div :id="'dc-overview' + this.id + '-barchart'">
-                <h3>{{ title }} <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                    <button type="button" 
-                            class="btn btn-danger btn-sm btn-rounded reset" 
-                            :id="'btn-overview-' + id + '-reset'"
-                            style="visibility: hidden"
-                            @click="resetChart('dc-overview' + id + '-barchart')">
-                        Reset Top
-                    </button>
-                    <button type="button" 
-                            :id="'btn-' + id + '-reset'"
-                            class="btn btn-danger btn-sm btn-rounded reset" 
-                            style="visibility: hidden"
-                            @click="resetChart('dc-' + id + '-barchart')">
-                        Reset Bottom
-                    </button>
-                </h3>
             </div>
         </div>
         <div :id="id" class="col-12">
@@ -284,10 +293,10 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 })
                 //override turnOnControls and turnOffControls for top brush chart to make only "Reset Top" button shown when filtering brush chart 
                 overviewChart.turnOnControls = function() {
-                    overviewChart.select('#btn-overview-'+vm.id+'-reset').style('visibility','visible');
+                    d3.select('#btn-overview-'+vm.id+'-reset').style('visibility','visible');
                 }
                 overviewChart.turnOffControls = function() {
-                    overviewChart.select('#btn-overview-'+vm.id+'-reset').style('visibility','hidden');
+                    d3.select('#btn-overview-'+vm.id+'-reset').style('visibility','hidden');
                 }
                 this.overviewChart = overviewChart
 
@@ -307,10 +316,10 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     });
                 //override turnOnControls and turnOffControls for bottom bar chart to allow reset button to be shown in first chart header
                 overviewUnitChart.turnOnControls = function() {
-                    overviewChart.select('#btn-'+vm.id+'-reset').style('visibility','visible');
+                    d3.select('#btn-'+vm.id+'-reset').style('visibility','visible');
                 }
                 overviewUnitChart.turnOffControls = function() {
-                    overviewChart.select('#btn-'+vm.id+'-reset').style('visibility','hidden');
+                    d3.select('#btn-'+vm.id+'-reset').style('visibility','hidden');
                 }
                 this.overviewUnitChart = overviewUnitChart
                 //render and redraw
@@ -342,6 +351,9 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
             if (this.loaded == true) {
                 this.renderOverviewCharts()
             }
+            $(function () {
+                $('[data-toggle="tooltip"]').tooltip()
+            })
         },
         beforeDestroy() {
             console.log('before destroy: overview')

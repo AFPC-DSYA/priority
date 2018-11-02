@@ -230,6 +230,23 @@
                        :title="'Units'"
                        :loaded="loaded">
         </largeBarChart>
+        <overviewBarChart :id="'Units'"
+                          :dimension="unitDim"
+                          :aspectRatio="3.8"
+                          :minHeight="240"
+                          :normalToOverviewFactor="2.5"
+                          :selected="selected"
+                          :ylabel="ylabel"
+                          :reducerAdd="manningAdd"
+                          :reducerRemove="manningRemove"
+                          :accumulator="manningInitial"
+                          :numBars="15"
+                          :margin="chartSpecs.baseChart.margins"
+                          :colorScale="baseColorScale"
+                          :colorFunction="dcBarColorFun"
+                          :title="'Units'"
+                          :loaded="loaded">
+        </overviewBarChart>
         <div class="row">
             <div class="col-12">
                 <div class="row">
@@ -319,11 +336,13 @@ import searchBox from '@/components/searchBox'
 import { store } from '@/store/store'
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome' 
 import largeBarChart from '@/components/largeBarChart'
+import overviewBarChart from '@/components/overviewBarChart'
 
     export default {
         data() {
             return {
                 data: [],
+                filterArray: [],
                 asDate: '',
                 type: "percent",
                 period: "curr",
@@ -332,6 +351,8 @@ import largeBarChart from '@/components/largeBarChart'
                 baseColor: chartSpecs.baseChart.color,
                 majcomColor: chartSpecs.majcomChart.color,
                 manningGoal: 95,
+                //overviewChart: {},
+                //overviewUnitChart: {},
                 rect: {
                     'width': '14px',
                     'height': '14px',
@@ -353,6 +374,7 @@ import largeBarChart from '@/components/largeBarChart'
                 unitColorScale: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color),
                 afscColor: ["#2ca25f","#d62728"],
                 afscColorScale: d3.scale.ordinal().domain(['good','under']).range(["#2ca25f","#d62728"]),
+                baseColorScale: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color),
                 chartSpecs: chartSpecs,
                 columns: [ 
                     {title: 'Unit', field: 'unit', sort_state: "ascending", selected: true, width: "20%"},
@@ -568,7 +590,8 @@ import largeBarChart from '@/components/largeBarChart'
             'loader': Loader,
             searchBox,
             FontAwesomeIcon,
-            largeBarChart
+            largeBarChart,
+            overviewBarChart
         },
         created: function(){
           console.log('created')
@@ -613,7 +636,7 @@ import largeBarChart from '@/components/largeBarChart'
                     console.log('END AXIOS SUCCESS') 
                 }).catch(function (error) {
                     console.log('AXIOS ERROR')
-                    console.log(error.response);
+                    console.log(error);
                 });
             }
 
@@ -800,6 +823,119 @@ import largeBarChart from '@/components/largeBarChart'
                         .attr('transform', 'translate(-8,0)rotate(-45)')
                     })
 
+                //overview
+                //var id_group = (group) => {
+                //    return {
+                //        all: () => {
+                //            return group.all().map(function(kv, i) {
+                //                return {key: i, value: kv.value};
+                //            });
+                //        }
+                //    }
+                //}
+
+                //var sortGroup = (group) => {
+                //    return {
+                //        all: () => {
+                //            return group.all().sort((a,b) => {return b.value[this.selected] - a.value[this.selected]})
+                //            .map((d,i) => {
+                //                d.sort = i
+                //                return d
+                //            })
+                //        }
+                //    }
+                //}
+
+                ////remove empty function (es6 syntax to keep correct scope)
+                //var removeEmptyBinsSpecial = (source_group) => {
+                //    return {
+                //        all: () => {
+                //            return source_group.all().filter((d) => {
+                //                if (this.filterArray.length > 0) {
+                //                    return d.value[this.selected] != 0 && _.includes(this.filterArray, d.key)
+                //                } else {
+                //                    return d.value[this.selected] != 0
+                //                }
+                //            })
+                //        }
+                //    }
+                //}
+
+                //var overviewConfig = {}
+                //overviewConfig.id = 'overview'
+                //overviewConfig.dim = this.ndx.dimension(function(d) { return d.unit; });
+                //var overviewPercent = overviewConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+                //var keys = overviewPercent.all().map(dc.pluck('key')).slice();
+                //overviewConfig.group = id_group(overviewPercent)
+                //console.log(overviewConfig.group.all())
+                //overviewConfig.minHeight = 100 
+                //overviewConfig.aspectRatio = 8 
+                //overviewConfig.margins = {top: 10, left: 45, right: 30, bottom: 10} 
+                //overviewConfig.x = d3.scale.linear().domain([0, keys.length])
+                //overviewConfig.xUnits = dc.units.integer
+                //overviewConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
+                //var overviewChart = dchelpers.getBrushBarChart(overviewConfig)
+                //overviewChart
+                //    .controlsUseVisibility(true)
+                //    .colorAccessor(this.dcBarColorFun)
+                //    .valueAccessor((d) => {
+                //        return d.value[this.selected]
+                //    })
+                //    .xAxis().ticks([]);
+
+                ////set up filter to enable brush (by default no brush for ordinal chart)
+                //var vm = this
+                //overviewChart.filterHandler(function(dimension, filters) {
+                //    //reset if no filters
+                //    if (filters.length === 0) {
+                //        dimension.filter(null);
+                //        return filters;
+                //    }
+                //    //apply filters (have to go from number to string as specified in dimension)
+                //    var rangeFilterDecode = filters.map(function(rangefilt) {
+                //        var low = keys[Math.ceil(rangefilt[0])]
+                //        var high = keys[Math.ceil(rangefilt[1])] || 'zzz';
+                //        var lowNum = Math.max(Math.ceil(rangefilt[0]),0) 
+                //        var highNum = Math.min(Math.ceil(rangefilt[1]),200)
+                //        vm.filterArray = []
+                //        for (var i = lowNum; i < highNum + 1; i++) {
+                //            vm.filterArray.push(keys[i])
+                //        }
+                //        return dc.filters.RangedFilter(low,high)
+                //    })
+                //    return rangeFilterDecode;
+                //});
+                //overviewChart.resetFilterHandler(function(filters) {
+                //    vm.filterArray = []
+                //    return [];
+                //})
+                //this.overviewChart = overviewChart
+
+                ////unit
+                //var overviewUnitConfig = {}
+                //overviewUnitConfig.id = 'overviewUnit'
+                //overviewUnitConfig.dim = overviewConfig.dim
+                //var overviewUnitPercent = overviewUnitConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+                //overviewUnitConfig.group = removeEmptyBinsSpecial(overviewUnitPercent)
+                //overviewUnitConfig.minHeight = chartSpecs.baseChart.minHeight 
+                //overviewUnitConfig.aspectRatio = chartSpecs.baseChart.aspectRatio 
+                //overviewUnitConfig.margins = chartSpecs.baseChart.margins 
+                //overviewUnitConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
+                //var overviewUnitChart = dchelpers.getOrdinalBarChart(overviewUnitConfig)
+                //overviewUnitChart
+                //    .elasticX(true)
+                //    .controlsUseVisibility(true)
+                //    .colorAccessor(this.dcBarColorFun)
+                //    .valueAccessor((d) => {
+                //        return d.value[this.selected]
+                //    })
+                //    .on('pretransition', (chart)=> {
+                //        chart.selectAll('g.x text')
+                //        .style('text-anchor', 'end')
+                //        .attr('transform', 'translate(-8,0)rotate(-45)')
+                //    })
+                //this.overviewUnitChart = overviewUnitChart
+
                 //data table
                 var dataTable = dc.dataTable("#dc-data-table")
 
@@ -844,6 +980,7 @@ import largeBarChart from '@/components/largeBarChart'
 
                 // after DOM updated redraw to make chart widths update
                 this.$nextTick(() => {
+                    //overviewChart.filter(dc.filters.RangedFilter(1,30))
                     dc.redrawAll()
                 })
                 

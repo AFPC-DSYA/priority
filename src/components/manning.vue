@@ -167,6 +167,23 @@
                 </div>
             </div>
         </div>
+        <overviewBarChart :id="'Units'"
+                          :dimension="unitDim"
+                          :aspectRatio="3.8"
+                          :minHeight="240"
+                          :normalToOverviewFactor="2.5"
+                          :selected="selected"
+                          :ylabel="ylabel"
+                          :reducerAdd="manningAdd"
+                          :reducerRemove="manningRemove"
+                          :accumulator="manningInitial"
+                          :numBars="15"
+                          :margin="chartSpecs.baseChart.margins"
+                          :colorScale="baseColorScale"
+                          :colorFunction="dcBarColorFun"
+                          :title="'Units'"
+                          :loaded="loaded">
+        </overviewBarChart>
         <div class="row">
             <div class="col-12">
                 <div class="row">
@@ -253,6 +270,7 @@ import searchBox from '@/components/searchBox'
 import { store } from '@/store/store'
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome' 
 import largeBarChart from '@/components/largeBarChart'
+import overviewBarChart from '@/components/overviewBarChart'
 
     export default {
         data() {
@@ -265,6 +283,7 @@ import largeBarChart from '@/components/largeBarChart'
                 loaded: false ,
                 baseColor: chartSpecs.baseChart.color,
                 majcomColor: chartSpecs.majcomChart.color,
+                baseColorScale: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color),
                 manningGoal: 95,
                 rect: {
                     'width': '14px',
@@ -485,7 +504,8 @@ import largeBarChart from '@/components/largeBarChart'
             'loader': Loader,
             searchBox,
             FontAwesomeIcon,
-            largeBarChart
+            largeBarChart,
+            overviewBarChart
         },
         created: function(){
           console.log('created')
