@@ -167,23 +167,6 @@
                 </div>
             </div>
         </div>
-        <overviewBarChart :id="'Units'"
-                          :dimension="unitDim"
-                          :aspectRatio="3.8"
-                          :minHeight="240"
-                          :normalToOverviewFactor="2.5"
-                          :selected="selected"
-                          :ylabel="ylabel"
-                          :reducerAdd="manningAdd"
-                          :reducerRemove="manningRemove"
-                          :accumulator="manningInitial"
-                          :numBars="15"
-                          :margin="chartSpecs.baseChart.margins"
-                          :colorScale="baseColorScale"
-                          :colorFunction="dcBarColorFun"
-                          :title="'Units'"
-                          :loaded="loaded">
-        </overviewBarChart>
         <div class="row">
             <div class="col-12">
                 <div class="row">
@@ -233,8 +216,9 @@
                             value="Next"
                             @click="nextPage">Next</button>
                 </span>
-                <div class="row" style="overflow-x: scroll;">
+                <div class="row z-depth-1" style="overflow-x: auto;">
                     <table class="table table-hover table-bordered table-sm" 
+                           style="background-color: #ffffff"
                            id="dc-data-table">
                         <thead>
                             <tr class="table-header">
@@ -305,7 +289,7 @@ import overviewBarChart from '@/components/overviewBarChart'
                 unitColor: chartSpecs.unitChart.color,
                 unitColorScale: d3.scale.ordinal().domain(['good','under']).range(chartSpecs.unitChart.color),
                 chartSpecs: chartSpecs,
-                columns: [ 
+                allColumns: [ 
                     {title: 'Unit', field: 'unit', sort_state: "ascending", selected: true, width: "20%"},
                     {title: 'MPF', field: 'mpf', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'MAJCOM', field: 'majcom', sort_state: "descending", selected: false, width: "10%"},
@@ -376,6 +360,18 @@ import overviewBarChart from '@/components/overviewBarChart'
           colorVar: function() {
             return 'percent'+this.period;
           },
+          //TODO: make less complex
+          columns: function() {
+            var excludePeriods = this.timeArray.filter((d) => {
+                return !(_.includes(d,this.period))
+            })
+            var displayColumns = this.allColumns.filter((d) => {
+                return !(excludePeriods.some((g) => {
+                    return _.includes(d.field,g)
+                }))      
+            })
+            return displayColumns;
+          }
         },
         methods: {
             nextPage: function() {
