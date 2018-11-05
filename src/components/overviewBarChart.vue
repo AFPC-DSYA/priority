@@ -1,3 +1,43 @@
+<!--######################################
+USAGE:
+    <overviewBarChart :id="'Units'"
+                      :dimension="unitDim"
+                      :aspectRatio="3.8"
+                      :minHeight="240"
+                      :normalToOverviewFactor="2.5"
+                      :selected="selected"
+                      :ylabel="ylabel"
+                      :reducerAdd="manningAdd"
+                      :reducerRemove="manningRemove"
+                      :accumulator="manningInitial"
+                      :numBars="15"
+                      :margin="chartSpecs.baseChart.margins"
+                      :colorScale="baseColorScale"
+                      :colorFunction="dcBarColorFun"
+                      :title="'Units'"
+                      :loaded="loaded">
+    </overviewBarChart>
+
+Props:
+    id: string that will act as substring for all element ids
+    dimension: a crossfilter dimension for data element (suggest making this a computed property)
+    aspectRatio: width-to-height ratio of chart
+    minHeight: minimum height for chart
+    normalToOverviewFactor: factor changing size difference between overview chart and 'normal' bar chart 
+    selected: data element to show for chosen dimension (percent, asgn, auth, etc.)
+    ylabel: string describing the data element in 'selected'
+    reducerAdd: reduction function for adding in data
+    reducerRemove: reduction function for removing data 
+    accumulator: function that returns initial object that reducer can accumulate on
+    numBars: default number of bars to display on bar chart (sets brush size on overview chart)
+    margin: object giving top, right, bottom, and right margins (all numbers)
+    colorScale: d3 scale that returns a color (needs domain and range - ensure range is an array of color values)
+    colorFunction: function that tells chart how to choose colors for different bars  
+    title: string for chart title
+    loaded: Boolean indicating where data has been loaded
+    
+
+###########################################-->
 <template>
     <div class="row">
         <div :id="'overview' + id" class="col-12">
@@ -5,7 +45,7 @@
                 <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
                 <span data-toggle="tooltip" 
                       data-placement="right"
-                      title="Use the slider on the top bar chart to filter the bottom bar chart. Each chart has it's own reset.">
+                      title="Use the brush on the top bar chart to filter the bottom bar chart. The bottom bar chart applies filters to other charts. Each chart has it's own reset.">
                     <FontAwesomeIcon icon="info-circle" 
                                      size="xs"
                                      >
@@ -46,7 +86,8 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 filterArray: [],
                 chartSpecs: chartSpecs,
                 overviewChart: {},
-                overviewUnitChart: {}
+                overviewNormalChart: {},
+                sortKey: true 
             }
         },
         props: {
@@ -125,28 +166,26 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 return this.overviewGroup.all().map(dc.pluck('key')).slice();    
             },
             overviewConfig: function() {
-                //TODO: componentize this
                 return {
                     'id': 'overview' + this.id,
                     'dim': this.dimension,
                     'group': this.removeEmptyBins(this.id_group(this.overviewGroup)),
-                    'minHeight': 50,
+                    'minHeight': this.aspectRatio/this.normalToOverviewFactor,
                     'aspectRatio': this.aspectRatio*this.normalToOverviewFactor,
-                    'margins': {top: 10, left: 45, right: 30, bottom: 10},
+                    'margins': {top: this.margin.top, left: this.margin.left, right: this.margin.right, bottom: 10},
                     'x': d3.scale.linear().domain([0,this.keys.length]),
                     'xUnits': dc.units.integer,
                     'colors': this.colorScale,
                 }
             },
             overviewNormalConfig: function() {
-                //TODO: componentize and figure better margins
                 return {
                     'id': this.id,
                     'dim': this.dimension,
-                    'group': this.removeEmptyBinsSpecial(this.overviewGroup),
+                    'group': this.removeEmptyBinsAndNonBrush(this.overviewGroup),
                     'minHeight': this.minHeight,
                     'aspectRatio': this.aspectRatio,
-                    'margins': {top: 10, left: 45, right: 30, bottom: 120},
+                    'margins': {top: 10, left: this.margin.left, right: this.margin.right, bottom: this.margin.bottom},
                     'colors': this.colorScale,
                 }
             },
@@ -170,7 +209,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     }
                 }
             },
-            removeEmptyBinsSpecial: function(source_group) {
+            removeEmptyBinsAndNonBrush: function(source_group) {
                 return {
                     all: () => {
                         return source_group.all().filter((d) => {
@@ -183,6 +222,9 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     }
                 }
             },
+            //group to return for overview chart (brush bar chart)
+            //note: brush bar chart needs a linear scale, and must return key 
+            //number in order to support linear scale
             id_group: function(group) {
                 return {
                     all: () => {
@@ -192,14 +234,11 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     }
                 }
             },
+            //sort by Value (TODO: enable sorting)
             sortGroup: function(group) {
                 return {
                     all: () => {
-                        return group.all().sort((a,b) => (b.value[this.selected] === undefined ? b.value : b.value[this.selected]) - (a.value[this.selected] === undefined ? a.value : a.value[this.selected]))
-                        .map((d,i) => {
-                            d.sort = i
-                            return d
-                        })
+                        return group.all().concat().sort((a,b) => (b.value[this.selected] === undefined ? b.value : b.value[this.selected]) - (a.value[this.selected] === undefined ? a.value : a.value[this.selected]))
                     }
                 }
             },
@@ -301,8 +340,8 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                 this.overviewChart = overviewChart
 
                 //unit
-                var overviewUnitChart = dchelpers.getOrdinalBarChart(this.overviewNormalConfig)
-                overviewUnitChart
+                var overviewNormalChart = dchelpers.getOrdinalBarChart(this.overviewNormalConfig)
+                overviewNormalChart
                     .elasticX(true)
                     .controlsUseVisibility(true)
                     .colorAccessor(this.colorFunction)
@@ -315,19 +354,19 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                         .attr('transform', 'translate(-8,0)rotate(-45)')
                     });
                 //override turnOnControls and turnOffControls for bottom bar chart to allow reset button to be shown in first chart header
-                overviewUnitChart.turnOnControls = function() {
+                overviewNormalChart.turnOnControls = function() {
                     d3.select('#btn-'+vm.id+'-reset').style('visibility','visible');
                 }
-                overviewUnitChart.turnOffControls = function() {
+                overviewNormalChart.turnOffControls = function() {
                     d3.select('#btn-'+vm.id+'-reset').style('visibility','hidden');
                 }
-                this.overviewUnitChart = overviewUnitChart
+                this.overviewNormalChart = overviewNormalChart
                 //render and redraw
                 this.overviewChart.render()
-                this.overviewUnitChart.render()
+                this.overviewNormalChart.render()
                 this.overviewChart.filter(dc.filters.RangedFilter(0,this.numBars-1)) 
                 this.overviewChart.redraw()
-                this.overviewUnitChart.redraw()
+                this.overviewNormalChart.redraw()
             },
             
         },
