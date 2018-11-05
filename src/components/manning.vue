@@ -224,10 +224,10 @@
                             <tr class="table-header">
                                 <th v-for="header in columns"
                                     :class="{sortedColumn: header.selected}"
-                                    style="cursor: pointer;"
+                                    style="cursor: pointer; font-weight: bold;"
                                     @click="sortColumn(header)"
                                     :width="header.width">
-                                    {{header.title}}<br>
+                                    {{header.title}}
                                     <span v-show="header.selected">
                                         <font-awesome-icon v-show="header.sort_state === 'ascending'" icon="arrow-up"></font-awesome-icon>
                                         <font-awesome-icon v-show="header.sort_state === 'descending'" icon="arrow-down"></font-awesome-icon>
