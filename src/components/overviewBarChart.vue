@@ -174,7 +174,7 @@ import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
                     'aspectRatio': this.aspectRatio*this.normalToOverviewFactor,
                     'margins': {top: this.margin.top, left: this.margin.left, right: this.margin.right, bottom: 10},
                     'x': d3.scale.linear().domain([0,this.keys.length]),
-                    'xUnits': dc.units.integer,
+                    'xUnits': this.overviewGroup.all().length,
                     'colors': this.colorScale,
                 }
             },

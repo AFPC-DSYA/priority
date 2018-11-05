@@ -80,25 +80,7 @@ apiRoutes.post('/priority_data', (req, res)=>{
 })
 
 //API endpoint for enl tos
-apiRoutes.get('/priority_data', (req, res)=>{
-    res.json( {
-        success: true,
-        ASOFDATE: "31-JAN-2018",
-        data: array_priority_data
-    } )
-})
-
-//API endpoint for enl tos
 apiRoutes.post('/priority_data_afsc', (req, res)=>{
-    res.json( {
-        success: true,
-        ASOFDATE: "31-JAN-2018",
-        data: array_priority_data_afsc
-    })
-})
-
-//API endpoint for enl tos
-apiRoutes.get('/priority_data_afsc', (req, res)=>{
     res.json( {
         success: true,
         ASOFDATE: "31-JAN-2018",
