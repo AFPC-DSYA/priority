@@ -19,14 +19,14 @@
                             <span class="custom-control-description">Percentage</span>
                         </label>
                         <label class="custom-control custom-radio" >
-                            <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="metric" @click="radioButton">
-                            <span class="custom-control-indicator"></span>
-                            <span class="custom-control-description">Assigned</span>
-                        </label>
-                        <label class="custom-control custom-radio" >
                             <input class="custom-control-input" name="radio" type="radio" id="radio3" value="auth" v-model="metric" @click="radioButton">
                             <span class="custom-control-indicator"></span>
                             <span class="custom-control-description">Authorized</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="metric" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Assigned</span>
                         </label>
                         <label class="custom-control custom-radio" >
                             <input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="metric" @click="radioButton">
@@ -237,20 +237,20 @@ import largeBarChart from '@/components/largeBarChart'
                 chartSpecs: chartSpecs,
                 columns: [ 
                     {title: 'Date', field: 'date', sort_state: "ascending", selected: true, width: "10%"},
-                    {title: 'Total Asgn', field: 'total_asgn', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Total Auth', field: 'total_auth', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Total Asgn', field: 'total_asgn', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Total STP', field: 'total_stp', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Total Percent', field: 'total_percent', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Total Avg Level', field: 'total_avg_level', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Total Avg TOS', field: 'total_avg_tos', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Off Asgn', field: 'off_asgn', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Off Auth', field: 'off_auth', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Off Asgn', field: 'off_asgn', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Off STP', field: 'off_stp', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Off Percent', field: 'off_percent', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Off Avg Level', field: 'off_avg_level', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Off Avg TOS', field: 'off_avg_tos', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Enl Asgn', field: 'enl_asgn', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Enl Auth', field: 'enl_auth', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Enl Asgn', field: 'enl_asgn', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Enl STP', field: 'enl_stp', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Enl Percent', field: 'enl_percent', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Enl Avg Level', field: 'enl_avg_level', sort_state: "descending", selected: false, width: "10%"},

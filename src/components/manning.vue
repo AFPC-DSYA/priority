@@ -19,14 +19,14 @@
                             <span class="custom-control-description">Percentage</span>
                         </label>
                         <label class="custom-control custom-radio" >
-                            <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="type" @click="radioButton">
-                            <span class="custom-control-indicator"></span>
-                            <span class="custom-control-description">Assigned</span>
-                        </label>
-                        <label class="custom-control custom-radio" >
                             <input class="custom-control-input" name="radio" type="radio" id="radio3" value="auth" v-model="type" @click="radioButton">
                             <span class="custom-control-indicator"></span>
                             <span class="custom-control-description">Authorized</span>
+                        </label>
+                        <label class="custom-control custom-radio" >
+                            <input class="custom-control-input" name="radio" type="radio" id="radio2" value="asgn" v-model="type" @click="radioButton">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Assigned</span>
                         </label>
                         <label class="custom-control custom-radio" >
                             <input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="type" @click="radioButton">
@@ -105,16 +105,16 @@
         </div>
         <div class="row">
             <div class="col-auto">
+                Authorized:
+                <span id="auth"></span>
+            </div>
+            <div class="col-auto">
                 Assigned:
                 <span id="asgn"></span>
             </div>
             <div class="col-auto">
                 STP:
                 <span id="stp"></span>
-            </div>
-            <div class="col-auto">
-                Authorized:
-                <span id="auth"></span>
             </div>
             <div class="col-auto">
                 Manning Percent:
@@ -294,20 +294,20 @@ import overviewBarChart from '@/components/overviewBarChart'
                     {title: 'MPF', field: 'mpf', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'MAJCOM', field: 'majcom', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'PASCODE', field: 'pascode', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Asgn', field: 'asgncurr', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Auth', field: 'authcurr', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn', field: 'asgncurr', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'STP', field: 'stpcurr', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Percent', field: 'percentcurr', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Asgn3', field: 'asgn3', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Auth3', field: 'auth3', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn3', field: 'asgn3', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'STP3', field: 'stp3', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Percent3', field: 'percent3', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Asgn6', field: 'asgn6', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Auth6', field: 'auth6', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn6', field: 'asgn6', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'STP6', field: 'stp6', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Percent6', field: 'percent6', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Asgn9', field: 'asgn9', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Auth9', field: 'auth9', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Asgn9', field: 'asgn9', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'STP9', field: 'stp9', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Percent9', field: 'percent9', sort_state: "descending", selected: false, width: "10%"},
                 ],
