@@ -212,24 +212,18 @@
                 </div>
             </div>
         </div>
-        <largeBarChart :id="'unit'"
-                       :dimension="unitDim"
-                       :group="unitGroup"
-                       :groupAll="unitGroup.all()"
-                       :widthFactor="0.90"
-                       :aspectRatio="chartSpecs.unitChart.aspectRatio"
-                       :minHeight="chartSpecs.unitChart.minHeight"
-                       :selected="selected"
-                       :ylabel="ylabel"
-                       :reducer="manningAdd"
-                       :accumulator="manningInitial"
-                       :numBars="30"
-                       :margin="chartSpecs.unitChart.margins"
-                       :colorScale="unitColorScale"
-                       :colorFunction="colorFun"
-                       :title="'Units'"
-                       :loaded="loaded">
-        </largeBarChart>
+        <div class="row">
+            <div id="unitType" class="col-12">
+                <div id="dc-unitType-barchart">
+                    <h3>Unit Type <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                    <button type="button" 
+                            class="btn btn-danger btn-sm btn-rounded reset" 
+                            style="visibility: hidden"
+                            @click="resetChart('dc-unitType-barchart')">Reset</button>
+                    </h3>
+                </div>
+            </div>
+        </div>
         <div class="row">
             <div class="col-12">
                 <div class="row">
@@ -807,6 +801,30 @@ import overviewBarChart from '@/components/overviewBarChart'
                 baseConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
                 var baseChart = dchelpers.getOrdinalBarChart(baseConfig)
                 baseChart
+                    .elasticX(true)
+                    .controlsUseVisibility(true)
+                    .colorAccessor(this.dcBarColorFun)
+                    .valueAccessor((d) => {
+                        return d.value[this.selected]
+                    })
+                    .on('pretransition', (chart)=> {
+                        chart.selectAll('g.x text')
+                        .style('text-anchor', 'end')
+                        .attr('transform', 'translate(-8,0)rotate(-45)')
+                    })
+
+                //unit type
+                var unitTypeConfig = {}
+                unitTypeConfig.id = 'unitType'
+                unitTypeConfig.dim = this.ndx.dimension(function(d){return d.unit_type})
+                var unitTypePercent = unitTypeConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+                unitTypeConfig.group = removeEmptyBins(unitTypePercent)
+                unitTypeConfig.minHeight = chartSpecs.baseChart.minHeight 
+                unitTypeConfig.aspectRatio = chartSpecs.baseChart.aspectRatio 
+                unitTypeConfig.margins = chartSpecs.baseChart.margins 
+                unitTypeConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
+                var unitTypeChart = dchelpers.getOrdinalBarChart(unitTypeConfig)
+                unitTypeChart
                     .elasticX(true)
                     .controlsUseVisibility(true)
                     .colorAccessor(this.dcBarColorFun)
