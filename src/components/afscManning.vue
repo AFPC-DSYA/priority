@@ -447,6 +447,28 @@ import overviewBarChart from '@/components/overviewBarChart'
           }
         },
         methods: {
+            makeObject: function(data) {
+                var keys = data.shift()   
+                var output = [];
+
+                for (var i = 0; i < data.length; i++) {
+                    var obj = {}
+                    for (var k = 0; k < keys.length; k++) {
+                        obj[keys[k]] = data[i][k]
+                    }
+                    var formattedObj = {}
+                    formattedObj = this.formatData(obj) 
+                    output.push(formattedObj)
+                }
+                return output;
+            },
+            formatData: function(obj) {
+                var newObj = Object.assign({},obj)
+                newObj.majcom = formats.majFormat[obj.majcom]
+                newObj.mpf = formats.mpfFormat[obj.mpf]
+                newObj.grade = formats.gradeFormat[obj.grade]
+                return newObj;
+            },
             nextPage: function() {
                 this.tableOffset += this.tablePageSize;
                 this.dataTable.redraw();
@@ -592,19 +614,12 @@ import overviewBarChart from '@/components/overviewBarChart'
             if (local) {
                 //load local data (works for both dev and prod) 
                 d3.json('./data/priority_data_afsc.json',(error,data) => {
-                    this.data = data.data;   
+                    this.data = this.makeObject(data.data);   
                     this.asDate = data.ASOFDATE;
-                    //apply formats so we have decoded variables globally
-                    for (let i = 0; i < this.data.length; i++) {
-                        this.data[i].majcom = formats.majFormat[this.data[i].majcom]
-                        this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
-                        this.data[i].grade = formats.gradeFormat[this.data[i].grade]
-                    }
                     renderCharts()
                 })
             } else {
                 var querystring = require('querystring');
-                console.log('BEFORE AXIOS')
                 const formData = {
                   '_PROGRAM': AXIOS_PROGRAM,
                   'nPage':"getData",
@@ -612,18 +627,10 @@ import overviewBarChart from '@/components/overviewBarChart'
                 }
                 axios.defaults.headers.get['Accepts'] = 'application/json'
                 axios.post(axios_url_priority_data_afsc, querystring.stringify(formData)).then(response => { 
-                    console.log('AXIOS SUCCESS') 
-                    this.data = response.data.data;   
+                    this.data = this.makeObject(response.data.data);   
                     this.asDate = response.data.ASOFDATE;
-                    //apply formats so we have decoded variables globally
-                    for (let i = 0; i < this.data.length; i++) {
-                        this.data[i].majcom = formats.majFormat[this.data[i].majcom]
-                        this.data[i].mpf = formats.mpfFormat[this.data[i].mpf]
-                        this.data[i].grade = formats.gradeFormat[this.data[i].grade]
-                    }
                     console.log(this.data) 
                     renderCharts()
-                    console.log('END AXIOS SUCCESS') 
                 }).catch(function (error) {
                     console.log('AXIOS ERROR')
                     console.log(error);
