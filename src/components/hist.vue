@@ -352,39 +352,63 @@ import largeBarChart from '@/components/largeBarChart'
             manningAdd: function(p,v) {
                 //ent
                 for (var group of this.types) {
-                    p[group + '_asgn'] = p[group + '_asgn'] + +v[group + '_asgn']
-                    p[group + '_auth'] = p[group + '_auth'] + +v[group + '_auth']
-                    p[group + '_stp'] = p[group + '_stp'] + +v[group + '_stp']
-                    p[group + '_percent'] = p[group + '_asgn']/p[group + '_auth'] === Infinity ? 0 : Math.round((p[group + '_asgn']/p[group + '_auth'])*1000)/10 || 0
-                    p[group + '_stpPercent'] = p[group + '_stp']/p[group + '_auth'] === Infinity ? 0 : Math.round((p[group + '_stp']/p[group + '_auth'])*1000)/10 || 0
-                    p[group + '_avg_level'] = p[group + '_avg_level'] + +v[group + '_avg_level']
-                    p[group + '_avg_tos'] = p[group + '_avg_tos'] + +v[group + '_avg_tos']
+                    //aggregate across years
+                    p[group + '_count'] += 1
+                    p[group + '_total_asgn'] = p[group + '_total_asgn'] + +v[group + '_asgn']
+                    p[group + '_total_auth'] = p[group + '_total_auth'] + +v[group + '_auth']
+                    p[group + '_total_stp'] = p[group + '_total_stp'] + +v[group + '_stp']
+                    p[group + '_avg_level_num'] = p[group + '_avg_level_num'] + +v[group + '_avg_level']*+v[group + '_asgn']
+                    p[group + '_avg_tos_num'] = p[group + '_avg_tos_num'] + +v[group + '_avg_tos']*+v[group + '_asgn']
+                    //calculate averages/percentages
+                    p[group + '_asgn'] = p[group + '_total_asgn']/p[group + '_count'] === Infinity ? 0 : Math.round((p[group + '_total_asgn']/p[group + '_count'])*10)/10 || 0 
+                    p[group + '_auth'] = p[group + '_total_auth']/p[group + '_count'] === Infinity ? 0 : Math.round((p[group + '_total_auth']/p[group + '_count'])*10)/10 || 0 
+                    p[group + '_stp'] = p[group + '_total_stp']/p[group + '_count'] === Infinity ? 0 : Math.round((p[group + '_total_stp']/p[group + '_count'])*10)/10 || 0 
+                    p[group + '_avg_level'] = p[group + '_avg_level_num']/p[group + '_total_asgn'] === Infinity ? 0 : Math.round((p[group + '_avg_level_num']/p[group + '_total_asgn'])*100)/100 || 0
+                    p[group + '_avg_tos'] = p[group + '_avg_tos_num']/p[group + '_total_asgn'] === Infinity ? 0 : Math.round((p[group + '_avg_tos_num']/p[group + '_total_asgn'])*100)/100 || 0
+                    p[group + '_percent'] = p[group + '_total_asgn']/p[group + '_total_auth'] === Infinity ? 0 : Math.round((p[group + '_total_asgn']/p[group + '_total_auth'])*1000)/10 || 0
+                    p[group + '_stpPercent'] = p[group + '_total_stp']/p[group + '_total_auth'] === Infinity ? 0 : Math.round((p[group + '_total_stp']/p[group + '_total_auth'])*1000)/10 || 0
                 }
                 return p
             },
             manningRemove: function(p,v) {
                 //ent
                 for (var group of this.types) {
-                    p[group + '_asgn'] = p[group + '_asgn'] - +v[group + '_asgn']
-                    p[group + '_auth'] = p[group + '_auth'] - +v[group + '_auth']
-                    p[group + '_stp'] = p[group + '_stp'] - +v[group + '_stp']
-                    p[group + '_percent'] = p[group + '_asgn']/p[group + '_auth'] === Infinity ? 0 : Math.round((p[group + '_asgn']/p[group + '_auth'])*1000)/10 || 0
-                    p[group + '_stpPercent'] = p[group + '_stp']/p[group + '_auth'] === Infinity ? 0 : Math.round((p[group + '_stp']/p[group + '_auth'])*1000)/10 || 0
-                    p[group + '_avg_level'] = p[group + '_avg_level'] - +v[group + '_avg_level']
-                    p[group + '_avg_tos'] = p[group + '_avg_tos'] - +v[group + '_avg_tos']
+                    //aggregate across dates
+                    p[group + '_count'] -= 1 
+                    p[group + '_total_asgn'] = p[group + '_total_asgn'] - +v[group + '_asgn']
+                    p[group + '_total_auth'] = p[group + '_total_auth'] - +v[group + '_auth']
+                    p[group + '_total_stp'] = p[group + '_total_stp'] - +v[group + '_stp']
+                    p[group + '_avg_level_num'] = p[group + '_avg_level_num'] - +v[group + '_avg_level']*+v[group + '_asgn']
+                    p[group + '_avg_tos_num'] = p[group + '_avg_tos_num'] - +v[group + '_avg_tos']*+v[group + '_asgn']
+                    //calculate averages/percentages
+                    p[group + '_asgn'] = p[group + '_total_asgn']/p[group + '_count'] === Infinity ? 0 : Math.round((p[group + '_total_asgn']/p[group + '_count'])*10)/10 || 0 
+                    p[group + '_auth'] = p[group + '_total_auth']/p[group + '_count'] === Infinity ? 0 : Math.round((p[group + '_total_auth']/p[group + '_count'])*10)/10 || 0 
+                    p[group + '_stp'] = p[group + '_total_stp']/p[group + '_count'] === Infinity ? 0 : Math.round((p[group + '_total_stp']/p[group + '_count'])*10)/10 || 0 
+                    p[group + '_avg_level'] = p[group + '_avg_level_num']/p[group + '_total_asgn'] === Infinity ? 0 : Math.round((p[group + '_avg_level_num']/p[group + '_total_asgn'])*100)/100 || 0
+                    p[group + '_avg_tos'] = p[group + '_avg_tos_num']/p[group + '_total_asgn'] === Infinity ? 0 : Math.round((p[group + '_avg_tos_num']/p[group + '_total_asgn'])*100)/100 || 0
+                    p[group + '_percent'] = p[group + '_total_asgn']/p[group + '_total_auth'] === Infinity ? 0 : Math.round((p[group + '_total_asgn']/p[group + '_total_auth'])*1000)/10 || 0
+                    p[group + '_stpPercent'] = p[group + '_total_stp']/p[group + '_total_auth'] === Infinity ? 0 : Math.round((p[group + '_total_stp']/p[group + '_total_auth'])*1000)/10 || 0
                 }
                 return p
             },
             manningInitial: function() {
                 var p = {}
                 for (var group of this.types) {
+                    //aggregate across years
+                    p[group + '_count'] = 0
+                    p[group + '_total_asgn'] = 0
+                    p[group + '_total_auth'] = 0
+                    p[group + '_total_stp'] = 0
+                    p[group + '_avg_level_num'] = 0
+                    p[group + '_avg_tos_num'] = 0
+                    //calculate averages/percentages
                     p[group + '_asgn'] = 0
                     p[group + '_auth'] = 0
                     p[group + '_stp'] = 0
-                    p[group + '_percent'] = 0
-                    p[group + '_stpPercent'] = 0
                     p[group + '_avg_level'] = 0
                     p[group + '_avg_tos'] = 0
+                    p[group + '_percent'] = 0
+                    p[group + '_stpPercent'] = 0
                 }
                 return p;
             },
@@ -586,7 +610,6 @@ import largeBarChart from '@/components/largeBarChart'
                     .valueAccessor((d) => {
                         return d.value[this.selected]
                     })
-                    .brushOn(true)
                     .on('pretransition', (chart)=> {
                         chart.selectAll('g.x text')
                         .style('text-anchor', 'end')
