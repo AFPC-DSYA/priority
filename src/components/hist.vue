@@ -107,6 +107,18 @@
                     </h3> 
                 </div>
             </div>
+            <div id="month" class="col-8">
+                <div id="dc-month-barchart">
+                    <h3 style="display: inline-block" class="mb-0">
+                        Month 
+                        <button type="button"
+                                class="btn btn-danger btn-sm reset mb-0"
+                                style="visibility: hidden"
+                                @click="resetChart('dc-month-barchart')">Reset
+                        </button> 
+                    </h3> 
+                </div>
+            </div>
         </div>
         <div class="row">
             <div id="dateLine" class="col-12">
@@ -270,7 +282,8 @@ import largeBarChart from '@/components/largeBarChart'
                     {title: 'Enl Avg Level', field: 'enl_avg_level', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Enl Avg TOS', field: 'enl_avg_tos', sort_state: "descending", selected: false, width: "10%"},
                 ],
-                types: ['total','off','enl']
+                types: ['total','off','enl'],
+                months: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
             }
         },
         computed: {
@@ -577,6 +590,38 @@ import largeBarChart from '@/components/largeBarChart'
                     .colorAccessor(this.dcBarColorFun)
                     .valueAccessor((d) => {
                         return d.value[this.selected];
+                    })
+                    .on('pretransition', (chart) => {
+                        chart.selectAll('g.x text')
+                            .style('text-anchor', 'end')
+                            .attr('transform', 'translate(-8,0)rotate(-45)')
+                    })
+
+                //month row chart 
+                var monthConfig = {}
+                monthConfig.id = 'month'
+                monthConfig.dim = this.ndx.dimension(function(d) {
+                    var year = Number(d.date.substring(0,4))
+                    var month = Number(d.date.substring(5,7)) - 1
+                    var day = Number(d.date.substring(8,10))
+                    var full_date = new Date(year,month,day)
+                    return full_date.toLocaleString('en-us', {month: 'short'});
+                })
+                monthConfig.group = removeEmptyBins(monthConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial))
+                monthConfig.minHeight = 200
+                monthConfig.aspectRatio = 4
+                monthConfig.margins = {top: 10, left: 45, right: 30, bottom: 40}
+                monthConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.majcomChart.color)
+                var monthChart = dchelpers.getOrdinalBarChart(monthConfig)
+                monthChart
+                    .elasticX(true)
+                    .controlsUseVisibility(true)
+                    .colorAccessor(this.dcBarColorFun)
+                    .valueAccessor((d) => {
+                        return d.value[this.selected];
+                    })
+                    .ordering((d) => {
+                        return this.months.indexOf(d.key)
                     })
                     .on('pretransition', (chart) => {
                         chart.selectAll('g.x text')
