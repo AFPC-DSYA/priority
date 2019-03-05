@@ -485,6 +485,14 @@ import overviewBarChart from '@/components/overviewBarChart'
 
                 this.dataTable.beginSlice(this.tableOffset);
                 this.dataTable.endSlice(this.tableOffset + this.tablePageSize);
+                //change which data is shown
+                this.dataTable.columns(this.columns.map(d=> {
+                    if (_.includes(d.field,'percent')) {
+                        return (v) => Math.round(v[d.field]*1000)/10 + '%';
+                    } else {
+                        return (v) => v[d.field];   
+                    }
+                }))
             },
             dcRowColorFun: function(d,i) {
                 return d.value[this.colorVar] < this.manningGoal ? 3 : (i >= 3 ? i + 1 : i);
@@ -499,6 +507,7 @@ import overviewBarChart from '@/components/overviewBarChart'
                     return colorScale(colorDomain[1])
                 } 
             },
+            //TODO: make reduce functions more efficient
             //reduce functions
             manningAdd: function(p,v) {
                 //iterate through all time periods
@@ -629,7 +638,6 @@ import overviewBarChart from '@/components/overviewBarChart'
                 axios.post(axios_url_priority_data_afsc, querystring.stringify(formData)).then(response => { 
                     this.data = this.makeObject(response.data.data);   
                     this.asDate = response.data.ASOFDATE;
-                    console.log(this.data) 
                     renderCharts()
                 }).catch(function (error) {
                     console.log('AXIOS ERROR')

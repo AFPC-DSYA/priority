@@ -411,6 +411,14 @@ import overviewBarChart from '@/components/overviewBarChart'
 
                 this.dataTable.beginSlice(this.tableOffset);
                 this.dataTable.endSlice(this.tableOffset + this.tablePageSize);
+                //change which data is shown
+                this.dataTable.columns(this.columns.map(d=> {
+                    if (_.includes(d.field,'percent')) {
+                        return (v) => Math.round(v[d.field]*1000)/10 + '%';
+                    } else {
+                        return (v) => v[d.field];   
+                    }
+                }))
             },
             dcRowColorFun: function(d,i) {
                 return d.value[this.colorVar] >= this.manningGoal ? i : 3;
