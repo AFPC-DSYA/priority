@@ -95,6 +95,20 @@
             </div>
         </div>
         <div class="row">
+            <div id="year" class="col-4">
+                <div id="dc-year-barchart">
+                    <h3 style="display: inline-block" class="mb-0">
+                        Year
+                        <button type="button"
+                                class="btn btn-danger btn-sm reset mb-0"
+                                style="visibility: hidden"
+                                @click="resetChart('dc-year-barchart')">Reset
+                        </button> 
+                    </h3> 
+                </div>
+            </div>
+        </div>
+        <div class="row">
             <div id="dateLine" class="col-12">
                 <div id="dc-dateLine-linechart">
                     <h3>Date
@@ -521,6 +535,29 @@ import largeBarChart from '@/components/largeBarChart'
                     .valueAccessor((d) => {return d['percent']})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number%</span>"
+                    })
+
+                //year row chart 
+                var yearConfig = {}
+                yearConfig.id = 'year'
+                yearConfig.dim = this.ndx.dimension(function(d) {return d.date.substring(0,4)})
+                yearConfig.group = removeEmptyBins(yearConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial))
+                yearConfig.minHeight = 200
+                yearConfig.aspectRatio = 3
+                yearConfig.margins = {top: 10, left: 45, right: 30, bottom: 40}
+                yearConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.majcomChart.color)
+                var yearChart = dchelpers.getOrdinalBarChart(yearConfig)
+                yearChart
+                    .elasticX(true)
+                    .controlsUseVisibility(true)
+                    .colorAccessor(this.dcBarColorFun)
+                    .valueAccessor((d) => {
+                        return d.value[this.selected];
+                    })
+                    .on('pretransition', (chart) => {
+                        chart.selectAll('g.x text')
+                            .style('text-anchor', 'end')
+                            .attr('transform', 'translate(-8,0)rotate(-45)')
                     })
 
 

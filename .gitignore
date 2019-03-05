@@ -17,5 +17,6 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.zip
+*.swp
 recent_commit.txt
 version.txt
