@@ -95,6 +95,24 @@
             </div>
         </div>
         <div class="row">
+            <div class="col-auto">
+                Authorized: 
+                <span id="auth"></span>
+            </div>
+            <div class="col-auto">
+                Assigned:
+                <span id="asgn"></span>
+            </div>
+            <div class="col-auto">
+                STP:
+                <span id="stp"></span>
+            </div>
+            <div class="col-auto">
+                Manning Percent:
+                <span id="percent"></span>
+            </div>
+        </div>
+        <div class="row">
             <div id="year" class="col-4">
                 <div id="dc-year-barchart">
                     <h3 style="display: inline-block" class="mb-0">
@@ -263,12 +281,12 @@ import largeBarChart from '@/components/largeBarChart'
                 chartSpecs: chartSpecs,
                 columns: [ 
                     {title: 'Date', field: 'date', sort_state: "ascending", selected: true, width: "10%"},
-                    {title: 'Total Auth', field: 'total_auth', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Total Asgn', field: 'total_asgn', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Total STP', field: 'total_stp', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Total Percent', field: 'total_percent', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Total Avg Level', field: 'total_avg_level', sort_state: "descending", selected: false, width: "10%"},
-                    {title: 'Total Avg TOS', field: 'total_avg_tos', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Combined Auth', field: 'total_auth', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Combined Asgn', field: 'total_asgn', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Combined STP', field: 'total_stp', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Combined Percent', field: 'total_percent', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Combined Avg Level', field: 'total_avg_level', sort_state: "descending", selected: false, width: "10%"},
+                    {title: 'Combined Avg TOS', field: 'total_avg_tos', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Off Auth', field: 'off_auth', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Off Asgn', field: 'off_asgn', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Off STP', field: 'off_stp', sort_state: "descending", selected: false, width: "10%"},
@@ -547,29 +565,29 @@ import largeBarChart from '@/components/largeBarChart'
                 var ndGroup = this.ndx.groupAll().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
                 var authND = dc.numberDisplay("#auth")
                 authND.group(ndGroup)
-                    .formatNumber(d3.format("d"))
-                    .valueAccessor((d) => { return d['auth'];})
+                    .formatNumber(d3.format("r"))
+                    .valueAccessor((d) => { return d[this.selected.split('_')[0]+'_auth'];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
                 var asgnND = dc.numberDisplay("#asgn")
                 asgnND.group(ndGroup)
-                    .formatNumber(d3.format("d"))
-                    .valueAccessor((d) => {return d['asgn'];})
+                    .formatNumber(d3.format("r"))
+                    .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_asgn'];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
                 var stpND = dc.numberDisplay("#stp")
                 stpND.group(ndGroup)
-                    .formatNumber(d3.format("d"))
-                    .valueAccessor((d) => {return d['stp'];})
+                    .formatNumber(d3.format("r"))
+                    .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_stp'];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
                 var percentND = dc.numberDisplay("#percent")
                 percentND.group(ndGroup)
                     .formatNumber(d3.format("r"))
-                    .valueAccessor((d) => {return d['percent']})
+                    .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_percent']})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number%</span>"
                     })
