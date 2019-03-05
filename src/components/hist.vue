@@ -213,7 +213,7 @@
                             value="Next"
                             @click="nextPage">Next</button>
                 </span>
-                <div class="row" style="overflow-x: scroll;">
+                <div class="row z-depth-1" style="overflow-x: auto;">
                     <table class="table table-hover table-bordered table-sm" 
                            id="dc-data-table">
                         <thead>
@@ -222,8 +222,8 @@
                                     :class="{sortedColumn: header.selected}"
                                     style="cursor: pointer;"
                                     @click="sortColumn(header)"
-                                    :width="header.width">
-                                    {{header.title}}<br>
+                                    width="header.width*width">
+                                    {{header.title}}
                                     <span v-show="header.selected">
                                         <font-awesome-icon v-show="header.sort_state === 'ascending'" icon="arrow-up"></font-awesome-icon>
                                         <font-awesome-icon v-show="header.sort_state === 'descending'" icon="arrow-down"></font-awesome-icon>
@@ -279,7 +279,7 @@ import largeBarChart from '@/components/largeBarChart'
                 sortOrder: d3.ascending,
                 width: document.documentElement.clientWidth,
                 chartSpecs: chartSpecs,
-                columns: [ 
+                allColumns: [ 
                     {title: 'Date', field: 'date', sort_state: "ascending", selected: true, width: "10%"},
                     {title: 'Combined Auth', field: 'total_auth', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'Combined Asgn', field: 'total_asgn', sort_state: "descending", selected: false, width: "10%"},
@@ -347,6 +347,15 @@ import largeBarChart from '@/components/largeBarChart'
           selected: function() {
             return this.type + '_' + this.metric;
           },
+          columns: function() {
+              return this.allColumns.filter((d) => {
+                  if (d.field === 'date') {
+                    return true;
+                  } else {
+                    return _.includes(d.field,this.type)
+                  }
+              }) 
+          }
         },
         methods: {
             nextPage: function() {
@@ -358,13 +367,21 @@ import largeBarChart from '@/components/largeBarChart'
                 this.dataTable.redraw();
             },
             updateTable: function() {
+                //determine which rows of data to show
                 this.totalFiltered = this.ndx.groupAll().value();
                 this.end = this.tableOffset + this.tablePageSize > this.totalFiltered ? this.totalFiltered : this.tableOffset + this.tablePageSize;
                 this.tableOffset = this.tableOffset >= this.totalFiltered ? Math.floor((this.totalFiltered - 1)/this.tablePageSize)*this.tablePageSize : this.tableOffset;
                 this.tableOffset = this.tableOffset < 0 ? 0 : this.tableOffset;
-
                 this.dataTable.beginSlice(this.tableOffset);
                 this.dataTable.endSlice(this.tableOffset + this.tablePageSize);
+                //change which data is shown
+                this.dataTable.columns(this.columns.map(d=> {
+                    if (_.includes(d.field,'percent')) {
+                        return (v) => Math.round(v[d.field]*1000)/10 + '%';
+                    } else {
+                        return (v) => v[d.field];   
+                    }
+                }))
             },
             dcRowColorFun: function(d,i) {
                 return d.value[this.type + '_percent'] >= this.manningGoal ? i : 3;
