@@ -517,7 +517,6 @@ import overviewBarChart from '@/components/overviewBarChart'
                     p['stp' + val] = p['stp' + val] + +v['stp' + val]
                     //if divide by 0, set to 0, and if NaN, set to zero
                     p['percent' + val] = p['asgn' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['asgn' + val]/p['auth' + val])*1000)/10 || 0
-                    p['stpPercent' + val] = p['stp' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['stp' + val]/p['auth' + val])*1000)/10 || 0
                 }
                 return p;
             },
@@ -529,7 +528,6 @@ import overviewBarChart from '@/components/overviewBarChart'
                     p['stp' + val] = p['stp' + val] - +v['stp' + val]
                     //if divide by 0, set to 0, and if NaN, set to zero
                     p['percent' + val] = p['asgn' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['asgn' + val]/p['auth' + val])*1000)/10 || 0
-                    p['stpPercent' + val] = p['stp' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['stp' + val]/p['auth' + val])*1000)/10 || 0
                 }
                 return p;
             },
@@ -541,7 +539,6 @@ import overviewBarChart from '@/components/overviewBarChart'
                     p['auth' + val] = 0
                     p['stp' + val] = 0
                     p['percent' + val] = 0
-                    p['stpPercent' + val] = 0
                 }
                 return p;
             },
