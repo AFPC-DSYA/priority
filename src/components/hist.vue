@@ -113,6 +113,10 @@
             </div>
         </div>
         <div class="row">
+            <div class="col-auto">
+            </div>
+        </div>
+        <div class="row">
             <div id="year" class="col-4">
                 <div id="dc-year-barchart">
                     <h3 style="display: inline-block" class="mb-0">
@@ -582,28 +586,28 @@ import largeBarChart from '@/components/largeBarChart'
                 var ndGroup = this.ndx.groupAll().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
                 var authND = dc.numberDisplay("#auth")
                 authND.group(ndGroup)
-                    .formatNumber(d3.format("r"))
+                    .formatNumber(d3.format(".1f"))
                     .valueAccessor((d) => { return d[this.selected.split('_')[0]+'_auth'];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
                 var asgnND = dc.numberDisplay("#asgn")
                 asgnND.group(ndGroup)
-                    .formatNumber(d3.format("r"))
+                    .formatNumber(d3.format(".1f"))
                     .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_asgn'];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
                 var stpND = dc.numberDisplay("#stp")
                 stpND.group(ndGroup)
-                    .formatNumber(d3.format("r"))
+                    .formatNumber(d3.format(".1f"))
                     .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_stp'];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
                 var percentND = dc.numberDisplay("#percent")
                 percentND.group(ndGroup)
-                    .formatNumber(d3.format("r"))
+                    .formatNumber(d3.format(".1f"))
                     .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_percent']})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number%</span>"

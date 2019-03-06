@@ -591,28 +591,28 @@ import overviewBarChart from '@/components/overviewBarChart'
                 var ndGroup = this.ndx.groupAll().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
                 var authND = dc.numberDisplay("#auth")
                 authND.group(ndGroup)
-                    .formatNumber(d3.format("d"))
+                    .formatNumber(d3.format("f"))
                     .valueAccessor((d) => { return d['auth' + this.period];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
                 var asgnND = dc.numberDisplay("#asgn")
                 asgnND.group(ndGroup)
-                    .formatNumber(d3.format("d"))
+                    .formatNumber(d3.format("f"))
                     .valueAccessor((d) => {return d['asgn' + this.period];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
                 var stpND = dc.numberDisplay("#stp")
                 stpND.group(ndGroup)
-                    .formatNumber(d3.format("d"))
+                    .formatNumber(d3.format("f"))
                     .valueAccessor((d) => {return d['stp' + this.period];})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
                 var percentND = dc.numberDisplay("#percent")
                 percentND.group(ndGroup)
-                    .formatNumber(d3.format("r"))
+                    .formatNumber(d3.format(".1f"))
                     .valueAccessor((d) => {return d[this.colorVar]})
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number%</span>"
