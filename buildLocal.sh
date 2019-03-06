@@ -1,14 +1,17 @@
 #!/bin/bash
+#begin by resetting local build repo working directory to last commit state
+git -C ~/priorityLocal reset --hard;
+#pull to sync with remote
+git -C ~/priorityLocal pull origin master
+#build
 yarn run build:local;
-rm ~/priority/recent_commit.txt
-rm ~/priority/version.txt
-git log -n 1 --oneline > ~/priority/recent_commit.txt
-git tag -n1 > ~/priority/version.txt 
-rm -r ~/priority/dist/data;
-rm ~/priority/dist/static/*.png;
-cd ~/priorityLocal/ 
-cp -r ~/priority/dist/* .
-cp ~/priority/version.txt .
-git add . ;
-git commit -F ~/priority/recent_commit.txt;
-git push origin master;
+#get most recent commit and current branch
+lastCommitHash=$(git rev-parse --short HEAD)
+lastCommit=$(git log -n 1 --oneline)
+branchName=$(git rev-parse --abbrev-ref HEAD)
+version=$(git describe --tags)
+#push code to github (webpack places build files in correct location)
+git -C ~/priorityLocal add .
+git -C ~/priorityLocal commit -m "${version} Push on: `(date "+%F %T")` from ${lastCommitHash} on branch ${branchName}" -m "Built version of: ${lastCommit}";
+git -C ~/priorityLocal push origin master;
+
