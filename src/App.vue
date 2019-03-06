@@ -18,4 +18,10 @@ export default {
 </script>
 
 <style>
+div[id*="-barchart"] .x.axis text{
+    text-anchor: end !important;
+    transform: translate(-8,0)rotate(-45deg);
+    cursor: pointer;
+    pointer-events: auto;
+}
 </style>

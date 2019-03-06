@@ -659,6 +659,10 @@ import overviewBarChart from '@/components/overviewBarChart'
                         chart.selectAll('g.x text')
                         .style('text-anchor', 'end')
                         .attr('transform', 'translate(-8,0)rotate(-45)')
+                        .on('click',(d) => {
+                            chart.filter(d)
+                            dc.redrawAll()
+                        })
                     })
 
                     
@@ -683,7 +687,12 @@ import overviewBarChart from '@/components/overviewBarChart'
                     .on('pretransition', (chart)=> {
                         chart.selectAll('g.x text')
                         .style('text-anchor', 'end')
+                        .style('cursor','pointer')
                         .attr('transform', 'translate(-8,0)rotate(-45)')
+                        .on('click',(d) => {
+                            chart.filter(d)
+                            dc.redrawAll()
+                        })
                     })
 
                 //unit type
@@ -708,6 +717,10 @@ import overviewBarChart from '@/components/overviewBarChart'
                         chart.selectAll('g.x text')
                         .style('text-anchor', 'end')
                         .attr('transform', 'translate(-8,0)rotate(-45)')
+                        .on('click',(d) => {
+                            chart.filter(d)
+                            dc.redrawAll()
+                        })
                     })
 
                 //data table

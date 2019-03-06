@@ -173,6 +173,8 @@ var preRedraw = (chart, config) => {
   else if (/\-piechart$/.test(chart.anchorName())){
     chart.radius(config.radius || newHeight/2)
   }
+  config.width = newWidth
+  config.height = newHeight
 }
 
 module.exports = {

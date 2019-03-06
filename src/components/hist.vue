@@ -630,6 +630,10 @@ import largeBarChart from '@/components/largeBarChart'
                         chart.selectAll('g.x text')
                             .style('text-anchor', 'end')
                             .attr('transform', 'translate(-8,0)rotate(-45)')
+                            .on('click',(d) => {
+                                chart.filter(d)
+                                dc.redrawAll()
+                        })
                     })
 
                 //month row chart 
@@ -662,6 +666,10 @@ import largeBarChart from '@/components/largeBarChart'
                         chart.selectAll('g.x text')
                             .style('text-anchor', 'end')
                             .attr('transform', 'translate(-8,0)rotate(-45)')
+                            .on('click',(d) => {
+                                chart.filter(d)
+                                dc.redrawAll()
+                            })
                     })
 
 

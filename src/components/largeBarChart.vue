@@ -16,7 +16,6 @@ USAGE:
                    :colorFunction="unitColorFun"
                    :title="'Units'"
                    :loaded="loaded"
-                   :vuetify="true"
                    :sortBy="value"
                    :orderBy="desc">
     </largeBarChart>
@@ -38,117 +37,60 @@ Props:
     colorFunction: function that tells chart how to choose colors for different bars  
     title: string for chart title
     loaded: Boolean indicating where data has been loaded
-    vuetify: Boolean indicating whether to use vuetify or not
     sortBy: key or value.  If this prop is used, you must also use orderBy
     orderBy: asc or desc.  If this prop is used, you must also use sortBy
 
 ###########################################-->
 <template>
-    <div>
-        <v-layout v-if="vuetify" row>
-            <v-flex :id="this.id + 'wrapper'" xs12>
-                <v-layout :id="this.id + 'title'" class="mb-0 pb-0" row>
-                    <h3 class="headline mb-0 pb-0">{{ title }}
-                        <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                        <v-tooltip bottom
-                                    open-delay="100"
-                                    close-delay="100"
-                                    max-width="400">
-                            <v-icon slot="activator"
-                                    style="cursor: default;">info</v-icon>
-                            <span>Click on a bar to apply a filter. Ctrl+click the 'Others' bar to see bars aggregated within 'Others'. 
-                                Pressing the 'Move up' button (displayed after Ctrl+clicking 'Others') is the opposite of Ctrl+clicking 'Others'. 
-                                Use the scroll bar to select how many bars to show.
-                            </span>
-                        </v-tooltip>
-                        <v-btn :id="this.id + 'level'"
-                                small
-                                color="success"
-                                style="visibility: hidden;"
-                                @click="moveUp()">
-                            Move Up
-                        </v-btn>
-                        <v-btn :id="this.id + 'reset'"
-                                small
-                                color="error"
-                                style="visibility: hidden;"
-                                class="reset"
-                                @click="filterAll()">
-                            Reset
-                        </v-btn>
-                        <v-btn  :id="this.id + 'sortAll'"
-                                small
-                                color="primary"
-                                @click="sortAll()"
-                                >
-                            Sort
-                        </v-btn>
-                        <v-slider   :id="this.id + 'slider'"
-                                    :label="String(lastBar + 1)"
-                                    class="pt-2 mt-2"
-                                    height="0"
-                                    :disabled="sliderDisabled"
-                                    min="1"
-                                    :max="Math.min(dataAll().length,60)" 
-                                    step="1"
-                                    v-model="lastBar"
-                                    @change="redraw()"
-                                    >
-                        </v-slider>
-                    </h3> 
-                </v-layout>
-            </v-flex>
-        </v-layout>
-        <div v-else class ="row">
-            <div :id="this.id + 'wrapper'" class="col-12">
-                <div :id="this.id + 'title'" class="row">
-                    <h3 class="col-12 mb-0 pb-0">{{ title }} 
-                        <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
-                        <span data-toggle="tooltip" 
-                              data-placement="bottom"
-                              title="Click on a bar to apply a filter. Ctrl+click the 'Others' bar to see bars aggregated within 'Others'. Pressing the 'Move up' button (displayed after Ctrl+clicking 'Others') is the opposite of Ctrl+clicking 'Others'. Use the scroll bar to select how many bars to show.">
-                            <fontAwesomeIcon icon="info-circle" 
-                                             size="xs"
-                                             >
-                            </fontAwesomeIcon>
-                        </span>
-                        <button :id="this.id + 'level'"
-                                class="btn btn-success btn-sm"
-                                style="visibility: hidden;"
-                                @click="moveUp()">
-                            Move Up
-                        </button>
-                        <button :id="this.id + 'reset'"
-                                class="btn btn-danger btn-sm reset"
-                                style="visibility: hidden;"
-                                @click="filterAll()">
-                            Reset
-                        </button>
-                        <button :id="this.id + 'sortAll'"
-                                class="btn btn-primary btn-sm"
-                                @click="sortAll()">
-                            Sort 
-                        </button>
-                        <div :id="this.id + 'slider-container'"
-                             style="display: inline-block;"
-                             class="mb-0 pb-0">
-                            <label  :id="this.id + 'slider-label'"
-                                    class="pt-0 pb-0 mt-0 mb-0"
-                                    style="font-size: 12px;">
-                                Bars Displayed: {{ Number(lastBar) + 1 }}
-                            </label>
-                            <input  :id="this.id + 'slider'"
-                                    type="range"
-                                    class="form-control slider pt-0 pb-0 mt-0 mb-0"
-                                    style="cursor: pointer;"
-                                    min=1
-                                    :max="Math.min(dataAll().length,60)"
-                                    step="1"
-                                    v-model="lastBar"
-                                    @change="redraw()">
-                        </div>
-                    </h3>
-                </div>
+    <div class ="row">
+        <div :id="this.id + 'wrapper'" class="col-12">
+            <div :id="this.id + 'title'" class="row">
+                <h3 class="col-12 mb-0 pb-0">{{ title }} 
+                    <span style="font-size: 14pt; opacity: 0.87;">{{ylabel}}</span>
+                    <span data-toggle="tooltip" 
+                          data-placement="bottom"
+                          title="Click on a bar to apply a filter. Ctrl+click the 'Others' bar to see bars aggregated within 'Others'. Pressing the 'Move up' button (displayed after Ctrl+clicking 'Others') is the opposite of Ctrl+clicking 'Others'. Use the scroll bar to select how many bars to show.">
+                        <fontAwesomeIcon icon="info-circle" 
+                                         size="xs"
+                                         >
+                        </fontAwesomeIcon>
+                    </span>
+                    <button :id="this.id + 'level'"
+                            class="btn btn-success btn-sm"
+                            style="visibility: hidden;"
+                            @click="moveUp()">
+                        Move Up
+                    </button>
+                    <button :id="this.id + 'reset'"
+                            class="btn btn-danger btn-sm reset"
+                            style="visibility: hidden;"
+                            @click="filterAll()">
+                        Reset
+                    </button>
+                    <button :id="this.id + 'sortAll'"
+                            class="btn btn-primary btn-sm"
+                            @click="sortAll()">
+                        Sort 
+                    </button>
+                    <div :id="this.id + 'slider-container'"
+                         style="display: inline-block;"
+                         class="mb-0 pb-0">
+                        <label  :id="this.id + 'slider-label'"
+                                class="pt-0 pb-0 mt-0 mb-0"
+                                style="font-size: 12px;">
+                            Bars Displayed: {{ Number(lastBar) + 1 }}
+                        </label>
+                        <input  :id="this.id + 'slider'"
+                                type="range"
+                                class="form-control slider pt-0 pb-0 mt-0 mb-0"
+                                style="cursor: pointer;"
+                                min=1
+                                :max="Math.min(dataAll().length,60)"
+                                step="1"
+                                v-model="lastBar"
+                                @change="redraw()">
+                    </div>
+                </h3>
             </div>
         </div>
     </div>
@@ -175,6 +117,16 @@ export default {
             w: document.documentElement.clientWidth*this.widthFactor - this.margin.left - this.margin.right,
             rendered: false,
             allSort: true,
+            listeners: d3.dispatch(
+                'preRender',
+                'postRender',
+                'preRedraw',
+                'postRedraw',
+                'filtered',
+                'zoomed',
+                'renderlet',
+                'pretransition'
+            )
         } 
     },
     props: {
@@ -241,10 +193,6 @@ export default {
         loaded: {
             type: Boolean,
             required: true,
-        },
-        vuetify: {
-            type: Boolean,
-            required: false,
         },
         sortBy: {
             type: String,
@@ -505,6 +453,9 @@ export default {
                 .property("disabled",true);
 
             this.dimension.filterFunction(d => _.includes(this.filters,d))
+            if (this.filters !== undefined) {
+                this.listeners.filtered(this.chart,this.filters)
+            }
             dc.redrawAll()
         },
         render: function() {
@@ -513,6 +464,8 @@ export default {
                 console.log('render')
                 // assign vm to this to prevent conflicts
                 var vm = this
+                // call preRender
+                vm.listeners.preRender(vm.chart)
                 //key funciton for accessing key properties in data
                 var key = function(d) {
                     return d.key;
@@ -587,7 +540,17 @@ export default {
                     .call(this.xAxis)
                     .selectAll("text")
                     .style("text-anchor","end")
-                    .attr("transform","translate(-8,3)rotate(-45)");
+                    .style("cursor","pointer")
+                    .attr("transform","translate(-8,3)rotate(-45)")
+                    .on('click', function(d) {
+                        //update filters expects object with key as property, spoof this for now
+                        var obj = {key: d}
+                        if (d3.event.ctrlKey) {
+                            vm.nextLevel(obj);
+                        } else {
+                            vm.updateFilters(obj);
+                        }
+                    });
 
                 svg.append("g")
                     .attr("class", "y axis")
@@ -612,6 +575,8 @@ export default {
                 console.log('redraw')
                 //allow use of 'this' within scoped functions
                 var vm = this
+                //call preRedraw
+                vm.listeners.preRedraw(vm.chart)
                 //key function for getting key for each object
                 var key = function(d) {
                     return d.key;
@@ -714,7 +679,21 @@ export default {
                               .call(this.xAxis)
                               .selectAll("text")
                               .style("text-anchor","end")
+                              .style("cursor","pointer")
                               .attr("transform","translate(-8,3)rotate(-45)");
+
+                d3.select("#" + this.id + "svg")
+                                .select(".x.axis")
+                                .selectAll("text")
+                                .on('click',function(d) {
+                                    //update filters expects object with key as property, spoof this for now
+                                    var obj = {key: d}
+                                    if (d3.event.ctrlKey) {
+                                        vm.nextLevel(obj);
+                                    } else {
+                                        vm.updateFilters(obj);
+                                    }
+                                });
 
                 d3.select("#" + this.id + "svg")
                               .select(".y.axis")
@@ -744,6 +723,10 @@ export default {
         this.chart.filterAll = this.filterAll
         this.chart.filter = this.filterAll 
         this.chart.filters = function() { return vm.filters }
+        this.chart.on = function (event, listener) {
+            vm.listeners.on(event, listener);
+            return vm.chart;
+        }
         //register chart for dc
         dc.chartRegistry.register(this.chart)
         //call render (redraw always happens after render) if component is destroyed then created again
