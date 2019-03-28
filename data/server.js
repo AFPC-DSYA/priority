@@ -12,7 +12,7 @@ var morgan      = require('morgan')
 var cors        = require('cors')
 
 // load data
-var contents = fs.readFileSync("priority_data.json")
+var contents = fs.readFileSync("priority_data_relatives.json")
 var priority_data = JSON.parse(contents)
 var array_priority_data = priority_data.data
 

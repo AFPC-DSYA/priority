@@ -122,6 +122,14 @@
             </div>
         </div>
         <div class="row">
+            <div class="alert alert-warning alert-dismissible fade show col-12" role="alert">
+                Data pre-filtered to only include Priority and Priority Support units.
+                <button type="button" class="close" style="cursor: pointer;" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button> 
+            </div>
+        </div>
+        <div class="row">
             <div id="cat" class="col-4">
                 <div id="dc-cat-rowchart">
                     <h3 style="display: inline-block">Category 
@@ -291,6 +299,7 @@ import overviewBarChart from '@/components/overviewBarChart'
                 chartSpecs: chartSpecs,
                 allColumns: [ 
                     {title: 'Unit', field: 'unit', sort_state: "ascending", selected: true, width: "20%"},
+                    {title: 'Category', field: 'unit_cat', sort_state: "ascending", selected: true, width: "20%"},
                     {title: 'MPF', field: 'mpf', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'MAJCOM', field: 'majcom', sort_state: "descending", selected: false, width: "10%"},
                     {title: 'PASCODE', field: 'pascode', sort_state: "descending", selected: false, width: "10%"},
@@ -442,7 +451,6 @@ import overviewBarChart from '@/components/overviewBarChart'
                     p['stp' + val] = p['stp' + val] + +v['stp' + val]
                     //if divide by 0, set to 0, and if NaN, set to zero
                     p['percent' + val] = p['asgn' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['asgn' + val]/p['auth' + val])*1000)/10 || 0
-                    p['stpPercent' + val] = p['stp' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['stp' + val]/p['auth' + val])*1000)/10 || 0
                 }
                 return p;
             },
@@ -454,7 +462,6 @@ import overviewBarChart from '@/components/overviewBarChart'
                     p['stp' + val] = p['stp' + val] - +v['stp' + val]
                     //if divide by 0, set to 0, and if NaN, set to zero
                     p['percent' + val] = p['asgn' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['asgn' + val]/p['auth' + val])*1000)/10 || 0
-                    p['stpPercent' + val] = p['stp' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['stp' + val]/p['auth' + val])*1000)/10 || 0
                 }
                 return p;
             },
@@ -466,7 +473,6 @@ import overviewBarChart from '@/components/overviewBarChart'
                     p['auth' + val] = 0
                     p['stp' + val] = 0
                     p['percent' + val] = 0
-                    p['stpPercent' + val] = 0
                 }
                 return p;
             },
@@ -544,7 +550,7 @@ import overviewBarChart from '@/components/overviewBarChart'
 
             if (local) {
                 //load local data (works for both dev and prod) 
-                d3.json('./data/priority_data.json',(error,data) => {
+                d3.json('./data/priority_data_relatives.json',(error,data) => {
                     this.data = this.makeObject(data.data);   
                     this.asDate = data.ASOFDATE;
                     renderCharts()
@@ -555,7 +561,7 @@ import overviewBarChart from '@/components/overviewBarChart'
                 const formData = {
                   '_PROGRAM': AXIOS_PROGRAM,
                   'nPage':"getData",
-                  'dataName': "priority_data.json",
+                  'dataName': "priority_data_relatives.json",
                 }
                 axios.defaults.headers.get['Accepts'] = 'application/json'
                 axios.post(axios_url_priority_data, querystring.stringify(formData)).then(response => { 
@@ -636,6 +642,8 @@ import overviewBarChart from '@/components/overviewBarChart'
                     .valueAccessor((d)=> {
                         return d.value[this.selected];
                     })
+                    .filter('Priority Support')
+                    .filter('Priority');
 
                 //Majcom
                 var majcomConfig = {}
