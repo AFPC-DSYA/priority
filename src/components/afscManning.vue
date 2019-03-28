@@ -28,11 +28,11 @@
                             <span class="custom-control-indicator"></span>
                             <span class="custom-control-description">Assigned</span>
                         </label>
-                        <label class="custom-control custom-radio" >
-                            <input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="type" @click="radioButton">
-                            <span class="custom-control-indicator"></span>
-                            <span class="custom-control-description">STP</span>
-                        </label>
+                        <!--<label class="custom-control custom-radio" >-->
+                            <!--<input class="custom-control-input" name="radio" type="radio" id="radio4" value="stp" v-model="type" @click="radioButton">-->
+                            <!--<span class="custom-control-indicator"></span>-->
+                            <!--<span class="custom-control-description">STP</span>-->
+                        <!--</label>-->
                         <span data-toggle="tooltip" 
                               data-placement="right"
                               title="Use the radio buttons to toggle between manning percentage, assigned, authorized, and STP (student, transient, personnel holdee). The charts show the selected data element.">
@@ -115,10 +115,10 @@
                 Assigned:
                 <span id="asgn"></span>
             </div>
-            <div class="col-auto">
-                STP:
-                <span id="stp"></span>
-            </div>
+            <!--<div class="col-auto">-->
+                <!--STP:-->
+                <!--<span id="stp"></span>-->
+            <!--</div>-->
             <div class="col-auto">
                 Manning Percent:
                 <span id="percent"></span>
@@ -495,13 +495,13 @@ import overviewBarChart from '@/components/overviewBarChart'
                 }))
             },
             dcRowColorFun: function(d,i) {
-                return d.value[this.colorVar] < this.manningGoal ? 3 : (i >= 3 ? i + 1 : i);
+                return this.valueAccessor(d,this.colorVar) < this.manningGoal ? 3 : (i >= 3 ? i + 1 : i);
             },
             dcBarColorFun: function(d,i) {
-                return d.value[this.colorVar] >= this.manningGoal ? 'good' : 'under';
+                return this.valueAccessor(d,this.colorVar) >= this.manningGoal ? 'good' : 'under';
             },
             colorFun: function(d, colorScale, colorDomain) {
-                if (d.value[this.colorVar] >= this.manningGoal) {
+                if (this.valueAccessor(d,this.colorVar) >= this.manningGoal) {
                     return colorScale(colorDomain[0]) 
                 } else {
                     return colorScale(colorDomain[1])
@@ -514,9 +514,9 @@ import overviewBarChart from '@/components/overviewBarChart'
                 for (var val of this.timeArray) {
                     p['asgn' + val] = p['asgn' + val] + +v['asgn' + val]
                     p['auth' + val] = p['auth' + val] + +v['auth' + val]
-                    p['stp' + val] = p['stp' + val] + +v['stp' + val]
+                    //p['stp' + val] = p['stp' + val] + +v['stp' + val]
                     //if divide by 0, set to 0, and if NaN, set to zero
-                    p['percent' + val] = p['asgn' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['asgn' + val]/p['auth' + val])*1000)/10 || 0
+                    //p['percent' + val] = p['asgn' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['asgn' + val]/p['auth' + val])*1000)/10 || 0
                 }
                 return p;
             },
@@ -525,9 +525,9 @@ import overviewBarChart from '@/components/overviewBarChart'
                 for (var val of this.timeArray) {
                     p['asgn' + val] = p['asgn' + val] - +v['asgn' + val]
                     p['auth' + val] = p['auth' + val] - +v['auth' + val]
-                    p['stp' + val] = p['stp' + val] - +v['stp' + val]
+                    //p['stp' + val] = p['stp' + val] - +v['stp' + val]
                     //if divide by 0, set to 0, and if NaN, set to zero
-                    p['percent' + val] = p['asgn' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['asgn' + val]/p['auth' + val])*1000)/10 || 0
+                    //p['percent' + val] = p['asgn' + val]/p['auth' + val] === Infinity ? 0 : Math.round((p['asgn' + val]/p['auth' + val])*1000)/10 || 0
                 }
                 return p;
             },
@@ -537,10 +537,25 @@ import overviewBarChart from '@/components/overviewBarChart'
                 for (var val of this.timeArray) {
                     p['asgn' + val] = 0
                     p['auth' + val] = 0
-                    p['stp' + val] = 0
-                    p['percent' + val] = 0
+                    //p['stp' + val] = 0
+                    //p['percent' + val] = 0
                 }
                 return p;
+            },
+            valueAccessor: function(d,prop) {
+                if (prop) {
+                    if (_.includes(prop,'percent')) {
+                        return d.value['asgn' + this.period]/d.value['auth' + this.period] === Infinity ? 0 : Math.round((d.value['asgn' + this.period]/d.value['auth' + this.period])*1000)/10 || 0
+                    } else {
+                        return d.value[this.selected];
+                    }
+                } else {
+                    if (this.type == 'percent') {
+                        return d.value['asgn' + this.period]/d.value['auth' + this.period] === Infinity ? 0 : Math.round((d.value['asgn' + this.period]/d.value['auth' + this.period])*1000)/10 || 0
+                    } else {
+                        return d.value[this.selected];
+                    }
+                }
             },
             sortColumn: function(col) {
                 for (let i = 0; i < this.columns.length; i++) {
@@ -645,6 +660,7 @@ import overviewBarChart from '@/components/overviewBarChart'
 
             var renderCharts = () => {
 
+                var vm = this
                 this.loaded = true
                 dc.dataCount(".dc-data-count")
                   .dimension(this.ndx)
@@ -666,28 +682,23 @@ import overviewBarChart from '@/components/overviewBarChart'
                 var authND = dc.numberDisplay("#auth")
                 authND.group(ndGroup)
                     .formatNumber(d3.format("f"))
-                    .valueAccessor((d) => { return d['auth' + this.period];})
+                    .valueAccessor(d => d['auth' + this.period])
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
                 var asgnND = dc.numberDisplay("#asgn")
                 asgnND.group(ndGroup)
                     .formatNumber(d3.format("f"))
-                    .valueAccessor((d) => {return d['asgn' + this.period];})
-                    .html({
-                        one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
-                    })
-                var stpND = dc.numberDisplay("#stp")
-                stpND.group(ndGroup)
-                    .formatNumber(d3.format("f"))
-                    .valueAccessor((d) => {return d['stp' + this.period];})
+                    .valueAccessor(d => d['asgn' + this.period])
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
                     })
                 var percentND = dc.numberDisplay("#percent")
                 percentND.group(ndGroup)
                     .formatNumber(d3.format(".1f"))
-                    .valueAccessor((d) => {return d[this.colorVar]})
+                    .valueAccessor((d) => {
+                        return d['asgn' + this.period]/d['auth' + this.period] === Infinity ? 0 : Math.round((d['asgn' + this.period]/d['auth' + this.period])*1000)/10 || 0;
+                    })
                     .html({
                         one:"<span style=\"color:steelblue; font-size: 20px;\">%number%</span>"
                     })
@@ -707,9 +718,7 @@ import overviewBarChart from '@/components/overviewBarChart'
                 catChart
                     .controlsUseVisibility(true)
                     .colorAccessor(this.dcRowColorFun)
-                    .valueAccessor((d)=> {
-                        return d.value[this.selected];
-                    })
+                    .valueAccessor(this.valueAccessor)
 
                 //grp
                 var grpDecode = {'ENL': 'Enlisted', 'OFF': 'Officer'}
@@ -727,8 +736,8 @@ import overviewBarChart from '@/components/overviewBarChart'
                 grpChart
                     .controlsUseVisibility(true)
                     .colorAccessor(this.dcRowColorFun)
-                    .valueAccessor((d)=> {
-                        return d.value[this.selected];
+                    .valueAccessor((d) => {
+                        return this.valueAccessor(d);
                     })
 
 
@@ -748,7 +757,7 @@ import overviewBarChart from '@/components/overviewBarChart'
                     .controlsUseVisibility(true)
                     .colorAccessor(this.dcBarColorFun)
                     .valueAccessor((d) => {
-                        return d.value[this.selected]
+                        return this.valueAccessor(d);
                     })
                     .on('pretransition', (chart)=> {
                         chart.selectAll('g.x text')
@@ -775,8 +784,8 @@ import overviewBarChart from '@/components/overviewBarChart'
                 gradeChart
                     .controlsUseVisibility(true)
                     .colorAccessor(this.dcRowColorFun)
-                    .valueAccessor((d)=> {
-                        return d.value[this.selected];
+                    .valueAccessor((d) => {
+                        return this.valueAccessor(d);
                     })
                     .ordering(function(d){
                       return formats.gradeOrder[d.key]
@@ -796,8 +805,8 @@ import overviewBarChart from '@/components/overviewBarChart'
                     .elasticX(true)
                     .controlsUseVisibility(true)
                     .colorAccessor(this.dcBarColorFun)
-                    .valueAccessor((d)=> {
-                        return d.value[this.selected];
+                    .valueAccessor((d) => {
+                        return this.valueAccessor(d);
                     })
                     .on('pretransition', (chart)=> {
                         chart.selectAll('g.x text')
@@ -825,7 +834,7 @@ import overviewBarChart from '@/components/overviewBarChart'
                     .controlsUseVisibility(true)
                     .colorAccessor(this.dcBarColorFun)
                     .valueAccessor((d) => {
-                        return d.value[this.selected]
+                        return this.valueAccessor(d);
                     })
                     .on('pretransition', (chart)=> {
                         chart.selectAll('g.x text')
@@ -853,7 +862,7 @@ import overviewBarChart from '@/components/overviewBarChart'
                     .controlsUseVisibility(true)
                     .colorAccessor(this.dcBarColorFun)
                     .valueAccessor((d) => {
-                        return d.value[this.selected]
+                        return this.valueAccessor(d);
                     })
                     .on('pretransition', (chart)=> {
                         chart.selectAll('g.x text')
