@@ -170,6 +170,21 @@ export default {
             type: Function,
             required: true,
         },
+        type: {
+            type: String,
+            required: false  //only required with specific valueAccessor prop   
+        },
+        period: {
+            type: String,
+            required: false  //only required with specific valueAccessor prop   
+        },
+        valueAccessor: {
+            type: Function,
+            required: false,
+            default: function(d) {
+                return d.value[this.selected] === undefined ? d.value : d.value[this.selected];
+            }   
+        },
         numBars: {
             type: Number,
             required: false, //if not supplied, defaults to 30
@@ -211,7 +226,7 @@ export default {
             return Math.max(Math.round(this.w/this.aspectRatio) - this.margin.top - this.margin.bottom, this.minHeight - this.margin.top - this.margin.bottom);
         },
         minMax: function() {
-            return d3.extent(this.data, d => (d.value[this.selected] || d.value))
+            return d3.extent(this.data, d => (this.valueAccessor(d)))
         },
         minVal: function() {
             return this.minMax[0]
@@ -280,7 +295,7 @@ export default {
             return {
                 all: () => {
                     return source_group.all().filter((d) => {
-                        return (d.value[this.selected] === undefined ? d.value : d.value[this.selected]) != 0
+                        return this.valueAccessor(d) != 0
                     })
                 }
             }
@@ -294,9 +309,9 @@ export default {
         },
         sortValue: function(order) {
             if (order == 'desc') {
-                return this.removeEmptyBins(this.group).all().sort((a,b) => (b.value[this.selected] === undefined ? b.value : b.value[this.selected]) - (a.value[this.selected] === undefined ? a.value : a.value[this.selected]));
+                return this.removeEmptyBins(this.group).all().sort((a,b) => this.valueAccessor(b) - this.valueAccessor(a));
             } else {
-                return this.removeEmptyBins(this.group).all().sort((a,b) => (a.value[this.selected] === undefined ? a.value : a.value[this.selected]) - (b.value[this.selected] === undefined ? b.value : b.value[this.selected]));
+                return this.removeEmptyBins(this.group).all().sort((a,b) => this.valueAccessor(a) - this.valueAccessor(b));
             }
             
         },
@@ -355,7 +370,7 @@ export default {
             // note: accumulator is a function so calling it returns an empty object 
             var othersObj = {key: "Others", value: nextVal.reduce(this.reducer, this.accumulator())}
             this.data.push(othersObj)
-            this.data = this.data.filter(d => (d.value[this.selected] === undefined ? d.value : d.value[this.selected]) != 0)
+            this.data = this.data.filter(d => this.valueAccessor(d) != 0)
         },
         sortAll: function() {
             this.allSort = !this.allSort
@@ -499,11 +514,11 @@ export default {
                         return vm.xScale(d.key)
                     })
                     .attr("y", function(d) {
-                        return vm.yScale((d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]));
+                        return vm.yScale(vm.valueAccessor(d));
                     })
                     .attr("width", this.xScale.rangeBand())
                     .attr("height", function(d) {
-                        return vm.h-vm.yScale((d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]));
+                        return vm.h-vm.yScale(vm.valueAccessor(d));
                     })
                     //color bars
                     .attr("fill", function(d) {
@@ -530,7 +545,7 @@ export default {
                     })
                     .append("title")
                     .text(function(d) {
-                        return d.key + ': ' + (d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]);
+                        return d.key + ': ' + vm.valueAccessor(d);
                     })
                     ;
 
@@ -629,13 +644,13 @@ export default {
                     })
                     .append("title")
                     .text(function(d) {
-                        return d.key + ': ' + (d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]);
+                        return d.key + ': ' + vm.valueAccessor(d);
                     })
                     ;
 
                 bars.select("title")
                     .text(function(d) {
-                        return d.key + ': ' + (d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]);
+                        return d.key + ': ' + vm.valueAccessor(d);
                     });
 
                 //defines bar color and specifies where entering bars end up
@@ -657,10 +672,10 @@ export default {
                     })
                     .attr("width", vm.xScale.rangeBand())
                     .attr("y", function(d) {
-                        return vm.yScale((d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]));
+                        return vm.yScale(vm.valueAccessor(d));
                     })
                     .attr("height", function(d) {
-                        return vm.h-vm.yScale((d.value[vm.selected] === undefined ? d.value : d.value[vm.selected]));
+                        return vm.h-vm.yScale(vm.valueAccessor(d));
                     })
                     ;
 

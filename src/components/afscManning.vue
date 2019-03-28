@@ -193,6 +193,9 @@
                        :ylabel="ylabel"
                        :reducer="manningAdd"
                        :accumulator="manningInitial"
+                       :type="type"
+                       :period="period"
+                       :valueAccessor="valueAccessor"
                        :numBars="30"
                        :margin="{top: 10, left: 40, right: 30, bottom: 80}"
                        :colorScale="afscColorScale"
@@ -671,7 +674,7 @@ import overviewBarChart from '@/components/overviewBarChart'
                     return {
                         all: () => {
                             return source_group.all().filter((d) => {
-                                return d.value[this.selected] != 0
+                                return vm.valueAccessor(d) != 0
                             })
                         }
                     }
