@@ -254,6 +254,7 @@ import searchBox from '@/components/searchBox'
 import { store } from '@/store/store'
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome' 
 import largeBarChart from '@/components/largeBarChart'
+import raw_data from '@/../data/priority_hist.json'
 
     export default {
         data() {
@@ -517,6 +518,347 @@ import largeBarChart from '@/components/largeBarChart'
           resetTable: function() {
             this.allDim.filterAll()
             dc.redrawAll()
+          },
+          renderCharts: function() {
+
+            this.loaded = true
+            dc.dataCount(".dc-data-count")
+              .dimension(this.ndx)
+              .group(this.allGroup)
+
+            //remove empty function (es6 syntax to keep correct scope)
+            var removeEmptyBins = (source_group) => {
+                return {
+                    all: () => {
+                        return source_group.all().filter((d) => {
+                            return d.value[this.selected] != 0
+                        })
+                    }
+                }
+            }
+
+            //Number Display for Auth, Asgn, STP - show total for filtered content
+            var ndGroup = this.ndx.groupAll().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+            var authND = dc.numberDisplay("#auth")
+            authND.group(ndGroup)
+                .formatNumber(d3.format(".1f"))
+                .valueAccessor((d) => { return d[this.selected.split('_')[0]+'_auth'];})
+                .html({
+                    one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
+                })
+            var asgnND = dc.numberDisplay("#asgn")
+            asgnND.group(ndGroup)
+                .formatNumber(d3.format(".1f"))
+                .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_asgn'];})
+                .html({
+                    one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
+                })
+            var stpND = dc.numberDisplay("#stp")
+            stpND.group(ndGroup)
+                .formatNumber(d3.format(".1f"))
+                .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_stp'];})
+                .html({
+                    one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
+                })
+            var percentND = dc.numberDisplay("#percent")
+            percentND.group(ndGroup)
+                .formatNumber(d3.format(".1f"))
+                .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_percent']})
+                .html({
+                    one:"<span style=\"color:steelblue; font-size: 20px;\">%number%</span>"
+                })
+
+            //year row chart 
+            var yearConfig = {}
+            yearConfig.id = 'year'
+            yearConfig.dim = this.ndx.dimension(function(d) {return d.date.substring(0,4)})
+            yearConfig.group = removeEmptyBins(yearConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial))
+            yearConfig.minHeight = 200
+            yearConfig.aspectRatio = 3
+            yearConfig.margins = {top: 10, left: 45, right: 30, bottom: 40}
+            yearConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.majcomChart.color)
+            var yearChart = dchelpers.getOrdinalBarChart(yearConfig)
+            yearChart
+                .elasticX(true)
+                .controlsUseVisibility(true)
+                .colorAccessor(this.dcBarColorFun)
+                .valueAccessor((d) => {
+                    return d.value[this.selected];
+                })
+                .on('pretransition', (chart) => {
+                    chart.selectAll('g.x text')
+                        .style('text-anchor', 'end')
+                        .attr('transform', 'translate(-8,0)rotate(-45)')
+                        .on('click',(d) => {
+                            chart.filter(d)
+                            dc.redrawAll()
+                    })
+                })
+
+            //month row chart 
+            var monthConfig = {}
+            monthConfig.id = 'month'
+            monthConfig.dim = this.ndx.dimension(function(d) {
+                var year = Number(d.date.substring(0,4))
+                var month = Number(d.date.substring(5,7)) - 1
+                var day = Number(d.date.substring(8,10))
+                var full_date = new Date(year,month,day)
+                return full_date.toLocaleString('en-us', {month: 'short'});
+            })
+            monthConfig.group = removeEmptyBins(monthConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial))
+            monthConfig.minHeight = 200
+            monthConfig.aspectRatio = 4
+            monthConfig.margins = {top: 10, left: 45, right: 30, bottom: 40}
+            monthConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.majcomChart.color)
+            var monthChart = dchelpers.getOrdinalBarChart(monthConfig)
+            monthChart
+                .elasticX(true)
+                .controlsUseVisibility(true)
+                .colorAccessor(this.dcBarColorFun)
+                .valueAccessor((d) => {
+                    return d.value[this.selected];
+                })
+                .ordering((d) => {
+                    return this.months.indexOf(d.key)
+                })
+                .on('pretransition', (chart) => {
+                    chart.selectAll('g.x text')
+                        .style('text-anchor', 'end')
+                        .attr('transform', 'translate(-8,0)rotate(-45)')
+                        .on('click',(d) => {
+                            chart.filter(d)
+                            dc.redrawAll()
+                        })
+                })
+
+
+            //date line chart
+            var lineConfig = {}
+            lineConfig.id = 'dateLine'
+            lineConfig.dim = this.ndx.dimension(function(d) {return d.date})
+            lineConfig.group = removeEmptyBins(lineConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial))
+            console.log('group!')
+            console.log(lineConfig.group.all())
+            lineConfig.minHeight = 400
+            lineConfig.aspectRatio = 3
+            lineConfig.margins = {top: 10, left: 60, right: 40, bottom: 60}
+            lineConfig.x = d3.scale.ordinal()
+            lineConfig.xUnits = dc.units.ordinal
+            lineConfig.brush = false 
+            lineConfig.tips = true
+            lineConfig.radius = 6
+            lineConfig.dataPoints = {
+                    fillOpacity: 0.8,
+                    strokeOpacity: 0.8,
+                    radius: 4,
+            }
+            var dateLineChart = dchelpers.getLineChart(lineConfig)
+            dateLineChart
+                .valueAccessor((d) => {
+                    return d.value[this.selected]
+                })
+                .on('pretransition', (chart)=> {
+                    chart.selectAll('g.x text')
+                    .style('text-anchor', 'end')
+                    .attr('transform', 'translate(-8,0)rotate(-45)')
+                })
+                .on('renderlet', (chart) => {
+                    if (_.includes(this.selected,'percent')) {
+                        //create horizontal line
+                        var horiz = 95
+                        var extraData= [
+                            {x: 0, y: chart.y()(horiz)},
+                            {x: chart.width(), y: chart.y()(horiz)}
+                        ]
+                    } else {
+                        //remove horizontal line
+                        var extraData= []
+                    }
+
+                    var line = d3.svg.line()
+                                .x(function(d) {return d.x;})
+                                .y(function(d) {return d.y;})
+                                .interpolate('linear');
+
+                    var path = chart.select('g.chart-body')
+                                    .selectAll('path.extra')
+                                    .data(extraData);
+                    path.enter()
+                        .append('path')
+                        .attr('d',line(extraData))
+                        .attr('class', 'extra')
+                        .attr('stroke','red')
+                        .style("stroke-dasharray", ("3, 3"));
+
+                    path.transition()
+                        .duration(200)
+                        .delay(0)
+                        .attr('d',line(extraData));
+
+                    path.exit()
+                        .transition()
+                        .duration(200)
+                        .style('opacity',0)
+                        .remove();
+
+                })
+
+            var padPercent = 0.05
+            dateLineChart.yAxisMin = () => {
+                var yMin = d3.min(lineConfig.group.all(), d => d.value[this.selected])
+                var yMax = d3.max(lineConfig.group.all(), d => d.value[this.selected])
+                var yRange = yMax - yMin
+                if (_.includes(this.selected,'percent')) {
+                    return Math.min(yMin - Math.round(yRange * padPercent),90);
+                } else {
+                    return yMin - Math.round(yRange * padPercent);
+                }
+            }
+            dateLineChart.yAxisMax = () => {
+                var yMin = d3.min(lineConfig.group.all(), d => d.value[this.selected])
+                var yMax = d3.max(lineConfig.group.all(), d => d.value[this.selected])
+                var yRange = yMax - yMin 
+                if (_.includes(this.selected,'percent')) {
+                    return Math.max(yMax + Math.round(yRange * padPercent),100);
+                } else {
+                    return yMax + Math.round(yRange * padPercent);
+                }
+            }
+
+            //date overview chart
+            //var parseDate = d3.time.format("%Y-%m-%d").parse;
+            //var overviewConfig = {}
+            //overviewConfig.id = 'overview'
+            //overviewConfig.dim = this.ndx.dimension(function(d) {return parseDate(d.date)})
+            //var minDate = overviewConfig.dim.bottom(1)[0].date
+            //var maxDate = overviewConfig.dim.top(1)[0].date
+            //overviewConfig.group = overviewConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
+            //overviewConfig.minHeight = 100
+            //overviewConfig.aspectRatio = 5
+            //overviewConfig.margins = {top: 10, left: 60, right: 40, bottom: 60}
+            //overviewConfig.x = d3.time.scale().domain([minDate, maxDate])
+            //overviewConfig.xUnits = d3.time.months
+            //overviewConfig.brush = true 
+            //overviewConfig.tips = true
+            //overviewConfig.radius = 6
+            //overviewConfig.dataPoints = {
+            //        fillOpacity: 0.8,
+            //        strokeOpacity: 0.8,
+            //        radius: 4,
+            //}
+            //var overviewChart = dchelpers.getLineChart(overviewConfig)
+            //console.log('13mo. ago')
+            //console.log(d3.time.month.offset(parseDate(maxDate),-13))
+            //overviewChart
+            //    .filter(dc.filters.RangedFilter(d3.time.month.offset(parseDate(maxDate),-13),d3.time.day.offset(parseDate(maxDate),1)))
+            //    .valueAccessor((d) => {
+            //        return d.value[this.selected]
+            //    })
+            //    .brushOn(true)
+            //    .on('pretransition', (chart)=> {
+            //        chart.selectAll('g.x text')
+            //        .style('text-anchor', 'end')
+            //        .attr('transform', 'translate(-8,0)rotate(-45)')
+            //    })
+            //var dateLineChart = dc.lineChart("#dc-date-linechart")
+            //dateLineChart
+            //    .margins(chartSpecs.majcomChart.margins)
+            //    .elasticY(true)
+            //    .width(800)
+            //    .height(480)
+            //    .group(dateConfig.group)
+            //    .dimension(dateConfig.dim)
+            //    .x(d3.scale.ordinal())
+            //    .xUnits(dc.units.ordinal)
+            //    .brushOn(false)
+            //    .xyTipsOn(true)
+            //    .dotRadius(6)
+            //    .renderDataPoints({
+            //        fillOpacity: 0.8,
+            //        strokeOpacity: 0.8,
+            //        radius: 4,
+            //    })
+            //    .valueAccessor((d) => {
+            //        return d.value[this.selected]
+            //    })
+            //    //.on('pretransition', (chart) => {
+            //    //    if (this.selected === 'percent') {
+            //    //        var horiz = 95
+            //    //        var extraData = [
+            //    //            {x: 0, y: chart.y()(horiz)},
+            //    //            
+            //    //        ]
+            //    //    }
+            //    //})
+            //;
+
+            var dataTable = dc.dataTable("#dc-data-table")
+
+            var tableDim = this.ndx.dimension(d => d.date)
+            dataTable.width(this.width)
+                .height(800)
+                .dimension(tableDim)
+                .group(d => 'Showing first 100')
+                .size(Infinity)
+                //give columns an array of functions for returning variables
+                .columns(this.columns.map(d=> {
+                    if (_.includes(d.field,'percent')) {
+                        return (v) => Math.round(v[d.field]*1000)/10 + '%';
+                    } else {
+                        return (v) => v[d.field];   
+                    }
+                }))
+                .showGroups(false)
+                .sortBy(d => d.unit)
+                .order(d3.ascending)
+                .on("preRender", this.updateTable)
+                .on("preRedraw", this.updateTable)
+                //.on("renderlet", function(table) {
+                //    console.log(d3.select("#dc-data-table tr"))
+                //})
+                ;
+
+            this.dataTable = dataTable
+
+            //Download Raw Data button
+            d3.select('#download')
+            .on('click', ()=>{
+                //TODO: find a better way then majcomConfig.dim - may not always have this
+                var data = tableDim.top(Infinity);
+                var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
+
+                var myFilters = '';
+                dc.chartRegistry.list().forEach((d)=>{
+                    if (d.filters()[0]) {
+                        myFilters += ' (' + d.filters() + ')'
+                    }
+                })
+
+                FileSaver.saveAs(blob, 'Priority_Units_Historical' + '_' + this.asDate + myFilters + '.csv');
+            });
+
+            // after DOM updated redraw to make chart widths update
+            this.$nextTick(() => {
+                dc.redrawAll()
+            })
+            
+            //make responsive
+            var temp
+            window.onresize = function(event) {
+                clearTimeout(temp)
+                temp = setTimeout(dc.redrawAll(), 500)
+            }
+
+            //var vm = this
+            //dc.chartRegistry.list().forEach((chart) => {
+            //    chart.on("filtered", function() {
+            //       vm.setTableData(); 
+            //    })
+            //})
+
+            //create charts
+            dc.renderAll()
+            dc.redrawAll()
           }
         },
         components: {
@@ -536,11 +878,9 @@ import largeBarChart from '@/components/largeBarChart'
 
             if (local) {
                 //load local data (works for both dev and prod) 
-                d3.json('./data/priority_hist.json',(error,data) => {
-                    this.data = data.data;   
-                    this.asDate = data.ASOFDATE;
-                    renderCharts()
-                })
+                this.data = raw_data.data
+                this.asDate = raw_data.ASOFDATE
+                this.renderCharts()
             } else {
                  var querystring = require('querystring');
                 console.log('BEFORE AXIOS')
@@ -556,7 +896,7 @@ import largeBarChart from '@/components/largeBarChart'
                     this.asDate = response.data.ASOFDATE;
                     //apply formats so we have decoded variables globally
                     console.log(this.data) 
-                    renderCharts()
+                    this.renderCharts()
                     console.log('END AXIOS SUCCESS') 
                 }).catch(function (error) {
                     console.log('AXIOS ERROR')
@@ -564,349 +904,6 @@ import largeBarChart from '@/components/largeBarChart'
                 });
             }
 
-            var renderCharts = () => {
-
-                this.loaded = true
-                dc.dataCount(".dc-data-count")
-                  .dimension(this.ndx)
-                  .group(this.allGroup)
-
-                //remove empty function (es6 syntax to keep correct scope)
-                var removeEmptyBins = (source_group) => {
-                    return {
-                        all: () => {
-                            return source_group.all().filter((d) => {
-                                return d.value[this.selected] != 0
-                            })
-                        }
-                    }
-                }
-
-                //Number Display for Auth, Asgn, STP - show total for filtered content
-                var ndGroup = this.ndx.groupAll().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
-                var authND = dc.numberDisplay("#auth")
-                authND.group(ndGroup)
-                    .formatNumber(d3.format(".1f"))
-                    .valueAccessor((d) => { return d[this.selected.split('_')[0]+'_auth'];})
-                    .html({
-                        one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
-                    })
-                var asgnND = dc.numberDisplay("#asgn")
-                asgnND.group(ndGroup)
-                    .formatNumber(d3.format(".1f"))
-                    .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_asgn'];})
-                    .html({
-                        one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
-                    })
-                var stpND = dc.numberDisplay("#stp")
-                stpND.group(ndGroup)
-                    .formatNumber(d3.format(".1f"))
-                    .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_stp'];})
-                    .html({
-                        one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
-                    })
-                var percentND = dc.numberDisplay("#percent")
-                percentND.group(ndGroup)
-                    .formatNumber(d3.format(".1f"))
-                    .valueAccessor((d) => {return d[this.selected.split('_')[0]+'_percent']})
-                    .html({
-                        one:"<span style=\"color:steelblue; font-size: 20px;\">%number%</span>"
-                    })
-
-                //year row chart 
-                var yearConfig = {}
-                yearConfig.id = 'year'
-                yearConfig.dim = this.ndx.dimension(function(d) {return d.date.substring(0,4)})
-                yearConfig.group = removeEmptyBins(yearConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial))
-                yearConfig.minHeight = 200
-                yearConfig.aspectRatio = 3
-                yearConfig.margins = {top: 10, left: 45, right: 30, bottom: 40}
-                yearConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.majcomChart.color)
-                var yearChart = dchelpers.getOrdinalBarChart(yearConfig)
-                yearChart
-                    .elasticX(true)
-                    .controlsUseVisibility(true)
-                    .colorAccessor(this.dcBarColorFun)
-                    .valueAccessor((d) => {
-                        return d.value[this.selected];
-                    })
-                    .on('pretransition', (chart) => {
-                        chart.selectAll('g.x text')
-                            .style('text-anchor', 'end')
-                            .attr('transform', 'translate(-8,0)rotate(-45)')
-                            .on('click',(d) => {
-                                chart.filter(d)
-                                dc.redrawAll()
-                        })
-                    })
-
-                //month row chart 
-                var monthConfig = {}
-                monthConfig.id = 'month'
-                monthConfig.dim = this.ndx.dimension(function(d) {
-                    var year = Number(d.date.substring(0,4))
-                    var month = Number(d.date.substring(5,7)) - 1
-                    var day = Number(d.date.substring(8,10))
-                    var full_date = new Date(year,month,day)
-                    return full_date.toLocaleString('en-us', {month: 'short'});
-                })
-                monthConfig.group = removeEmptyBins(monthConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial))
-                monthConfig.minHeight = 200
-                monthConfig.aspectRatio = 4
-                monthConfig.margins = {top: 10, left: 45, right: 30, bottom: 40}
-                monthConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.majcomChart.color)
-                var monthChart = dchelpers.getOrdinalBarChart(monthConfig)
-                monthChart
-                    .elasticX(true)
-                    .controlsUseVisibility(true)
-                    .colorAccessor(this.dcBarColorFun)
-                    .valueAccessor((d) => {
-                        return d.value[this.selected];
-                    })
-                    .ordering((d) => {
-                        return this.months.indexOf(d.key)
-                    })
-                    .on('pretransition', (chart) => {
-                        chart.selectAll('g.x text')
-                            .style('text-anchor', 'end')
-                            .attr('transform', 'translate(-8,0)rotate(-45)')
-                            .on('click',(d) => {
-                                chart.filter(d)
-                                dc.redrawAll()
-                            })
-                    })
-
-
-                //date line chart
-                var lineConfig = {}
-                lineConfig.id = 'dateLine'
-                lineConfig.dim = this.ndx.dimension(function(d) {return d.date})
-                lineConfig.group = removeEmptyBins(lineConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial))
-                console.log('group!')
-                console.log(lineConfig.group.all())
-                lineConfig.minHeight = 400
-                lineConfig.aspectRatio = 3
-                lineConfig.margins = {top: 10, left: 60, right: 40, bottom: 60}
-                lineConfig.x = d3.scale.ordinal()
-                lineConfig.xUnits = dc.units.ordinal
-                lineConfig.brush = false 
-                lineConfig.tips = true
-                lineConfig.radius = 6
-                lineConfig.dataPoints = {
-                        fillOpacity: 0.8,
-                        strokeOpacity: 0.8,
-                        radius: 4,
-                }
-                var dateLineChart = dchelpers.getLineChart(lineConfig)
-                dateLineChart
-                    .valueAccessor((d) => {
-                        return d.value[this.selected]
-                    })
-                    .on('pretransition', (chart)=> {
-                        chart.selectAll('g.x text')
-                        .style('text-anchor', 'end')
-                        .attr('transform', 'translate(-8,0)rotate(-45)')
-                    })
-                    .on('renderlet', (chart) => {
-                        if (_.includes(this.selected,'percent')) {
-                            //create horizontal line
-                            var horiz = 95
-                            var extraData= [
-                                {x: 0, y: chart.y()(horiz)},
-                                {x: chart.width(), y: chart.y()(horiz)}
-                            ]
-                        } else {
-                            //remove horizontal line
-                            var extraData= []
-                        }
-
-                        var line = d3.svg.line()
-                                    .x(function(d) {return d.x;})
-                                    .y(function(d) {return d.y;})
-                                    .interpolate('linear');
-
-                        var path = chart.select('g.chart-body')
-                                        .selectAll('path.extra')
-                                        .data(extraData);
-                        path.enter()
-                            .append('path')
-                            .attr('d',line(extraData))
-                            .attr('class', 'extra')
-                            .attr('stroke','red')
-                            .style("stroke-dasharray", ("3, 3"));
-
-                        path.transition()
-                            .duration(200)
-                            .delay(0)
-                            .attr('d',line(extraData));
-
-                        path.exit()
-                            .transition()
-                            .duration(200)
-                            .style('opacity',0)
-                            .remove();
-
-                    })
-
-                var padPercent = 0.05
-                dateLineChart.yAxisMin = () => {
-                    var yMin = d3.min(lineConfig.group.all(), d => d.value[this.selected])
-                    var yMax = d3.max(lineConfig.group.all(), d => d.value[this.selected])
-                    var yRange = yMax - yMin
-                    if (_.includes(this.selected,'percent')) {
-                        return Math.min(yMin - Math.round(yRange * padPercent),90);
-                    } else {
-                        return yMin - Math.round(yRange * padPercent);
-                    }
-                }
-                dateLineChart.yAxisMax = () => {
-                    var yMin = d3.min(lineConfig.group.all(), d => d.value[this.selected])
-                    var yMax = d3.max(lineConfig.group.all(), d => d.value[this.selected])
-                    var yRange = yMax - yMin 
-                    if (_.includes(this.selected,'percent')) {
-                        return Math.max(yMax + Math.round(yRange * padPercent),100);
-                    } else {
-                        return yMax + Math.round(yRange * padPercent);
-                    }
-                }
-
-                //date overview chart
-                //var parseDate = d3.time.format("%Y-%m-%d").parse;
-                //var overviewConfig = {}
-                //overviewConfig.id = 'overview'
-                //overviewConfig.dim = this.ndx.dimension(function(d) {return parseDate(d.date)})
-                //var minDate = overviewConfig.dim.bottom(1)[0].date
-                //var maxDate = overviewConfig.dim.top(1)[0].date
-                //overviewConfig.group = overviewConfig.dim.group().reduce(manningAdd,manningRemove,manningInitial)
-                //overviewConfig.minHeight = 100
-                //overviewConfig.aspectRatio = 5
-                //overviewConfig.margins = {top: 10, left: 60, right: 40, bottom: 60}
-                //overviewConfig.x = d3.time.scale().domain([minDate, maxDate])
-                //overviewConfig.xUnits = d3.time.months
-                //overviewConfig.brush = true 
-                //overviewConfig.tips = true
-                //overviewConfig.radius = 6
-                //overviewConfig.dataPoints = {
-                //        fillOpacity: 0.8,
-                //        strokeOpacity: 0.8,
-                //        radius: 4,
-                //}
-                //var overviewChart = dchelpers.getLineChart(overviewConfig)
-                //console.log('13mo. ago')
-                //console.log(d3.time.month.offset(parseDate(maxDate),-13))
-                //overviewChart
-                //    .filter(dc.filters.RangedFilter(d3.time.month.offset(parseDate(maxDate),-13),d3.time.day.offset(parseDate(maxDate),1)))
-                //    .valueAccessor((d) => {
-                //        return d.value[this.selected]
-                //    })
-                //    .brushOn(true)
-                //    .on('pretransition', (chart)=> {
-                //        chart.selectAll('g.x text')
-                //        .style('text-anchor', 'end')
-                //        .attr('transform', 'translate(-8,0)rotate(-45)')
-                //    })
-                //var dateLineChart = dc.lineChart("#dc-date-linechart")
-                //dateLineChart
-                //    .margins(chartSpecs.majcomChart.margins)
-                //    .elasticY(true)
-                //    .width(800)
-                //    .height(480)
-                //    .group(dateConfig.group)
-                //    .dimension(dateConfig.dim)
-                //    .x(d3.scale.ordinal())
-                //    .xUnits(dc.units.ordinal)
-                //    .brushOn(false)
-                //    .xyTipsOn(true)
-                //    .dotRadius(6)
-                //    .renderDataPoints({
-                //        fillOpacity: 0.8,
-                //        strokeOpacity: 0.8,
-                //        radius: 4,
-                //    })
-                //    .valueAccessor((d) => {
-                //        return d.value[this.selected]
-                //    })
-                //    //.on('pretransition', (chart) => {
-                //    //    if (this.selected === 'percent') {
-                //    //        var horiz = 95
-                //    //        var extraData = [
-                //    //            {x: 0, y: chart.y()(horiz)},
-                //    //            
-                //    //        ]
-                //    //    }
-                //    //})
-                //;
-
-                var dataTable = dc.dataTable("#dc-data-table")
-
-                var tableDim = this.ndx.dimension(d => d.date)
-                dataTable.width(this.width)
-                    .height(800)
-                    .dimension(tableDim)
-                    .group(d => 'Showing first 100')
-                    .size(Infinity)
-                    //give columns an array of functions for returning variables
-                    .columns(this.columns.map(d=> {
-                        if (_.includes(d.field,'percent')) {
-                            return (v) => Math.round(v[d.field]*1000)/10 + '%';
-                        } else {
-                            return (v) => v[d.field];   
-                        }
-                    }))
-                    .showGroups(false)
-                    .sortBy(d => d.unit)
-                    .order(d3.ascending)
-                    .on("preRender", this.updateTable)
-                    .on("preRedraw", this.updateTable)
-                    //.on("renderlet", function(table) {
-                    //    console.log(d3.select("#dc-data-table tr"))
-                    //})
-                    ;
-
-                this.dataTable = dataTable
-
-
-                //Download Raw Data button
-                d3.select('#download')
-                .on('click', ()=>{
-                    //TODO: find a better way then majcomConfig.dim - may not always have this
-                    var data = tableDim.top(Infinity);
-                    var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
-
-                    var myFilters = '';
-                    dc.chartRegistry.list().forEach((d)=>{
-                        if (d.filters()[0]) {
-                            myFilters += ' (' + d.filters() + ')'
-                        }
-                    })
-
-                    FileSaver.saveAs(blob, 'Priority_Units_Historical' + '_' + this.asDate + myFilters + '.csv');
-                });
-
-                // after DOM updated redraw to make chart widths update
-                this.$nextTick(() => {
-                    dc.redrawAll()
-                })
-                
-                //make responsive
-                var temp
-                window.onresize = function(event) {
-                    clearTimeout(temp)
-                    temp = setTimeout(dc.redrawAll(), 500)
-                }
-
-                //var vm = this
-                //dc.chartRegistry.list().forEach((chart) => {
-                //    chart.on("filtered", function() {
-                //       vm.setTableData(); 
-                //    })
-                //})
-
-                //create charts
-                dc.renderAll()
-                dc.redrawAll()
-                
-            }
         },
         beforeUpdate() {
             console.log("beforeupdate")

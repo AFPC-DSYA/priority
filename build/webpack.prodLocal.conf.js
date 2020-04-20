@@ -44,15 +44,15 @@ const webpackConfig = merge(baseWebpackConfig, {
       'AXIOS_PROGRAM':'"/STARS_PROJECTS/Reports/Priority_Manning/StoredProcess/Priority_Manning"',  
       'local': true
     }),
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        compress: {
-          warnings: false
-        }
-      },
-      sourceMap: config.buildLocal.productionSourceMap,
-      parallel: true
-    }),
+    //new UglifyJsPlugin({
+    //  uglifyOptions: {
+    //    compress: {
+    //      warnings: false
+    //    }
+    //  },
+    //  sourceMap: config.buildLocal.productionSourceMap,
+    //  parallel: true
+    //}),
     // extract css into its own file
     new ExtractTextPlugin({
       filename: utils.assetsPath('css/[name].[contenthash].css'),
@@ -78,13 +78,7 @@ const webpackConfig = merge(baseWebpackConfig, {
         : config.buildLocal.index,
       template: 'index.html',
       inject: true,
-      minify: {
-        removeComments: true,
-        collapseWhitespace: true,
-        removeAttributeQuotes: true
-        // more options:
-        // https://github.com/kangax/html-minifier#options-quick-reference
-      },
+      minify: false,
       // necessary to consistently work with multiple chunks via CommonsChunkPlugin
       chunksSortMode: 'dependency'
     }),

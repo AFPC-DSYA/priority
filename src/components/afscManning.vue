@@ -318,6 +318,7 @@ import { store } from '@/store/store'
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome' 
 import largeBarChart from '@/components/largeBarChart'
 import overviewBarChart from '@/components/overviewBarChart'
+import raw_data from '@/../data/priority_data_afsc.json'
 
     export default {
         data() {
@@ -621,6 +622,399 @@ import overviewBarChart from '@/components/overviewBarChart'
             this.allDim.filterAll()
             dc.redrawAll()
           },
+          renderCharts: function() {
+            this.loaded = true
+            dc.dataCount(".dc-data-count")
+              .dimension(this.ndx)
+              .group(this.allGroup)
+
+            //remove empty function (es6 syntax to keep correct scope)
+            var removeEmptyBins = (source_group) => {
+                return {
+                    all: () => {
+                        return source_group.all().filter((d) => {
+                            return this.valueAccessor(d) != 0
+                        })
+                    }
+                }
+            }
+
+            //Number Display for Auth, Asgn, STP - show total for filtered content
+            var ndGroup = this.ndx.groupAll().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+            var authND = dc.numberDisplay("#auth")
+            authND.group(ndGroup)
+                .formatNumber(d3.format("f"))
+                .valueAccessor(d => d['auth' + this.period])
+                .html({
+                    one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
+                })
+            var asgnND = dc.numberDisplay("#asgn")
+            asgnND.group(ndGroup)
+                .formatNumber(d3.format("f"))
+                .valueAccessor(d => d['asgn' + this.period])
+                .html({
+                    one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
+                })
+            var percentND = dc.numberDisplay("#percent")
+            percentND.group(ndGroup)
+                .formatNumber(d3.format(".1f"))
+                .valueAccessor((d) => {
+                    return d['asgn' + this.period]/d['auth' + this.period] === Infinity ? 0 : Math.round((d['asgn' + this.period]/d['auth' + this.period])*1000)/10 || 0;
+                })
+                .html({
+                    one:"<span style=\"color:steelblue; font-size: 20px;\">%number%</span>"
+                })
+
+            //cat
+            var catConfig = {};
+            catConfig.id = 'cat';
+            catConfig.dim = this.ndx.dimension(function (d) {
+                return d.unit_cat;
+            })
+            catConfig.group = catConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+            catConfig.minHeight = 100 
+            catConfig.aspectRatio = 4
+            catConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
+            catConfig.colors = d3.scale.ordinal().domain([0,1,2,3]).range(['#238b55','#238b35','#238b45','#d62728'])
+            var catChart = dchelpers.getRowChart(catConfig)
+            catChart
+                .controlsUseVisibility(true)
+                .colorAccessor(this.dcRowColorFun)
+                .valueAccessor(this.valueAccessor)
+
+            //grp
+            var grpDecode = {'ENL': 'Enlisted', 'OFF': 'Officer'}
+            var grpConfig = {};
+            grpConfig.id = 'grp';
+            grpConfig.dim = this.ndx.dimension(function (d) {
+                return grpDecode[d.grp];
+            })
+            grpConfig.group = grpConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+            grpConfig.minHeight = 100 
+            grpConfig.aspectRatio = 4
+            grpConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
+            grpConfig.colors = d3.scale.ordinal().domain([0,1,2,3]).range(["#238b55","#238b35","#636363","#d62728"])
+            var grpChart = dchelpers.getRowChart(grpConfig)
+            grpChart
+                .controlsUseVisibility(true)
+                .colorAccessor(this.dcRowColorFun)
+                .valueAccessor((d) => {
+                    return this.valueAccessor(d);
+                })
+
+
+            //Majcom
+            var majcomConfig = {}
+            majcomConfig.id = 'majcom'
+            majcomConfig.dim = this.ndx.dimension(function(d){return d.majcom})
+            var majcomPercent = majcomConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+            majcomConfig.group = removeEmptyBins(majcomPercent)
+            majcomConfig.minHeight = chartSpecs.majcomChart.minHeight 
+            majcomConfig.aspectRatio = chartSpecs.majcomChart.aspectRatio 
+            majcomConfig.margins = chartSpecs.majcomChart.margins 
+            majcomConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.majcomChart.color)
+            var majcomChart = dchelpers.getOrdinalBarChart(majcomConfig)
+            majcomChart
+                .elasticX(true)
+                .controlsUseVisibility(true)
+                .colorAccessor(this.dcBarColorFun)
+                .valueAccessor((d) => {
+                    return this.valueAccessor(d);
+                })
+                .on('pretransition', (chart)=> {
+                    chart.selectAll('g.x text')
+                    .style('text-anchor', 'end')
+                    .attr('transform', 'translate(-8,0)rotate(-45)')
+                    .on('click',(d) => {
+                        chart.filter(d)
+                        dc.redrawAll()
+                    })
+                })
+
+            //grade
+            var gradeConfig = {};
+            gradeConfig.id = 'grade';
+            gradeConfig.dim = this.ndx.dimension(function (d) {
+                return d.grade;
+            })
+            gradeConfig.group = gradeConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+            gradeConfig.minHeight = 200 
+            gradeConfig.aspectRatio = 2
+            gradeConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
+            gradeConfig.colors = d3.scale.ordinal().domain([0,1,2,3,4]).range(["#addd8e","#78c679","#61ab5d","#d62728","#51ab5d","#41ab5d","#338443","#238443","#138443","#006d2c"])
+            var gradeChart = dchelpers.getRowChart(gradeConfig)
+            gradeChart
+                .controlsUseVisibility(true)
+                .colorAccessor(this.dcRowColorFun)
+                .valueAccessor((d) => {
+                    return this.valueAccessor(d);
+                })
+                .ordering(function(d){
+                  return formats.gradeOrder[d.key]
+                })                                    
+
+            //afscFamily
+            var afscFamilyConfig = {}
+            afscFamilyConfig.id = 'afscFamily'
+            afscFamilyConfig.dim = this.ndx.dimension(function(d){return formats.afsc1[d.afsc_family]})
+            afscFamilyConfig.group = removeEmptyBins(afscFamilyConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial))
+            afscFamilyConfig.minHeight = 200 
+            afscFamilyConfig.aspectRatio = 3 
+            afscFamilyConfig.margins = {top: 10, left: 40, right: 30, bottom: 90}
+            afscFamilyConfig.colors = d3.scale.ordinal().domain(['good','under']).range(this.afscColor)
+            var afscFamilyChart = dchelpers.getOrdinalBarChart(afscFamilyConfig)
+            afscFamilyChart
+                .elasticX(true)
+                .controlsUseVisibility(true)
+                .colorAccessor(this.dcBarColorFun)
+                .valueAccessor((d) => {
+                    return this.valueAccessor(d);
+                })
+                .on('pretransition', (chart)=> {
+                    chart.selectAll('g.x text')
+                    .style('text-anchor', 'end')
+                    .attr('transform', 'translate(-8,0)rotate(-45)')
+                    .on('click',(d) => {
+                        chart.filter(d)
+                        dc.redrawAll()
+                    })
+                });
+
+            //base(mpf)
+            var baseConfig = {}
+            baseConfig.id = 'base'
+            baseConfig.dim = this.ndx.dimension(function(d){return d.mpf})
+            var basePercent = baseConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+            baseConfig.group = removeEmptyBins(basePercent)
+            baseConfig.minHeight = chartSpecs.baseChart.minHeight 
+            baseConfig.aspectRatio = chartSpecs.baseChart.aspectRatio 
+            baseConfig.margins = chartSpecs.baseChart.margins 
+            baseConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
+            var baseChart = dchelpers.getOrdinalBarChart(baseConfig)
+            baseChart
+                .elasticX(true)
+                .controlsUseVisibility(true)
+                .colorAccessor(this.dcBarColorFun)
+                .valueAccessor((d) => {
+                    return this.valueAccessor(d);
+                })
+                .on('pretransition', (chart)=> {
+                    chart.selectAll('g.x text')
+                    .style('text-anchor', 'end')
+                    .attr('transform', 'translate(-8,0)rotate(-45)')
+                    .on('click',(d) => {
+                        chart.filter(d)
+                        dc.redrawAll()
+                    })
+                })
+
+            //unit type
+            var unitTypeConfig = {}
+            unitTypeConfig.id = 'unitType'
+            unitTypeConfig.dim = this.ndx.dimension(function(d){return d.unit_type})
+            var unitTypePercent = unitTypeConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+            unitTypeConfig.group = removeEmptyBins(unitTypePercent)
+            unitTypeConfig.minHeight = chartSpecs.baseChart.minHeight 
+            unitTypeConfig.aspectRatio = chartSpecs.baseChart.aspectRatio 
+            unitTypeConfig.margins = chartSpecs.baseChart.margins 
+            unitTypeConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
+            var unitTypeChart = dchelpers.getOrdinalBarChart(unitTypeConfig)
+            unitTypeChart
+                .elasticX(true)
+                .controlsUseVisibility(true)
+                .colorAccessor(this.dcBarColorFun)
+                .valueAccessor((d) => {
+                    return this.valueAccessor(d);
+                })
+                .on('pretransition', (chart)=> {
+                    chart.selectAll('g.x text')
+                    .style('text-anchor', 'end')
+                    .attr('transform', 'translate(-8,0)rotate(-45)')
+                    .on('click',(d) => {
+                        chart.filter(d)
+                        dc.redrawAll()
+                    })
+                })
+
+            //overview
+            //var id_group = (group) => {
+            //    return {
+            //        all: () => {
+            //            return group.all().map(function(kv, i) {
+            //                return {key: i, value: kv.value};
+            //            });
+            //        }
+            //    }
+            //}
+
+            //var sortGroup = (group) => {
+            //    return {
+            //        all: () => {
+            //            return group.all().sort((a,b) => {return b.value[this.selected] - a.value[this.selected]})
+            //            .map((d,i) => {
+            //                d.sort = i
+            //                return d
+            //            })
+            //        }
+            //    }
+            //}
+
+            ////remove empty function (es6 syntax to keep correct scope)
+            //var removeEmptyBinsSpecial = (source_group) => {
+            //    return {
+            //        all: () => {
+            //            return source_group.all().filter((d) => {
+            //                if (this.filterArray.length > 0) {
+            //                    return d.value[this.selected] != 0 && _.includes(this.filterArray, d.key)
+            //                } else {
+            //                    return d.value[this.selected] != 0
+            //                }
+            //            })
+            //        }
+            //    }
+            //}
+
+            //var overviewConfig = {}
+            //overviewConfig.id = 'overview'
+            //overviewConfig.dim = this.ndx.dimension(function(d) { return d.unit; });
+            //var overviewPercent = overviewConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+            //var keys = overviewPercent.all().map(dc.pluck('key')).slice();
+            //overviewConfig.group = id_group(overviewPercent)
+            //console.log(overviewConfig.group.all())
+            //overviewConfig.minHeight = 100 
+            //overviewConfig.aspectRatio = 8 
+            //overviewConfig.margins = {top: 10, left: 45, right: 30, bottom: 10} 
+            //overviewConfig.x = d3.scale.linear().domain([0, keys.length])
+            //overviewConfig.xUnits = dc.units.integer
+            //overviewConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
+            //var overviewChart = dchelpers.getBrushBarChart(overviewConfig)
+            //overviewChart
+            //    .controlsUseVisibility(true)
+            //    .colorAccessor(this.dcBarColorFun)
+            //    .valueAccessor((d) => {
+            //        return d.value[this.selected]
+            //    })
+            //    .xAxis().ticks([]);
+
+            ////set up filter to enable brush (by default no brush for ordinal chart)
+            //var vm = this
+            //overviewChart.filterHandler(function(dimension, filters) {
+            //    //reset if no filters
+            //    if (filters.length === 0) {
+            //        dimension.filter(null);
+            //        return filters;
+            //    }
+            //    //apply filters (have to go from number to string as specified in dimension)
+            //    var rangeFilterDecode = filters.map(function(rangefilt) {
+            //        var low = keys[Math.ceil(rangefilt[0])]
+            //        var high = keys[Math.ceil(rangefilt[1])] || 'zzz';
+            //        var lowNum = Math.max(Math.ceil(rangefilt[0]),0) 
+            //        var highNum = Math.min(Math.ceil(rangefilt[1]),200)
+            //        vm.filterArray = []
+            //        for (var i = lowNum; i < highNum + 1; i++) {
+            //            vm.filterArray.push(keys[i])
+            //        }
+            //        return dc.filters.RangedFilter(low,high)
+            //    })
+            //    return rangeFilterDecode;
+            //});
+            //overviewChart.resetFilterHandler(function(filters) {
+            //    vm.filterArray = []
+            //    return [];
+            //})
+            //this.overviewChart = overviewChart
+
+            ////unit
+            //var overviewUnitConfig = {}
+            //overviewUnitConfig.id = 'overviewUnit'
+            //overviewUnitConfig.dim = overviewConfig.dim
+            //var overviewUnitPercent = overviewUnitConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
+            //overviewUnitConfig.group = removeEmptyBinsSpecial(overviewUnitPercent)
+            //overviewUnitConfig.minHeight = chartSpecs.baseChart.minHeight 
+            //overviewUnitConfig.aspectRatio = chartSpecs.baseChart.aspectRatio 
+            //overviewUnitConfig.margins = chartSpecs.baseChart.margins 
+            //overviewUnitConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
+            //var overviewUnitChart = dchelpers.getOrdinalBarChart(overviewUnitConfig)
+            //overviewUnitChart
+            //    .elasticX(true)
+            //    .controlsUseVisibility(true)
+            //    .colorAccessor(this.dcBarColorFun)
+            //    .valueAccessor((d) => {
+            //        return d.value[this.selected]
+            //    })
+            //    .on('pretransition', (chart)=> {
+            //        chart.selectAll('g.x text')
+            //        .style('text-anchor', 'end')
+            //        .attr('transform', 'translate(-8,0)rotate(-45)')
+            //    })
+            //this.overviewUnitChart = overviewUnitChart
+
+            //data table
+            var dataTable = dc.dataTable("#dc-data-table")
+
+            var tableDim = this.ndx.dimension(d => d.unit)
+            dataTable.width(this.width)
+                .height(800)
+                .dimension(tableDim)
+                .group(d => 'Showing first 100')
+                .size(Infinity)
+                //give columns an array of functions for returning variables
+                .columns(this.columns.map(d=> {
+                    if (_.includes(d.field,'percent')) {
+                        return (v) => Math.round(v[d.field]*1000)/10 + '%';
+                    } else {
+                        return (v) => v[d.field];   
+                    }
+                }))
+                .showGroups(false)
+                .sortBy(d => d.unit)
+                .order(d3.ascending)
+                .on("preRender", this.updateTable)
+                .on("preRedraw", this.updateTable)
+                ;
+
+            this.dataTable = dataTable
+
+            //Download Raw Data button
+            d3.select('#download')
+            .on('click', ()=>{
+                //TODO: find a better way then majcomConfig.dim - may not always have this
+                var data = tableDim.top(Infinity);
+                var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
+
+                var myFilters = '';
+                dc.chartRegistry.list().forEach((d)=>{
+                    if (d.filters()[0])
+                        myFilters += ' (' + d.filters() + ')'
+                })
+
+                FileSaver.saveAs(blob, 'Priority_Units_Manning' + '_' + this.asDate + myFilters + '.csv');
+            });
+
+            // after DOM updated redraw to make chart widths update
+            this.$nextTick(() => {
+                //overviewChart.filter(dc.filters.RangedFilter(1,30))
+                dc.redrawAll()
+            })
+            
+            //make responsive
+            var temp
+            window.onresize = function(event) {
+                clearTimeout(temp)
+                temp = setTimeout(dc.redrawAll(), 500)
+            }
+
+            //var vm = this
+            //dc.chartRegistry.list().forEach((chart) => {
+            //    chart.on("filtered", function() {
+            //       vm.setTableData(); 
+            //    })
+            //})
+
+            //create charts
+            dc.renderAll()
+            dc.redrawAll()
+          }
         },
         components: {
             'loader': Loader,
@@ -637,11 +1031,9 @@ import overviewBarChart from '@/components/overviewBarChart'
 
             if (local) {
                 //load local data (works for both dev and prod) 
-                d3.json('./data/priority_data_afsc.json',(error,data) => {
-                    this.data = this.makeObject(data.data);   
-                    this.asDate = data.ASOFDATE;
-                    renderCharts()
-                })
+                this.data = this.makeObject(raw_data.data)
+                this.asDate = raw_data.ASOFDATE
+                this.renderCharts()
             } else {
                 var querystring = require('querystring');
                 const formData = {
@@ -653,7 +1045,7 @@ import overviewBarChart from '@/components/overviewBarChart'
                 axios.post(axios_url_priority_data_afsc, querystring.stringify(formData)).then(response => { 
                     this.data = this.makeObject(response.data.data);   
                     this.asDate = response.data.ASOFDATE;
-                    renderCharts()
+                    this.renderCharts()
                 }).catch(function (error) {
                     console.log('AXIOS ERROR')
                     console.log(error);
@@ -661,402 +1053,6 @@ import overviewBarChart from '@/components/overviewBarChart'
             }
 
 
-            var renderCharts = () => {
-
-                var vm = this
-                this.loaded = true
-                dc.dataCount(".dc-data-count")
-                  .dimension(this.ndx)
-                  .group(this.allGroup)
-
-                //remove empty function (es6 syntax to keep correct scope)
-                var removeEmptyBins = (source_group) => {
-                    return {
-                        all: () => {
-                            return source_group.all().filter((d) => {
-                                return vm.valueAccessor(d) != 0
-                            })
-                        }
-                    }
-                }
-
-                //Number Display for Auth, Asgn, STP - show total for filtered content
-                var ndGroup = this.ndx.groupAll().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
-                var authND = dc.numberDisplay("#auth")
-                authND.group(ndGroup)
-                    .formatNumber(d3.format("f"))
-                    .valueAccessor(d => d['auth' + this.period])
-                    .html({
-                        one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
-                    })
-                var asgnND = dc.numberDisplay("#asgn")
-                asgnND.group(ndGroup)
-                    .formatNumber(d3.format("f"))
-                    .valueAccessor(d => d['asgn' + this.period])
-                    .html({
-                        one:"<span style=\"color:steelblue; font-size: 20px;\">%number</span>"
-                    })
-                var percentND = dc.numberDisplay("#percent")
-                percentND.group(ndGroup)
-                    .formatNumber(d3.format(".1f"))
-                    .valueAccessor((d) => {
-                        return d['asgn' + this.period]/d['auth' + this.period] === Infinity ? 0 : Math.round((d['asgn' + this.period]/d['auth' + this.period])*1000)/10 || 0;
-                    })
-                    .html({
-                        one:"<span style=\"color:steelblue; font-size: 20px;\">%number%</span>"
-                    })
-
-                //cat
-                var catConfig = {};
-                catConfig.id = 'cat';
-                catConfig.dim = this.ndx.dimension(function (d) {
-                    return d.unit_cat;
-                })
-                catConfig.group = catConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
-                catConfig.minHeight = 100 
-                catConfig.aspectRatio = 4
-                catConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
-                catConfig.colors = d3.scale.ordinal().domain([0,1,2,3]).range(['#238b55','#238b35','#238b45','#d62728'])
-                var catChart = dchelpers.getRowChart(catConfig)
-                catChart
-                    .controlsUseVisibility(true)
-                    .colorAccessor(this.dcRowColorFun)
-                    .valueAccessor(this.valueAccessor)
-
-                //grp
-                var grpDecode = {'ENL': 'Enlisted', 'OFF': 'Officer'}
-                var grpConfig = {};
-                grpConfig.id = 'grp';
-                grpConfig.dim = this.ndx.dimension(function (d) {
-                    return grpDecode[d.grp];
-                })
-                grpConfig.group = grpConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
-                grpConfig.minHeight = 100 
-                grpConfig.aspectRatio = 4
-                grpConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
-                grpConfig.colors = d3.scale.ordinal().domain([0,1,2,3]).range(["#238b55","#238b35","#636363","#d62728"])
-                var grpChart = dchelpers.getRowChart(grpConfig)
-                grpChart
-                    .controlsUseVisibility(true)
-                    .colorAccessor(this.dcRowColorFun)
-                    .valueAccessor((d) => {
-                        return this.valueAccessor(d);
-                    })
-
-
-                //Majcom
-                var majcomConfig = {}
-                majcomConfig.id = 'majcom'
-                majcomConfig.dim = this.ndx.dimension(function(d){return d.majcom})
-                var majcomPercent = majcomConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
-                majcomConfig.group = removeEmptyBins(majcomPercent)
-                majcomConfig.minHeight = chartSpecs.majcomChart.minHeight 
-                majcomConfig.aspectRatio = chartSpecs.majcomChart.aspectRatio 
-                majcomConfig.margins = chartSpecs.majcomChart.margins 
-                majcomConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.majcomChart.color)
-                var majcomChart = dchelpers.getOrdinalBarChart(majcomConfig)
-                majcomChart
-                    .elasticX(true)
-                    .controlsUseVisibility(true)
-                    .colorAccessor(this.dcBarColorFun)
-                    .valueAccessor((d) => {
-                        return this.valueAccessor(d);
-                    })
-                    .on('pretransition', (chart)=> {
-                        chart.selectAll('g.x text')
-                        .style('text-anchor', 'end')
-                        .attr('transform', 'translate(-8,0)rotate(-45)')
-                        .on('click',(d) => {
-                            chart.filter(d)
-                            dc.redrawAll()
-                        })
-                    })
-
-                //grade
-                var gradeConfig = {};
-                gradeConfig.id = 'grade';
-                gradeConfig.dim = this.ndx.dimension(function (d) {
-                    return d.grade;
-                })
-                gradeConfig.group = gradeConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
-                gradeConfig.minHeight = 200 
-                gradeConfig.aspectRatio = 2
-                gradeConfig.margins = {top: 10, left: 40, right: 30, bottom: 20}
-                gradeConfig.colors = d3.scale.ordinal().domain([0,1,2,3,4]).range(["#addd8e","#78c679","#61ab5d","#d62728","#51ab5d","#41ab5d","#338443","#238443","#138443","#006d2c"])
-                var gradeChart = dchelpers.getRowChart(gradeConfig)
-                gradeChart
-                    .controlsUseVisibility(true)
-                    .colorAccessor(this.dcRowColorFun)
-                    .valueAccessor((d) => {
-                        return this.valueAccessor(d);
-                    })
-                    .ordering(function(d){
-                      return formats.gradeOrder[d.key]
-                    })                                    
-
-                //afscFamily
-                var afscFamilyConfig = {}
-                afscFamilyConfig.id = 'afscFamily'
-                afscFamilyConfig.dim = this.ndx.dimension(function(d){return formats.afsc1[d.afsc_family]})
-                afscFamilyConfig.group = removeEmptyBins(afscFamilyConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial))
-                afscFamilyConfig.minHeight = 200 
-                afscFamilyConfig.aspectRatio = 3 
-                afscFamilyConfig.margins = {top: 10, left: 40, right: 30, bottom: 90}
-                afscFamilyConfig.colors = d3.scale.ordinal().domain(['good','under']).range(this.afscColor)
-                var afscFamilyChart = dchelpers.getOrdinalBarChart(afscFamilyConfig)
-                afscFamilyChart
-                    .elasticX(true)
-                    .controlsUseVisibility(true)
-                    .colorAccessor(this.dcBarColorFun)
-                    .valueAccessor((d) => {
-                        return this.valueAccessor(d);
-                    })
-                    .on('pretransition', (chart)=> {
-                        chart.selectAll('g.x text')
-                        .style('text-anchor', 'end')
-                        .attr('transform', 'translate(-8,0)rotate(-45)')
-                        .on('click',(d) => {
-                            chart.filter(d)
-                            dc.redrawAll()
-                        })
-                    });
-
-                //base(mpf)
-                var baseConfig = {}
-                baseConfig.id = 'base'
-                baseConfig.dim = this.ndx.dimension(function(d){return d.mpf})
-                var basePercent = baseConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
-                baseConfig.group = removeEmptyBins(basePercent)
-                baseConfig.minHeight = chartSpecs.baseChart.minHeight 
-                baseConfig.aspectRatio = chartSpecs.baseChart.aspectRatio 
-                baseConfig.margins = chartSpecs.baseChart.margins 
-                baseConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
-                var baseChart = dchelpers.getOrdinalBarChart(baseConfig)
-                baseChart
-                    .elasticX(true)
-                    .controlsUseVisibility(true)
-                    .colorAccessor(this.dcBarColorFun)
-                    .valueAccessor((d) => {
-                        return this.valueAccessor(d);
-                    })
-                    .on('pretransition', (chart)=> {
-                        chart.selectAll('g.x text')
-                        .style('text-anchor', 'end')
-                        .attr('transform', 'translate(-8,0)rotate(-45)')
-                        .on('click',(d) => {
-                            chart.filter(d)
-                            dc.redrawAll()
-                        })
-                    })
-
-                //unit type
-                var unitTypeConfig = {}
-                unitTypeConfig.id = 'unitType'
-                unitTypeConfig.dim = this.ndx.dimension(function(d){return d.unit_type})
-                var unitTypePercent = unitTypeConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
-                unitTypeConfig.group = removeEmptyBins(unitTypePercent)
-                unitTypeConfig.minHeight = chartSpecs.baseChart.minHeight 
-                unitTypeConfig.aspectRatio = chartSpecs.baseChart.aspectRatio 
-                unitTypeConfig.margins = chartSpecs.baseChart.margins 
-                unitTypeConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
-                var unitTypeChart = dchelpers.getOrdinalBarChart(unitTypeConfig)
-                unitTypeChart
-                    .elasticX(true)
-                    .controlsUseVisibility(true)
-                    .colorAccessor(this.dcBarColorFun)
-                    .valueAccessor((d) => {
-                        return this.valueAccessor(d);
-                    })
-                    .on('pretransition', (chart)=> {
-                        chart.selectAll('g.x text')
-                        .style('text-anchor', 'end')
-                        .attr('transform', 'translate(-8,0)rotate(-45)')
-                        .on('click',(d) => {
-                            chart.filter(d)
-                            dc.redrawAll()
-                        })
-                    })
-
-                //overview
-                //var id_group = (group) => {
-                //    return {
-                //        all: () => {
-                //            return group.all().map(function(kv, i) {
-                //                return {key: i, value: kv.value};
-                //            });
-                //        }
-                //    }
-                //}
-
-                //var sortGroup = (group) => {
-                //    return {
-                //        all: () => {
-                //            return group.all().sort((a,b) => {return b.value[this.selected] - a.value[this.selected]})
-                //            .map((d,i) => {
-                //                d.sort = i
-                //                return d
-                //            })
-                //        }
-                //    }
-                //}
-
-                ////remove empty function (es6 syntax to keep correct scope)
-                //var removeEmptyBinsSpecial = (source_group) => {
-                //    return {
-                //        all: () => {
-                //            return source_group.all().filter((d) => {
-                //                if (this.filterArray.length > 0) {
-                //                    return d.value[this.selected] != 0 && _.includes(this.filterArray, d.key)
-                //                } else {
-                //                    return d.value[this.selected] != 0
-                //                }
-                //            })
-                //        }
-                //    }
-                //}
-
-                //var overviewConfig = {}
-                //overviewConfig.id = 'overview'
-                //overviewConfig.dim = this.ndx.dimension(function(d) { return d.unit; });
-                //var overviewPercent = overviewConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
-                //var keys = overviewPercent.all().map(dc.pluck('key')).slice();
-                //overviewConfig.group = id_group(overviewPercent)
-                //console.log(overviewConfig.group.all())
-                //overviewConfig.minHeight = 100 
-                //overviewConfig.aspectRatio = 8 
-                //overviewConfig.margins = {top: 10, left: 45, right: 30, bottom: 10} 
-                //overviewConfig.x = d3.scale.linear().domain([0, keys.length])
-                //overviewConfig.xUnits = dc.units.integer
-                //overviewConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
-                //var overviewChart = dchelpers.getBrushBarChart(overviewConfig)
-                //overviewChart
-                //    .controlsUseVisibility(true)
-                //    .colorAccessor(this.dcBarColorFun)
-                //    .valueAccessor((d) => {
-                //        return d.value[this.selected]
-                //    })
-                //    .xAxis().ticks([]);
-
-                ////set up filter to enable brush (by default no brush for ordinal chart)
-                //var vm = this
-                //overviewChart.filterHandler(function(dimension, filters) {
-                //    //reset if no filters
-                //    if (filters.length === 0) {
-                //        dimension.filter(null);
-                //        return filters;
-                //    }
-                //    //apply filters (have to go from number to string as specified in dimension)
-                //    var rangeFilterDecode = filters.map(function(rangefilt) {
-                //        var low = keys[Math.ceil(rangefilt[0])]
-                //        var high = keys[Math.ceil(rangefilt[1])] || 'zzz';
-                //        var lowNum = Math.max(Math.ceil(rangefilt[0]),0) 
-                //        var highNum = Math.min(Math.ceil(rangefilt[1]),200)
-                //        vm.filterArray = []
-                //        for (var i = lowNum; i < highNum + 1; i++) {
-                //            vm.filterArray.push(keys[i])
-                //        }
-                //        return dc.filters.RangedFilter(low,high)
-                //    })
-                //    return rangeFilterDecode;
-                //});
-                //overviewChart.resetFilterHandler(function(filters) {
-                //    vm.filterArray = []
-                //    return [];
-                //})
-                //this.overviewChart = overviewChart
-
-                ////unit
-                //var overviewUnitConfig = {}
-                //overviewUnitConfig.id = 'overviewUnit'
-                //overviewUnitConfig.dim = overviewConfig.dim
-                //var overviewUnitPercent = overviewUnitConfig.dim.group().reduce(this.manningAdd,this.manningRemove,this.manningInitial)
-                //overviewUnitConfig.group = removeEmptyBinsSpecial(overviewUnitPercent)
-                //overviewUnitConfig.minHeight = chartSpecs.baseChart.minHeight 
-                //overviewUnitConfig.aspectRatio = chartSpecs.baseChart.aspectRatio 
-                //overviewUnitConfig.margins = chartSpecs.baseChart.margins 
-                //overviewUnitConfig.colors = d3.scale.ordinal().domain(['good','under']).range(chartSpecs.baseChart.color)
-                //var overviewUnitChart = dchelpers.getOrdinalBarChart(overviewUnitConfig)
-                //overviewUnitChart
-                //    .elasticX(true)
-                //    .controlsUseVisibility(true)
-                //    .colorAccessor(this.dcBarColorFun)
-                //    .valueAccessor((d) => {
-                //        return d.value[this.selected]
-                //    })
-                //    .on('pretransition', (chart)=> {
-                //        chart.selectAll('g.x text')
-                //        .style('text-anchor', 'end')
-                //        .attr('transform', 'translate(-8,0)rotate(-45)')
-                //    })
-                //this.overviewUnitChart = overviewUnitChart
-
-                //data table
-                var dataTable = dc.dataTable("#dc-data-table")
-
-                var tableDim = this.ndx.dimension(d => d.unit)
-                dataTable.width(this.width)
-                    .height(800)
-                    .dimension(tableDim)
-                    .group(d => 'Showing first 100')
-                    .size(Infinity)
-                    //give columns an array of functions for returning variables
-                    .columns(this.columns.map(d=> {
-                        if (_.includes(d.field,'percent')) {
-                            return (v) => Math.round(v[d.field]*1000)/10 + '%';
-                        } else {
-                            return (v) => v[d.field];   
-                        }
-                    }))
-                    .showGroups(false)
-                    .sortBy(d => d.unit)
-                    .order(d3.ascending)
-                    .on("preRender", this.updateTable)
-                    .on("preRedraw", this.updateTable)
-                    ;
-
-                this.dataTable = dataTable
-
-                //Download Raw Data button
-                d3.select('#download')
-                .on('click', ()=>{
-                    //TODO: find a better way then majcomConfig.dim - may not always have this
-                    var data = tableDim.top(Infinity);
-                    var blob = new Blob([d3.csv.format(data)], {type: "text/csv;charset=utf-8"});
-
-                    var myFilters = '';
-                    dc.chartRegistry.list().forEach((d)=>{
-                        if (d.filters()[0])
-                            myFilters += ' (' + d.filters() + ')'
-                    })
-
-                    FileSaver.saveAs(blob, 'Priority_Units_Manning' + '_' + this.asDate + myFilters + '.csv');
-                });
-
-                // after DOM updated redraw to make chart widths update
-                this.$nextTick(() => {
-                    //overviewChart.filter(dc.filters.RangedFilter(1,30))
-                    dc.redrawAll()
-                })
-                
-                //make responsive
-                var temp
-                window.onresize = function(event) {
-                    clearTimeout(temp)
-                    temp = setTimeout(dc.redrawAll(), 500)
-                }
-
-                //var vm = this
-                //dc.chartRegistry.list().forEach((chart) => {
-                //    chart.on("filtered", function() {
-                //       vm.setTableData(); 
-                //    })
-                //})
-
-                //create charts
-                dc.renderAll()
-                dc.redrawAll()
-                
-            }
         },
         beforeUpdate() {
             console.log("beforeupdate")
