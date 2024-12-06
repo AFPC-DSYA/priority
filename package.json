@@ -22,7 +22,7 @@
     "dc": "^2.1.9",
     "es6-promise-promise": "^1.0.0",
     "file-saver": "^1.3.8",
-    "jquery": "3.4.0",
+    "jquery": "3.5.0",
     "lodash": "4.17.12",
     "mdbootstrap": "^4.4.1",
     "popper.js": "1.12.3",
